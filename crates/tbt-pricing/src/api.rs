@@ -335,6 +335,12 @@ impl PriceEntry {
 }
 
 /// Parses the bundled price file; every row gets `source = Bundled`, `id = None`.
+pub const BUNDLED_PRICES_TOML: &str = include_str!("../../../assets/prices.toml");
+
+pub fn bundled_prices() -> Result<Vec<ModelPrice>> {
+    parse_prices_toml(BUNDLED_PRICES_TOML)
+}
+
 pub fn parse_prices_toml(text: &str) -> Result<Vec<ModelPrice>> {
     let file: PriceFile = toml::from_str(text)?;
     Ok(file

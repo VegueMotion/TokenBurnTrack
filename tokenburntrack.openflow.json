@@ -1903,7 +1903,7 @@
           },
           "size": {
             "width": 1704,
-            "height": 652
+            "height": 744
           },
           "content": {
             "label": "TokenBurnTrack — Data Model"
@@ -1914,8 +1914,8 @@
             "dsl": {
               "family": "erd",
               "version": 1,
-              "source": "%% ofk 1\nerd\ntitle: TokenBurnTrack — Data Model\nharness [orange] { id text pk   display_name text   enabled int   roots_json text }\nsource_file [gray] { id int pk   harness_id text fk   path text   cursor_json text   last_read text   missing int }\nproject [teal] { id int pk   path text unique   name text }\nsession [blue] { id int pk   harness_id text fk   ext_id text   project_id int fk   resumed_from_session_id int fk   parent_session_id int fk   started_at text   ended_at text   active_seconds int   cost_micros int   cumulative_json text }\nusage_event [violet] { id int pk   harness_id text   dedup_key text unique   session_id int fk   ts text   model text   input_tokens int   output_tokens int   cache_write_5m_tokens int   cache_write_1h_tokens int   cache_read_tokens int   cost_micros int   reported_cost_micros int   price_id int fk   source_file_id int fk }\nmessage [pink] { id int pk   session_id int fk   key text unique   ts text   role text   tool_name text   preview text   usage_event_id int fk }\nhourly_usage [green] { hour text pk   harness_id text pk   model text pk   project_id int pk   input_tokens int   output_tokens int   cost_micros int }\nmodel_price [yellow] { id int pk   provider text   model_pattern text   effective_from text   effective_to text   input_per_mtok text   output_per_mtok text   cache_read_per_mtok text   source text }\ningest_run [gray] { id int pk   trigger text   started_at text   finished_at text   events_new int   warnings_json text }\nharness ||--o{ source_file : has\nharness ||--o{ session : owns\nproject |o--o{ session : groups\nproject ||--o{ hourly_usage : \"buckets (0 = none)\"\nsession |o--o{ session : resumed_from\nsession |o--o{ session : \"parent (subagent)\"\nsession ||--o{ usage_event : contains\nsession ||--o{ message : contains\nsource_file |o--o{ usage_event : origin\nmodel_price |o--o{ usage_event : prices\nusage_event |o--o{ message : produced",
-              "hash": "1ppbfle",
+              "source": "%% ofk 1\nerd\ntitle: TokenBurnTrack — Data Model\nharness [orange] { id text pk   display_name text   enabled int   roots_json text }\nsource_file [gray] { id int pk   harness_id text fk   path text   cursor_json text   last_read text   missing int }\nproject [teal] { id int pk   path text unique   name text }\nsession [blue] { id int pk   harness_id text fk   ext_id text   project_id int fk   resumed_from_session_id int fk   parent_session_id int fk   started_at text   ended_at text   active_seconds int   unpriced_events int   cost_micros int   cumulative_json text }\nsession_model [blue] { session_id int pk   model text pk }\nusage_event [violet] { id int pk   harness_id text   dedup_key text unique   session_id int fk   project_id int fk   ts text   model text   input_tokens int   output_tokens int   cache_write_5m_tokens int   cache_write_1h_tokens int   cache_read_tokens int   cost_micros int   reported_cost_micros int   price_id int fk   source_file_id int fk }\nmessage [pink] { id int pk   session_id int fk   key text unique   ts text   role text   tool_name text   preview text   usage_event_id int fk }\nhourly_usage [green] { hour text pk   harness_id text pk   model text pk   project_id int pk   unpriced_events int   input_tokens int   output_tokens int   cost_micros int }\nmodel_price [yellow] { id int pk   provider text   model_pattern text   effective_from text   effective_to text   input_per_mtok text   output_per_mtok text   cache_read_per_mtok text   source text }\ningest_run [gray] { id int pk   trigger text   started_at text   finished_at text   events_new int   warnings_json text }\nharness ||--o{ source_file : has\nharness ||--o{ session : owns\nproject ||--o{ session : \"groups (0 = none)\"\nproject ||--o{ usage_event : \"bucket (0 = none)\"\nproject ||--o{ hourly_usage : \"buckets (0 = none)\"\nsession |o--o{ session : resumed_from\nsession |o--o{ session : \"parent (subagent)\"\nsession ||--o{ session_model : uses\nsession ||--o{ usage_event : contains\nsession ||--o{ message : contains\nsource_file |o--o{ usage_event : origin\nmodel_price |o--o{ usage_event : prices\nusage_event |o--o{ message : produced",
+              "hash": "1fkjif1",
               "title": "TokenBurnTrack — Data Model",
               "autoIcons": true
             }
@@ -1931,7 +1931,7 @@
           "transform": {
             "translation": {
               "x": 28,
-              "y": 528
+              "y": 622
             },
             "rotationRadians": 0,
             "scale": {
@@ -1973,7 +1973,7 @@
           "transform": {
             "translation": {
               "x": 539,
-              "y": 542
+              "y": 412
             },
             "rotationRadians": 0,
             "scale": {
@@ -2016,7 +2016,7 @@
           "transform": {
             "translation": {
               "x": 28,
-              "y": 240
+              "y": 350
             },
             "rotationRadians": 0,
             "scale": {
@@ -2059,7 +2059,7 @@
           "transform": {
             "translation": {
               "x": 539,
-              "y": 282
+              "y": 622
             },
             "rotationRadians": 0,
             "scale": {
@@ -2094,6 +2094,48 @@
           "extensions": {}
         },
         {
+          "id": "session-model",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 986,
+              "y": 554
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "session_model",
+            "color": "blue",
+            "erFields": [
+              {
+                "name": "session_id",
+                "dataType": "int",
+                "isPrimaryKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "session-model",
+              "line": 8
+            }
+          },
+          "extensions": {}
+        },
+        {
           "id": "usage-event",
           "kind": "er_entity",
           "parentId": "dsl-5gcwyq",
@@ -2102,7 +2144,7 @@
           "transform": {
             "translation": {
               "x": 986,
-              "y": 412
+              "y": 404
             },
             "rotationRadians": 0,
             "scale": {
@@ -2132,7 +2174,7 @@
           "metadata": {
             "dsl": {
               "id": "usage-event",
-              "line": 8
+              "line": 9
             }
           },
           "extensions": {}
@@ -2146,7 +2188,7 @@
           "transform": {
             "translation": {
               "x": 1436,
-              "y": 398
+              "y": 629
             },
             "rotationRadians": 0,
             "scale": {
@@ -2176,7 +2218,7 @@
           "metadata": {
             "dsl": {
               "id": "message",
-              "line": 9
+              "line": 10
             }
           },
           "extensions": {}
@@ -2190,7 +2232,7 @@
           "transform": {
             "translation": {
               "x": 539,
-              "y": 72
+              "y": 282
             },
             "rotationRadians": 0,
             "scale": {
@@ -2218,7 +2260,7 @@
           "metadata": {
             "dsl": {
               "id": "hourly-usage",
-              "line": 10
+              "line": 11
             }
           },
           "extensions": {}
@@ -2232,7 +2274,7 @@
           "transform": {
             "translation": {
               "x": 539,
-              "y": 412
+              "y": 152
             },
             "rotationRadians": 0,
             "scale": {
@@ -2260,7 +2302,7 @@
           "metadata": {
             "dsl": {
               "id": "model-price",
-              "line": 11
+              "line": 12
             }
           },
           "extensions": {}
@@ -2274,7 +2316,7 @@
           "transform": {
             "translation": {
               "x": 28,
-              "y": 110
+              "y": 220
             },
             "rotationRadians": 0,
             "scale": {
@@ -2302,7 +2344,7 @@
           "metadata": {
             "dsl": {
               "id": "ingest-run",
-              "line": 12
+              "line": 13
             }
           },
           "extensions": {}
@@ -3789,7 +3831,7 @@
           },
           "metadata": {
             "dsl": {
-              "line": 13,
+              "line": 14,
               "structuredRelation": "||--o{"
             }
           },
@@ -3832,7 +3874,7 @@
           },
           "metadata": {
             "dsl": {
-              "line": 14,
+              "line": 15,
               "structuredRelation": "||--o{"
             }
           },
@@ -3860,50 +3902,7 @@
           "labels": [
             {
               "id": "rel-label-3",
-              "text": "groups",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "|o--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 15,
-              "structuredRelation": "|o--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:project->hourly-usage:4",
-          "source": {
-            "nodeId": "project",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "hourly-usage",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-4",
-              "text": "buckets (0 = none)",
+              "text": "groups (0 = none)",
               "pathRatio": 0.5,
               "offset": {
                 "x": 0,
@@ -3925,15 +3924,58 @@
           "extensions": {}
         },
         {
-          "id": "rel:session->session:5",
+          "id": "rel:project->usage-event:4",
           "source": {
-            "nodeId": "session",
+            "nodeId": "project",
             "portId": null,
             "anchor": null,
             "point": null
           },
           "target": {
-            "nodeId": "session",
+            "nodeId": "usage-event",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-4",
+              "text": "bucket (0 = none)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 17,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:project->hourly-usage:5",
+          "source": {
+            "nodeId": "project",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "hourly-usage",
             "portId": null,
             "anchor": null,
             "point": null
@@ -3946,7 +3988,7 @@
           "labels": [
             {
               "id": "rel-label-5",
-              "text": "resumed_from",
+              "text": "buckets (0 = none)",
               "pathRatio": 0.5,
               "offset": {
                 "x": 0,
@@ -3957,12 +3999,12 @@
           ],
           "appearance": {},
           "semantics": {
-            "erRelation": "|o--o{"
+            "erRelation": "||--o{"
           },
           "metadata": {
             "dsl": {
-              "line": 17,
-              "structuredRelation": "|o--o{"
+              "line": 18,
+              "structuredRelation": "||--o{"
             }
           },
           "extensions": {}
@@ -3989,6 +4031,49 @@
           "labels": [
             {
               "id": "rel-label-6",
+              "text": "resumed_from",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "|o--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 19,
+              "structuredRelation": "|o--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:session->session:7",
+          "source": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-7",
               "text": "parent (subagent)",
               "pathRatio": 0.5,
               "offset": {
@@ -4004,14 +4089,57 @@
           },
           "metadata": {
             "dsl": {
-              "line": 18,
+              "line": 20,
               "structuredRelation": "|o--o{"
             }
           },
           "extensions": {}
         },
         {
-          "id": "rel:session->usage-event:7",
+          "id": "rel:session->session-model:8",
+          "source": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "session-model",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-8",
+              "text": "uses",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 21,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:session->usage-event:9",
           "source": {
             "nodeId": "session",
             "portId": null,
@@ -4031,7 +4159,7 @@
           "waypoints": [],
           "labels": [
             {
-              "id": "rel-label-7",
+              "id": "rel-label-9",
               "text": "contains",
               "pathRatio": 0.5,
               "offset": {
@@ -4047,14 +4175,14 @@
           },
           "metadata": {
             "dsl": {
-              "line": 19,
+              "line": 22,
               "structuredRelation": "||--o{"
             }
           },
           "extensions": {}
         },
         {
-          "id": "rel:session->message:8",
+          "id": "rel:session->message:10",
           "source": {
             "nodeId": "session",
             "portId": null,
@@ -4074,7 +4202,7 @@
           "waypoints": [],
           "labels": [
             {
-              "id": "rel-label-8",
+              "id": "rel-label-10",
               "text": "contains",
               "pathRatio": 0.5,
               "offset": {
@@ -4090,14 +4218,14 @@
           },
           "metadata": {
             "dsl": {
-              "line": 20,
+              "line": 23,
               "structuredRelation": "||--o{"
             }
           },
           "extensions": {}
         },
         {
-          "id": "rel:source-file->usage-event:9",
+          "id": "rel:source-file->usage-event:11",
           "source": {
             "nodeId": "source-file",
             "portId": null,
@@ -4117,7 +4245,7 @@
           "waypoints": [],
           "labels": [
             {
-              "id": "rel-label-9",
+              "id": "rel-label-11",
               "text": "origin",
               "pathRatio": 0.5,
               "offset": {
@@ -4133,14 +4261,14 @@
           },
           "metadata": {
             "dsl": {
-              "line": 21,
+              "line": 24,
               "structuredRelation": "|o--o{"
             }
           },
           "extensions": {}
         },
         {
-          "id": "rel:model-price->usage-event:10",
+          "id": "rel:model-price->usage-event:12",
           "source": {
             "nodeId": "model-price",
             "portId": null,
@@ -4160,7 +4288,7 @@
           "waypoints": [],
           "labels": [
             {
-              "id": "rel-label-10",
+              "id": "rel-label-12",
               "text": "prices",
               "pathRatio": 0.5,
               "offset": {
@@ -4176,14 +4304,14 @@
           },
           "metadata": {
             "dsl": {
-              "line": 22,
+              "line": 25,
               "structuredRelation": "|o--o{"
             }
           },
           "extensions": {}
         },
         {
-          "id": "rel:usage-event->message:11",
+          "id": "rel:usage-event->message:13",
           "source": {
             "nodeId": "usage-event",
             "portId": null,
@@ -4203,7 +4331,7 @@
           "waypoints": [],
           "labels": [
             {
-              "id": "rel-label-11",
+              "id": "rel-label-13",
               "text": "produced",
               "pathRatio": 0.5,
               "offset": {
@@ -4219,7 +4347,7 @@
           },
           "metadata": {
             "dsl": {
-              "line": 23,
+              "line": 26,
               "structuredRelation": "|o--o{"
             }
           },

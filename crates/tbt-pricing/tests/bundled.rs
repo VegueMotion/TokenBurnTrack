@@ -269,3 +269,13 @@ fn every_fixture_model_is_priced_or_known_unpriced() {
         "fixture models without a price: {missing:?}"
     );
 }
+
+#[test]
+fn bundled_prices_accessor_matches_asset() {
+    let rows = tbt_pricing::bundled_prices().unwrap();
+    assert!(!rows.is_empty());
+    assert!(
+        rows.iter()
+            .all(|r| r.source == tbt_core::PriceSource::Bundled)
+    );
+}

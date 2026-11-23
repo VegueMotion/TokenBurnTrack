@@ -210,13 +210,13 @@ CREATE TABLE project (
 
 CREATE TABLE session (
   id INTEGER PRIMARY KEY, harness_id TEXT NOT NULL REFERENCES harness(id),
-  ext_id TEXT NOT NULL, project_id INTEGER REFERENCES project(id),
+  ext_id TEXT NOT NULL, project_id INTEGER NOT NULL DEFAULT 0 REFERENCES project(id),
   title TEXT, git_branch TEXT, harness_version TEXT,
   resumed_from_session_id INTEGER REFERENCES session(id),
   parent_session_id INTEGER REFERENCES session(id),   -- subagent run → session that spawned it
   started_at TEXT NOT NULL, ended_at TEXT, active_seconds INTEGER NOT NULL DEFAULT 0,
   -- denormalized totals, maintained on ingest
-  events INTEGER NOT NULL DEFAULT 0,
+  events INTEGER NOT NULL DEFAULT 0, unpriced_events INTEGER NOT NULL DEFAULT 0,
   input_tokens INTEGER NOT NULL DEFAULT 0, output_tokens INTEGER NOT NULL DEFAULT 0,
   cache_write_tokens INTEGER NOT NULL DEFAULT 0, cache_read_tokens INTEGER NOT NULL DEFAULT 0,
   cost_micros INTEGER NOT NULL DEFAULT 0,
@@ -228,6 +228,7 @@ CREATE TABLE usage_event (
   id INTEGER PRIMARY KEY,
   harness_id TEXT NOT NULL, dedup_key TEXT NOT NULL,
   session_id INTEGER NOT NULL REFERENCES session(id),
+  project_id INTEGER NOT NULL DEFAULT 0 REFERENCES project(id),  -- rollup bucket chosen at ingest
   ts TEXT NOT NULL, provider TEXT NOT NULL, model TEXT NOT NULL,
   input_tokens INTEGER NOT NULL, output_tokens INTEGER NOT NULL,
   cache_write_5m_tokens INTEGER NOT NULL, cache_write_1h_tokens INTEGER NOT NULL,
@@ -240,7 +241,13 @@ CREATE TABLE usage_event (
   UNIQUE(harness_id, dedup_key)
 );
 CREATE INDEX ix_event_ts ON usage_event(ts);
-CREATE INDEX ix_event_session ON usage_event(session_id);
+CREATE INDEX ix_event_session ON usage_event(session_id, ts);
+CREATE INDEX ix_event_unpriced ON usage_event(provider, model) WHERE price_id IS NULL;
+
+CREATE TABLE session_model (      -- models used per session, for the sessions table
+  session_id INTEGER NOT NULL REFERENCES session(id), model TEXT NOT NULL,
+  PRIMARY KEY(session_id, model)
+) WITHOUT ROWID;
 
 CREATE TABLE message (            -- optional session content
   id INTEGER PRIMARY KEY, session_id INTEGER NOT NULL REFERENCES session(id),
@@ -253,7 +260,8 @@ CREATE TABLE message (            -- optional session content
 
 CREATE TABLE hourly_usage (       -- rollup for fast charts
   hour TEXT NOT NULL, harness_id TEXT NOT NULL, model TEXT NOT NULL,
-  project_id INTEGER NOT NULL REFERENCES project(id), events INTEGER NOT NULL,
+  project_id INTEGER NOT NULL REFERENCES project(id),
+  events INTEGER NOT NULL, unpriced_events INTEGER NOT NULL,
   input_tokens INTEGER NOT NULL, output_tokens INTEGER NOT NULL,
   cache_write_tokens INTEGER NOT NULL, cache_read_tokens INTEGER NOT NULL,
   cost_micros INTEGER NOT NULL,
@@ -278,6 +286,8 @@ CREATE TABLE ingest_run (
 
 Notes:
 - Money is stored as integer **micro-USD**, so sums never drift.
+- Timestamps are stored as fixed-width UTC text (`YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`), so text order equals time order.
+- `usage_event.project_id` records which project bucket the event was rolled up into (the event's own project, else its session's), so `hourly_usage` can be rebuilt exactly after a recompute.
 - `hourly_usage` is updated in the same transaction as the events. The dashboard reads rollups and never scans the event table for ranges.
 - `hourly_usage.project_id` is `NOT NULL`. Events without a project go to a seeded `project` row with `id = 0` ("no project"). SQLite treats NULLs in a primary key as distinct, so a nullable column would make `ON CONFLICT` upserts insert duplicate rows instead of adding to the bucket.
 - **Privacy setting:** `message` storage is off / metadata-only / truncated preview (default: metadata only, which means role, tool name and timestamps but no text). Adapters always emit previews; the collector applies the privacy level before storing.
@@ -295,7 +305,9 @@ cost = in   × p_in
      + cw5m × p_cache_write_5m
      + cw1h × p_cache_write_1h
      + cr   × p_cache_read
-   (each p in USD per 1M tokens; long-context tier multiplier applied when input > threshold)
+   (each p in USD per 1M tokens; long-context tier multipliers applied when the prompt
+    size, input + cache writes + cache reads, is above the threshold; a missing cache
+    rate is billed at the input rate, including its multiplier)
 ```
 
 - **Model matching:** exact id first, then glob pattern (`claude-sonnet-4-5*`), then a provider-level fallback marked *unpriced*. Unpriced events show a warning badge in the UI and are not counted as $0.

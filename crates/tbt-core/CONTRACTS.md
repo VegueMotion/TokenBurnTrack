@@ -32,6 +32,9 @@ Frozen at the end of Wave 0. Changes go through the orchestrator.
   harness includes them). `output_tokens` includes reasoning; `reasoning_tokens` is a subset,
   informational, never billed again. Prompt size for long-context tiers = input + cache writes
   + cache reads.
+- **Missing cache rates** are billed at the input rate, including the input long-context
+  multiplier. OpenAI's 30-minute and 12-hour cache-write prices use the `cache_write_5m` and
+  `cache_write_1h` slots.
 - **Dedup keys** come only from provider/harness IDs, never from session ID or file path.
 
 ## JSONL cursor
