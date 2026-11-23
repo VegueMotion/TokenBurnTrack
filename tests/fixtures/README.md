@@ -1,0 +1,191 @@
+# Adapter fixtures
+
+Real harness logs from one machine (harvested 2026-11-23), anonymized with
+`scripts/anonymize.py`. Gemini CLI fixtures are synthetic (see
+`gemini_cli/README.md`, confidence: low).
+
+Layout: `<harness>/<harness-version>/<path as the harness writes it, below its data dir>`.
+
+## What the anonymizer keeps and changes
+
+Kept as-is: JSON structure and field names, line order, token counts and all other
+numbers, timestamps, model ids, provider ids, tool names, event/line types, enum-like
+fields (`stop_reason`, `service_tier`, `status`, …), reported cost fields.
+
+Replaced consistently (same input → same output across all files and the DB, keyed
+HMAC with a fixed salt):
+
+- UUIDs → fake UUIDs (same version/variant; UUIDv7 keeps its 48-bit time prefix, so
+  Codex ids still sort by time).
+- Prefixed ids (`msg_…`, `req_…`, `toolu_…`, `call_…`, `resp_…`) → same prefix,
+  same length and character classes. OpenCode ids (`ses_`/`msg_`/`prt_`/`evt_`) keep
+  their 12-hex time prefix.
+- Hex ids/hashes (git SHAs, OpenCode project ids, `shapeHash`, …), Claude Code agent
+  ids (`a` + 16 hex), dict keys that are ids.
+- Paths: the home dir prefix → `/u/user`, other segments → fake names like `pale-fjord-8a`
+  (extension kept). Claude Code project dir slugs are recomputed from the fake cwd.
+- Git branches other than `main`/`master`/… → `branch-xxxxxx`; URLs →
+  `https://example.invalid/…`; timezone → `UTC`; emails, user and host names scrubbed.
+- All other text (prompts, responses, thinking, code, tool inputs/outputs, titles) →
+  lorem text of the same length, capped at 160 chars. JSON embedded in strings (e.g.
+  Codex `arguments`, OpenCode `data` columns) is parsed and anonymized recursively.
+
+Consequences: dedup keys still collide where they did in the real data (copied
+lines in resumed Claude Code sessions), `parentUuid` chains still link, subagent file
+names still match `agentId`, the Codex `history_base` thread id still names the base
+file.
+
+Files over ~290 KB were trimmed (`--max-bytes 290000`): non-usage lines are dropped
+largest first (children re-linked to the dropped line's parent), then, if still too
+big, lines are cut from the end. Usage lines are never dropped before the tail cut.
+Trimmed files are noted below. Codex `history_base.end_byte_offset` is recomputed
+for the trimmed base file.
+
+Regenerate: copy the raw sources into a staging dir with this same layout, then
+`python3 scripts/anonymize.py <staging> <out> --max-bytes 290000 --scrub <name>`, where
+`--scrub` was given the desktop client name that Codex writes into `originator`.
+Output is byte-identical between runs.
+
+## Claude Code (`claude_code/<version>/projects/<slug>/`)
+
+| File | Version | Scenario | Size |
+|---|---|---|---|
+| `2.1.330/…-pale-fjord-8a/35395b06-….jsonl` | 2.1.330 | short: 1 API call (sonnet), 44 lines | 96 KB |
+| `2.1.330/…-pale-quartz-b9/981f8c38-….jsonl` | 2.1.330 | long: prefix of a 791-line session, 178 lines, 64 of 88 calls (trimmed) | 284 KB |
+| `2.1.330/…-pale-fjord-8a/64ed9da4-….jsonl` + `64ed9da4-…/subagents/agent-a919fc890880d1075.jsonl` | 2.1.330 | subagents: main (opus, 19 calls) + one subagent run (haiku, 6 calls) | 244 + 96 KB |
+| `2.1.329/…-pale-fjord-8a/3fc87bac-….jsonl` + `d1774c7e-….jsonl` | 2.1.329 (+2.1.330 lines in the second) | resumed: original (50 calls) and the session that continues it (55 calls, 50 shared with the original) | 284 + 284 KB |
+| `2.1.325/…-keen-lagoon-45/f001a22b-….jsonl` | 2.1.325 | tool-heavy: 69 tool_use blocks, 53 of 69 calls (trimmed) | 284 KB |
+| `2.1.319/…-noble-orchid-25/ee7bdb9e-….jsonl` | 2.1.319 | multi-model: `claude-fable-5-2` + `claude-opus-5-5` + a `<synthetic>` API-error line; spans 2 days | 184 KB |
+
+Format notes:
+
+- Every line has `type`. Usage lines are `type: "assistant"` with
+  `message.usage` = `{input_tokens, output_tokens, cache_read_input_tokens,
+  cache_creation_input_tokens, cache_creation: {ephemeral_5m_input_tokens,
+  ephemeral_1h_input_tokens}, output_tokens_details.thinking_tokens, service_tier,
+  speed, inference_geo, iterations[…], server_tool_use{web_search_requests,
+  web_fetch_requests}}`. `input_tokens` excludes cache reads/writes.
+- One API response is split into one line per content block (`thinking`, `text`,
+  `tool_use`), each with the same `message.id` + `requestId` and an identical,
+  final `usage`, distinguished by `apiBlockIndex`. Count each `(message.id,
+  requestId)` once.
+- Model: `message.model`; also `requestedModel`/`advisorModel` on the line.
+  `<synthetic>` lines (`isApiErrorMessage: true`) have all-zero usage and a UUID as
+  `message.id`; skip them.
+- Per line: `sessionId`, `cwd`, `gitBranch`, `version`, `timestamp` (UTC ISO),
+  `uuid`/`parentUuid`. A file can contain two `version` values when the CLI was
+  updated mid-session.
+- Many non-message line types exist (`api-request`, `api-request-blob`,
+  `attachment`, `system`, `file-history-snapshot`, `data-flow-records`, `mode`,
+  `ai-title`, `last-prompt`, `session-owner`, …); ignore unknown types.
+  `api-request` lines carry `params.model` and an `id` that assistant lines reference
+  as `requestRef`.
+- `cost-state` lines: running per-session `totalCostUSD` and `modelUsage[model]`
+  (`inputTokens`, `outputTokens`, `cacheRead…`, `cacheCreationEphemeral5m/1h…`,
+  `costUSD`). They include background calls that never appear as assistant lines
+  (e.g. haiku title generation in the short fixture), so they don't sum to the
+  transcript. Useful only as a reported-cost cross-check.
+- Subagents: `<session-id>/subagents/agent-<agentId>.jsonl`. Lines have
+  `isSidechain: true`, `agentId` = file suffix and `sessionId` = the parent session
+  id (not their own). The parent's `Agent` tool result references the same `agentId`.
+- Resume/fork: the new file copies the earlier conversation line by line, keeping
+  `uuid`, `parentUuid`, `message.id`, `requestId` and `timestamp`, but rewriting
+  `sessionId` to the new session. The new file has a `derived-from` line
+  (`sessions: [{type: "claude_code_session", id: <original>, via: "fork"}]`) and
+  the original gets a `continued-in` line (`continuedInSessionId`).
+
+## Codex CLI (`codex/<version>/sessions/YYYY/MM/DD/rollout-<ts>-<thread-id>.jsonl`)
+
+| File | Version | Scenario | Size |
+|---|---|---|---|
+| `0.135.0/…/rollout-2026-05-31T19-42-32-019e7f21-….jsonl` | 0.135.0 | short: 2 `token_count`, gpt-5.5 | 8 KB |
+| `0.139.0/…/rollout-2026-06-11T23-38-02-019eb89e-….jsonl` | 0.139.0 | tool-heavy: 560 lines, `function_call` + `custom_tool_call` (apply_patch), 78 `token_count` incl. one repeated total | 212 KB |
+| `0.155.0/…/rollout-2026-09-18T13-35-05-01a0b44c-….jsonl` + `…T15-31-24-01a0b44c-…_01a0b4b6-….jsonl` | 0.155.0 | resumed: base thread + resumed file branching at ordinal 52 | 116 + 140 KB |
+| `0.163.0/…/rollout-2026-10-20T10-49-13-01a15880-….jsonl` | 0.163.0 | long + compaction: 961 → 326 lines (trimmed; all 131 `token_count` and 126 `token_usage_record` kept), `compacted` line, 6 repeated totals | 284 KB |
+| `0.163.0/…/rollout-2026-10-20T13-05-40-01a158fd-….jsonl` | 0.163.0 | model switch (gpt-6.1-sol → gpt-6-luna in `turn_context`), both `token_count.info` are `null`, no usage | 32 KB |
+| `0.165.0/…/rollout-2026-11-03T13-25-20-01a1a15f-….jsonl` + `…T20-23-44-01a1a2de-….jsonl` | 0.165.0 | fork: parent (963 → 384 lines, trimmed, all usage kept) + fork with `forked_from_id` | 284 + 80 KB |
+| `0.171.0/…/rollout-2026-11-22T01-31-59-01a200aa-….jsonl` | 0.171.0 | no usage: turn ends in `task_complete.error` (`model_not_found`) | 16 KB |
+
+Format notes:
+
+- Line = `{timestamp, type, payload}`; from 0.155 also `ordinal` (per-thread line
+  counter). First line is `session_meta` with `payload.id` (thread id),
+  `cli_version`, `cwd`, `originator`, `source`, `model_provider`, `git{commit_hash,
+  branch, repository_url}`. Model per turn: `turn_context.payload.model` (also
+  `event_msg/thread_settings_applied.thread_settings.model`).
+- `event_msg` with `payload.type: "token_count"`: `info.total_token_usage`
+  (cumulative for the thread) and `info.last_token_usage` (last response), each
+  `{input_tokens, cached_input_tokens, output_tokens, reasoning_output_tokens,
+  total_tokens}`; `cache_write_input_tokens` from 0.145. `cached_input_tokens` is a
+  subset of `input_tokens`, `reasoning_output_tokens` a subset of `output_tokens`,
+  `total = input + output`. `info` can be `null`. The same total is sometimes
+  emitted twice in a row (rate-limit refresh); count a delta only when the total
+  changes. `rate_limits` rides along.
+- From 0.155: `type: "token_usage_record"` lines, one per model response:
+  `payload.{thread_id, turn_id, response_id, usage, turn_token_usage,
+  thread_token_usage}`. `response_id` (`resp_…`) is unique per response and is a
+  natural dedup key; `usage` is the per-response count. In 0.163 there are a few
+  more `token_count` than `token_usage_record` (the repeats).
+- No totals decrease in any real file, including across `compacted`.
+- 0.155+ use `history_mode: "paginated"`. A resumed or forked session starts a new
+  file whose `session_meta.history_base = {thread_id, end_ordinal_exclusive,
+  end_byte_offset}` points into the base file instead of copying it. The
+  anonymizer recomputed `end_byte_offset` for the fixtures.
+  - Resume (0.155 pair): new file name `rollout-<ts>-<thread>_<new-id>.jsonl`,
+    `session_meta.id` is the **same** thread id. It branches at ordinal 52 of the
+    base, and its cumulative totals continue from the base's total at that point
+    (`146644 - 21541 = 125103`), not from the base's final total (535496), because
+    the base thread went on after ordinal 52. Baseline = last total before
+    `end_ordinal_exclusive` in the base file.
+  - Fork (0.165 pair): new thread id, `forked_from_id` = parent, `history_base`
+    covers the whole parent; ordinals and cumulative totals continue from the
+    parent's last values (15584244 → 15788100).
+- Recent short sessions (0.170, 0.171) contain no `token_count` at all.
+
+## OpenCode (`opencode/1.19.5/opencode.db`)
+
+SQLite copy of `~/.local/share/opencode/opencode.db`, trimmed to 6 sessions and
+VACUUMed (page size 1024), 324 KB. Installed version 1.19.5 (`opencode --version`);
+latest migration `20260622202450_simplify_session_input` in table `migration`
+(`__drizzle_migrations` stops at `20260511173437_session-metadata`).
+
+| Session (`agent`, `version`) | Scenario |
+|---|---|
+| `ses_1859d49beffe…` (build, `local`) | 22 messages, parent of a subagent |
+| `ses_1859d3a5bffe…` (explore, `local`) | subagent: `parent_id` = the session above |
+| `ses_181201c62ffe…` (build, `1.15.13`) | short, ends with `MessageAbortedError` |
+| `ses_181a135d8ffe…` (build, `local`) | gpt-5.5, API error (quota), zero tokens |
+| `ses_e20abeb75ffe…` (build, `1.19.5`) | ollama `qwen3.5:9b`, has `event` rows |
+| `ses_dff56f2c1ffe…` (build, `1.19.5`) | `session_message` `model-switched`, API errors, zero tokens |
+
+Format notes:
+
+- `message.data` (JSON) for `role: "assistant"`: `modelID`, `providerID`, `mode`,
+  `agent`, `path{cwd, root}`, `cost`, `tokens{total, input, output, reasoning,
+  cache{read, write}}`, `time{created, completed}` (epoch ms), `finish`, optional
+  `error{name, data}`. `total = input + output + reasoning + cache.read`.
+  User messages carry `model{providerID, modelID}` and `summary.diffs`.
+- `part.data` (JSON) types: `text`, `reasoning`, `tool` (`tool`, `callID`,
+  `state{status, input, output, …}`), `step-start`, `step-finish` (`tokens`,
+  `cost`, `reason`), `patch`. Each assistant message has at most one
+  `step-finish`, with the same tokens as the message; use the message, not both.
+- `session` has denormalized totals (`cost`, `tokens_input`, `tokens_output`,
+  `tokens_reasoning`, `tokens_cache_read`, `tokens_cache_write`; added by migration
+  `20260510033149_session_usage`), equal to the sum over its messages. `model` is
+  JSON `{id, providerID, variant}`; `version` is the OpenCode version or `local`;
+  `parent_id` links subagent sessions; `directory` is the cwd.
+- `cost` is 0 everywhere in this data (free and local models), so the fixture
+  can't test reported cost.
+- Timestamps are epoch ms integers (`time_created`, `time_updated`). Ids are
+  `<prefix>_<12 hex time><14 base62>`; session ids sort descending by time,
+  message/part ids ascending but the hex prefix wraps (`msg_e7a6…` in May,
+  `msg_200a…` in November), so order by `time_created`, not by id.
+- `event` (`aggregate_id` = session id, `seq`, `type` like `message.updated.1`,
+  `data` JSON snapshot) exists only for 1.19.x sessions; `event_sequence` holds
+  the last `seq` per session.
+- No legacy per-message JSON on this machine: `storage/` holds only
+  `session_diff/*.json` and a `migration` marker.
+
+## Gemini CLI (`gemini_cli/`)
+
+Synthetic, built from upstream source. See `gemini_cli/README.md`.
