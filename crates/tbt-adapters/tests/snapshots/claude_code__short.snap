@@ -1,0 +1,46 @@
+---
+source: crates/tbt-adapters/tests/claude_code.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 35395b06-00f0-4c8b-9098-93d35ca8f399
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/pale-fjord-8a
+    title: reprehenderit officia quis quis nostr
+    git_branch: master
+    harness_version: 2.1.330
+    started_at: "2026-11-21T22:13:07.89Z"
+    ended_at: "2026-11-21T22:13:12.734Z"
+    has_baseline_hint: false
+event_count: 1
+totals:
+  (all):
+    calls: 1
+    input: 2
+    output: 538
+    cache_write_5m: 0
+    cache_write_1h: 16609
+    cache_read: 21566
+    reasoning: 97
+    total: 38715
+  anthropic/claude-sonnet-5-5:
+    calls: 1
+    input: 2
+    output: 538
+    cache_write_5m: 0
+    cache_write_1h: 16609
+    cache_read: 21566
+    reasoning: 97
+    total: 38715
+events:
+  - "2026-11-21T22:13:09.328Z msg_647UkLvz2JUpXMI8QpmSZlzK:req_814WhIrt06rB1hjv3tw0tm5T claude-sonnet-5-5 in=2 out=538 cw5m=0 cw1h=16609 cr=21566 rs=97"
+message_count: 3
+messages_by_kind:
+  assistant/text: 1
+  assistant/thinking: 1
+  user/text: 1
+messages_linked_to_events: 2
+messages_with_preview: 2
+tools: {}
+warnings: []
