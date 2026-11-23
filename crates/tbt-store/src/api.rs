@@ -1,13 +1,14 @@
-#![allow(unused_variables, dead_code)]
-
 use std::path::{Path, PathBuf};
 
+use rusqlite::TransactionBehavior;
 use serde::{Deserialize, Serialize};
 use tbt_core::{
     Cursor, EventId, HarnessId, Hour, MessageKind, MessageRecord, MessageRole, Micros, ModelPrice,
     ParseWarning, PriceId, PricedEvent, ProjectId, RunId, SessionId, SessionUpsert, SourceFileId,
     TimeRange, Timestamp, TokenCounts, UsageEvent,
 };
+
+use crate::{admin, ingest, query, recompute, schema};
 
 pub type Result<T, E = StoreError> = std::result::Result<T, E>;
 
@@ -36,23 +37,37 @@ pub struct Store {
 }
 
 impl Store {
+    fn writable(&self) -> Result<()> {
+        if self.conn.is_readonly(rusqlite::MAIN_DB)? {
+            return Err(StoreError::ReadOnly);
+        }
+        Ok(())
+    }
+
     /// Opens or creates the DB, applies WAL + `foreign_keys=ON`, runs migrations and
     /// seeds the `project(id = 0)` "no project" row.
     pub fn open(path: &Path) -> Result<Store> {
-        todo!()
+        Ok(Store {
+            conn: schema::open(path)?,
+        })
     }
 
     pub fn open_in_memory() -> Result<Store> {
-        todo!()
+        Ok(Store {
+            conn: schema::open_in_memory()?,
+        })
     }
 
     /// Read-only connection; never migrates. Write calls return [`StoreError::ReadOnly`].
     pub fn open_read_only(path: &Path) -> Result<Store> {
-        todo!()
+        Ok(Store {
+            conn: schema::open_read_only(path)?,
+        })
     }
 
     pub fn start_run(&mut self, trigger: RunTrigger, started_at: Timestamp) -> Result<RunId> {
-        todo!()
+        self.writable()?;
+        admin::start_run(&self.conn, trigger, started_at)
     }
 
     pub fn finish_run(
@@ -63,74 +78,97 @@ impl Store {
         warnings: &[ParseWarning],
         error: Option<&str>,
     ) -> Result<()> {
-        todo!()
+        self.writable()?;
+        admin::finish_run(&self.conn, run, finished_at, stats, warnings, error)
     }
 
     /// `None` if the source was never read.
     pub fn cursor_for(&self, harness: &HarnessId, path: &Path) -> Result<Option<Cursor>> {
-        todo!()
+        admin::cursor_for(&self.conn, harness, path)
     }
 
     /// Paths of all `source_file` rows of `harness` that are not marked missing.
     pub fn known_sources(&self, harness: &HarnessId) -> Result<Vec<PathBuf>> {
-        todo!()
+        admin::known_sources(&self.conn, harness)
     }
 
     /// Flags a source that `discover` no longer returns. Its data stays.
     /// A later `SourceTx::save_cursor` for the same path clears the flag.
     pub fn mark_source_missing(&mut self, harness: &HarnessId, path: &Path) -> Result<()> {
-        todo!()
+        self.writable()?;
+        admin::mark_source_missing(&self.conn, harness, path)
     }
 
     /// Starts the single transaction in which one source's batch is written.
     /// Creates the `source_file` row if needed. Dropping the `SourceTx` without
     /// [`SourceTx::commit`] rolls everything back, cursor included.
     pub fn begin_source_tx(&mut self, harness: &HarnessId, path: &Path) -> Result<SourceTx<'_>> {
-        todo!()
+        self.writable()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let source_file = ingest::source_file(&tx, harness.as_str(), path)?;
+        Ok(SourceTx {
+            tx,
+            harness: harness.clone(),
+            source_file,
+        })
     }
 
     /// Inserts the `harness` row if missing (keeps `enabled` / roots of an existing row,
     /// updates `display_name`). Called for every registered adapter at startup.
     pub fn register_harness(&mut self, id: &HarnessId, display_name: &str) -> Result<()> {
-        todo!()
+        self.writable()?;
+        admin::register_harness(&self.conn, id, display_name)
     }
 
     pub fn harnesses(&self) -> Result<Vec<HarnessConfig>> {
-        todo!()
+        admin::harnesses(&self.conn)
     }
 
     pub fn set_harness_enabled(&mut self, id: &HarnessId, enabled: bool) -> Result<()> {
-        todo!()
+        self.writable()?;
+        admin::set_harness_enabled(&self.conn, id, enabled)
     }
 
     /// `None` = use the adapter's default roots.
     pub fn set_harness_roots(&mut self, id: &HarnessId, roots: Option<&[PathBuf]>) -> Result<()> {
-        todo!()
+        self.writable()?;
+        admin::set_harness_roots(&self.conn, id, roots)
     }
 
     /// All rows, open and closed, with `id` set.
     pub fn model_prices(&self) -> Result<Vec<ModelPrice>> {
-        todo!()
+        admin::model_prices(&self.conn)
     }
 
     /// Ignores `price.id`; returns the new id.
     pub fn insert_price(&mut self, price: &ModelPrice) -> Result<PriceId> {
-        todo!()
+        self.writable()?;
+        admin::insert_price(&self.conn, price)
     }
 
     pub fn close_price(&mut self, id: PriceId, effective_to: Timestamp) -> Result<()> {
-        todo!()
+        self.writable()?;
+        admin::close_price(&self.conn, id, effective_to)
     }
 
     /// Overwrites the row `price.id` (must be `Some`). Does not touch event costs;
     /// run a recompute for `RecomputeFilter { price_id: Some(id), .. }` afterwards.
     pub fn update_price(&mut self, price: &ModelPrice) -> Result<()> {
-        todo!()
+        self.writable()?;
+        admin::update_price(&self.conn, price)
     }
 
     /// Inserts `prices` only if `model_price` is empty. Returns rows inserted.
     pub fn seed_prices_if_empty(&mut self, prices: &[ModelPrice]) -> Result<usize> {
-        todo!()
+        self.writable()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let n = admin::seed_prices_if_empty(&tx, prices)?;
+        tx.commit()?;
+        Ok(n)
     }
 
     /// One page of events matching `filter`, ordered by id, starting after `after`.
@@ -141,20 +179,26 @@ impl Store {
         after: Option<EventId>,
         limit: usize,
     ) -> Result<Vec<RecomputeRow>> {
-        todo!()
+        recompute::events_for_recompute(&self.conn, filter, after, limit)
     }
 
     pub fn begin_recompute_tx(&mut self) -> Result<RecomputeTx<'_>> {
-        todo!()
+        self.writable()?;
+        Ok(RecomputeTx {
+            tx: self
+                .conn
+                .transaction_with_behavior(TransactionBehavior::Immediate)?,
+        })
     }
 
     /// Sets `raw_json = NULL` on events older than `now - days`. Returns rows changed.
     pub fn drop_raw_json_older_than(&mut self, days: u32, now: Timestamp) -> Result<usize> {
-        todo!()
+        self.writable()?;
+        recompute::drop_raw_json_older_than(&self.conn, days, now)
     }
 
     pub fn kpi_summary(&self, filter: &QueryFilter) -> Result<KpiSummary> {
-        todo!()
+        query::kpi_summary(&self.conn, filter)
     }
 
     /// One row per (bucket, group key) with usage; empty buckets are omitted.
@@ -163,43 +207,43 @@ impl Store {
         filter: &QueryFilter,
         group: BucketGroup,
     ) -> Result<Vec<CostBucket>> {
-        todo!()
+        query::cost_buckets(&self.conn, filter, group)
     }
 
     /// Weekday × hour-of-day in `filter.time_zone`; only cells with usage.
     pub fn heatmap(&self, filter: &QueryFilter) -> Result<Vec<HeatCell>> {
-        todo!()
+        query::heatmap(&self.conn, filter)
     }
 
     /// Sessions with at least one event in `filter.range`, newest first.
     pub fn sessions(&self, filter: &QueryFilter) -> Result<Vec<SessionRow>> {
-        todo!()
+        query::sessions(&self.conn, filter)
     }
 
     pub fn session_detail(&self, id: SessionId) -> Result<Option<SessionDetail>> {
-        todo!()
+        query::session_detail(&self.conn, id)
     }
 
     pub fn model_stats(&self, filter: &QueryFilter) -> Result<Vec<ModelStats>> {
-        todo!()
+        query::model_stats(&self.conn, filter)
     }
 
     pub fn project_stats(&self, filter: &QueryFilter) -> Result<Vec<ProjectStats>> {
-        todo!()
+        query::project_stats(&self.conn, filter)
     }
 
     pub fn harness_status(&self) -> Result<Vec<HarnessStatus>> {
-        todo!()
+        query::harness_status(&self.conn)
     }
 
     /// Models that have events with `price_id IS NULL`, all time.
     pub fn unpriced_models(&self) -> Result<Vec<UnpricedModel>> {
-        todo!()
+        query::unpriced_models(&self.conn)
     }
 
     /// Newest first.
     pub fn ingest_runs(&self, limit: usize) -> Result<Vec<IngestRunSummary>> {
-        todo!()
+        admin::ingest_runs(&self.conn, limit)
     }
 }
 
@@ -218,7 +262,7 @@ impl SourceTx<'_> {
 
     /// `None` → [`ProjectId::NONE`]. Otherwise inserts the project by path if missing.
     pub fn upsert_project(&mut self, path: Option<&str>) -> Result<ProjectId> {
-        todo!()
+        ingest::upsert_project(&self.tx, path)
     }
 
     /// Inserts or merges by `(harness, ext_id)`: non-`None` fields overwrite,
@@ -231,19 +275,19 @@ impl SourceTx<'_> {
         session: &SessionUpsert,
         project: ProjectId,
     ) -> Result<SessionId> {
-        todo!()
+        ingest::upsert_session(&self.tx, session, project)
     }
 
     pub fn session_id(&self, harness: &HarnessId, ext_id: &str) -> Result<Option<SessionId>> {
-        todo!()
+        ingest::session_id(&self.tx, harness.as_str(), ext_id)
     }
 
     pub fn link_resumed_session(&mut self, new: SessionId, original: SessionId) -> Result<()> {
-        todo!()
+        ingest::link_session(&self.tx, "resumed_from_session_id", new, original)
     }
 
     pub fn set_parent_session(&mut self, subagent: SessionId, parent: SessionId) -> Result<()> {
-        todo!()
+        ingest::link_session(&self.tx, "parent_session_id", subagent, parent)
     }
 
     /// Session of the already stored event with this dedup key (sees this tx's inserts).
@@ -252,16 +296,16 @@ impl SourceTx<'_> {
         harness: &HarnessId,
         dedup_key: &str,
     ) -> Result<Option<SessionId>> {
-        todo!()
+        ingest::session_holding_dedup_key(&self.tx, harness.as_str(), dedup_key)
     }
 
     /// Raw running total last saved for `session` (cumulative-counter harnesses only).
     pub fn last_cumulative_total(&self, session: SessionId) -> Result<Option<TokenCounts>> {
-        todo!()
+        ingest::last_cumulative_total(&self.tx, session)
     }
 
     pub fn save_cumulative_total(&mut self, session: SessionId, total: &TokenCounts) -> Result<()> {
-        todo!()
+        ingest::save_cumulative_total(&self.tx, session, total)
     }
 
     /// `INSERT … ON CONFLICT(harness_id, dedup_key) DO NOTHING`. For every row actually
@@ -270,22 +314,23 @@ impl SourceTx<'_> {
     /// A session not yet upserted in this tx is created with defaults.
     /// Returns the number of new events.
     pub fn insert_events(&mut self, events: &[PricedEvent]) -> Result<usize> {
-        todo!()
+        ingest::insert_events(&self.tx, self.source_file, events)
     }
 
     /// Skips messages whose `(session, key)` is already stored; links
     /// `event_dedup_key` to `usage_event.id`. Returns the number of new messages.
     pub fn insert_messages(&mut self, messages: &[MessageRecord]) -> Result<usize> {
-        todo!()
+        ingest::insert_messages(&self.tx, self.harness.as_str(), messages)
     }
 
     /// Also clears the source's `missing` flag and sets `last_read = now`.
     pub fn save_cursor(&mut self, cursor: &Cursor, now: Timestamp) -> Result<()> {
-        todo!()
+        ingest::save_cursor(&self.tx, self.source_file, cursor, now)
     }
 
     pub fn commit(self) -> Result<()> {
-        todo!()
+        self.tx.commit()?;
+        Ok(())
     }
 }
 
@@ -298,19 +343,20 @@ impl RecomputeTx<'_> {
     /// Sets `cost_micros` and `price_id` per event. Returns the sessions and hours the
     /// changed events belong to, to pass to the two rebuild calls.
     pub fn update_event_costs(&mut self, updates: &[CostUpdate]) -> Result<Affected> {
-        todo!()
+        recompute::update_event_costs(&self.tx, updates)
     }
 
     pub fn rebuild_session_totals(&mut self, sessions: &[SessionId]) -> Result<()> {
-        todo!()
+        recompute::rebuild_session_totals(&self.tx, sessions)
     }
 
     pub fn rebuild_hourly(&mut self, hours: &[Hour]) -> Result<()> {
-        todo!()
+        recompute::rebuild_hourly(&self.tx, hours)
     }
 
     pub fn commit(self) -> Result<()> {
-        todo!()
+        self.tx.commit()?;
+        Ok(())
     }
 }
 
