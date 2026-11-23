@@ -1,0 +1,22 @@
+[package]
+name = "tbt-daemon"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+tbt-core.workspace = true
+tbt-collector.workspace = true
+tbt-store.workspace = true
+tbt-pricing.workspace = true
+tbt-adapters.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-appender.workspace = true
+directories.workspace = true
+jiff.workspace = true
+smol.workspace = true

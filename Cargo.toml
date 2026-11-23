@@ -1,0 +1,46 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+tbt-core = { path = "crates/tbt-core" }
+tbt-adapters = { path = "crates/tbt-adapters" }
+tbt-pricing = { path = "crates/tbt-pricing" }
+tbt-store = { path = "crates/tbt-store" }
+tbt-collector = { path = "crates/tbt-collector" }
+
+gpui = "0.2.2"
+rusqlite = { version = "0.41", features = ["bundled"] }
+rusqlite_migration = "2.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+toml = "1.2"
+rust_decimal = { version = "1.43", features = ["serde-str"] }
+rust_decimal_macros = "1.43"
+jiff = { version = "1", features = ["serde"] }
+directories = "6"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+smol = "2"
+notify = "9"
+globset = "0.4"
+fs4 = "1.1"
+thiserror = "2"
+anyhow = "1"
+clap = { version = "4.6", features = ["derive"] }
+blake3 = "1.8"
+crossbeam-channel = "0.5"
+
+insta = { version = "1.49", features = ["json", "yaml", "redactions"] }
+proptest = "1.12"
+tempfile = "3.27"
+
+[profile.dev.package."*"]
+opt-level = 1
