@@ -1,0 +1,103 @@
+---
+source: crates/tbt-adapters/tests/claude_code.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 64ed9da4-d663-42b6-bd5f-db9652067ec7
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/pale-fjord-8a
+    title: occaecat elit incididunt minim dui
+    git_branch: master
+    harness_version: 2.1.330
+    started_at: "2026-11-21T18:43:52.017Z"
+    ended_at: "2026-11-21T18:48:59.898Z"
+    has_baseline_hint: false
+  - ext_id: 64ed9da4-d663-42b6-bd5f-db9652067ec7/agent-a919fc890880d1075
+    parent_ext_id: 64ed9da4-d663-42b6-bd5f-db9652067ec7
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/pale-fjord-8a
+    title: ~
+    git_branch: master
+    harness_version: 2.1.330
+    started_at: "2026-11-21T18:44:26.313Z"
+    ended_at: "2026-11-21T18:45:06.537Z"
+    has_baseline_hint: false
+event_count: 25
+totals:
+  (all):
+    calls: 25
+    input: 60
+    output: 12908
+    cache_write_5m: 63619
+    cache_write_1h: 31118
+    cache_read: 1084138
+    reasoning: 3474
+    total: 1191843
+  anthropic/claude-haiku-5-5:
+    calls: 6
+    input: 12
+    output: 4051
+    cache_write_5m: 63619
+    cache_write_1h: 0
+    cache_read: 228644
+    reasoning: 965
+    total: 296326
+  anthropic/claude-opus-5-5:
+    calls: 19
+    input: 48
+    output: 8857
+    cache_write_5m: 0
+    cache_write_1h: 31118
+    cache_read: 855494
+    reasoning: 2509
+    total: 895517
+events:
+  - "2026-11-21T18:43:54.225Z msg_470JmNHfWA9jFNImbPZn546H:req_324GzRNhJEhIPBf0dowQRINP claude-opus-5-5 in=2 out=486 cw5m=0 cw1h=14677 cr=23578 rs=162"
+  - "2026-11-21T18:43:58.683Z msg_586TqMVvxX4k3Q94vV9pejzG:req_689SrCGloJJHIJCNeczUSRGC claude-opus-5-5 in=2 out=383 cw5m=0 cw1h=1149 cr=38255 rs=113"
+  - "2026-11-21T18:44:06.539Z msg_667HaDGpKF6oCO38Ufb9UFRV:req_284CpUOvP6MhpwDPxpNRjapE claude-opus-5-5 in=2 out=577 cw5m=0 cw1h=860 cr=39404 rs=157"
+  - "2026-11-21T18:44:23.639Z msg_140CrAPtbSFnEwr4ZHBjx0Es:req_210VtNEkpJcqs9dwfRlo90rV claude-opus-5-5 in=4 out=593 cw5m=0 cw1h=8 cr=40841 rs=279"
+  - "2026-11-21T18:44:26.986Z msg_284KjKAs2ngviZINbY1KryyZ:req_137DiOPr4jGDudbSQrr75J74 claude-opus-5-5 in=2 out=26 cw5m=0 cw1h=977 cr=40849 rs=0"
+  - "2026-11-21T18:45:13.022Z msg_633BfKMg0fFwLFNs78dOGgAe:req_222LmLKy0jNiR5NluHwrcOaL claude-opus-5-5 in=2 out=668 cw5m=0 cw1h=2036 cr=41826 rs=223"
+  - "2026-11-21T18:46:43.578Z msg_905FaTo124lCSHgQLNRciEtt:req_903MeWg68kRhaIZhi1MaiS0T claude-opus-5-5 in=4 out=303 cw5m=0 cw1h=1280 cr=43862 rs=100"
+  - "2026-11-21T18:47:28.777Z msg_638TdFs1SqfqM0bH12q3QOYI:req_823BxIb9VxZDsIySAgKma4rp claude-opus-5-5 in=4 out=373 cw5m=0 cw1h=324 cr=45142 rs=50"
+  - "2026-11-21T18:47:32.246Z msg_818HsVy0oeXp3RyXoKtHCesL:req_215NkSc0wx27WSVBwVgxwaDd claude-opus-5-5 in=2 out=172 cw5m=0 cw1h=1230 cr=45466 rs=26"
+  - "2026-11-21T18:47:37.559Z msg_306ZwIu3mH4BcN0025qD2RST:req_890MiWw8p8lpIEHzABP62Knt claude-opus-5-5 in=2 out=388 cw5m=0 cw1h=272 cr=46696 rs=9"
+  - "2026-11-21T18:48:00.063Z msg_924TiQm7ONn2PXHUJg0yf08f:req_126AiTe8H0SnM3iBcMFUHMSY claude-opus-5-5 in=4 out=500 cw5m=0 cw1h=414 cr=46968 rs=303"
+  - "2026-11-21T18:48:08.106Z msg_976VjDk6oI26L1aQi1Hi80TD:req_878JzWn9a6fnNeAhW6k8P8mo claude-opus-5-5 in=2 out=652 cw5m=0 cw1h=712 cr=47382 rs=10"
+  - "2026-11-21T18:48:26.234Z msg_230EiHmGaavTrHS0nfPVOu1U:req_331GhLtWgRdOveMJithB4I8M claude-opus-5-5 in=4 out=275 cw5m=0 cw1h=668 cr=48094 rs=122"
+  - "2026-11-21T18:48:28.926Z msg_581SaJlNx8OYdpdbHcm8ZL7v:req_761SsQiRp0zgRKY9bn5NtlKm claude-opus-5-5 in=2 out=148 cw5m=0 cw1h=349 cr=48762 rs=0"
+  - "2026-11-21T18:48:30.057Z msg_011OgKfJrwqMFQYkmoWsj0jv:req_479LpVsMnRYSxMXm4xQVs9r1 claude-opus-5-5 in=2 out=421 cw5m=0 cw1h=940 cr=49111 rs=45"
+  - "2026-11-21T18:48:33.587Z msg_141UgWhGBKjHSGdc5gMBpESn:req_491HbJbDCENXzOt3LkO4kcXI claude-opus-5-5 in=2 out=364 cw5m=0 cw1h=1913 cr=50051 rs=29"
+  - "2026-11-21T18:48:41.742Z msg_732GpTxUP2tBeqAyYep7RPiP:req_812XuBaTWbmBcjGnmGKDMSvo claude-opus-5-5 in=2 out=960 cw5m=0 cw1h=1054 cr=51964 rs=519"
+  - "2026-11-21T18:48:48.876Z msg_584RwGkB1yEg2pBgqWCrEZjs:req_650DgCkR4oa3myWBJzfm6xf1 claude-opus-5-5 in=2 out=586 cw5m=0 cw1h=1207 cr=53018 rs=275"
+  - "2026-11-21T18:48:59.874Z msg_976ZnRtLI4kkULSLBPKEWQIe:req_897TuVcPS2u7hiYcBuQnWRGY claude-opus-5-5 in=2 out=982 cw5m=0 cw1h=1048 cr=54225 rs=87"
+  - "2026-11-21T18:44:27.275Z msg_703LeRTc26PNjS8IHFk4XonY:req_097BaZVa8y9m8dsV7c7rh65m claude-haiku-5-5 in=2 out=366 cw5m=22196 cw1h=0 cr=0 rs=61"
+  - "2026-11-21T18:44:32.862Z msg_360KrVPrKTSxBkmXX7DzLL0j:req_804XmKKaD0sxUCchS479WMsp claude-haiku-5-5 in=2 out=471 cw5m=2575 cw1h=0 cr=22196 rs=0"
+  - "2026-11-21T18:44:38.338Z msg_608FsRFvkE7n944IaujHPREu:req_884AtTBwoBPiLBUSUa4Cq7ZP claude-haiku-5-5 in=2 out=419 cw5m=33939 cw1h=0 cr=24771 rs=159"
+  - "2026-11-21T18:44:46.204Z msg_215CdZPqVrJuuN6nIeJLrYnS:req_036QrNKzFRK9PghmY5BgRC0b claude-haiku-5-5 in=2 out=311 cw5m=2306 cw1h=0 cr=58710 rs=0"
+  - "2026-11-21T18:44:47.962Z msg_004KqVMrwgh2jDQ0CbZWTCTl:req_634RuBSxlIORUXPpnxL1QhGF claude-haiku-5-5 in=2 out=325 cw5m=935 cw1h=0 cr=61016 rs=0"
+  - "2026-11-21T18:45:00.891Z msg_478JvCRsBNvXEme4zL5x7iEb:req_713NlOWaA80a8DBEqa0cBo7W claude-haiku-5-5 in=2 out=2159 cw5m=1668 cw1h=0 cr=61951 rs=745"
+message_count: 87
+messages_by_kind:
+  assistant/text: 7
+  assistant/thinking: 20
+  assistant/tool_use: 25
+  tool/tool_result: 25
+  user/text: 10
+messages_linked_to_events: 52
+messages_with_preview: 67
+tools:
+  tool_result/Agent: 1
+  tool_result/Bash: 11
+  tool_result/SubagentHandback: 1
+  tool_result/WebFetch: 10
+  tool_result/WebSearch: 1
+  tool_result/Yield: 1
+  tool_use/Agent: 1
+  tool_use/Bash: 11
+  tool_use/SubagentHandback: 1
+  tool_use/WebFetch: 10
+  tool_use/WebSearch: 1
+  tool_use/Yield: 1
+warnings: []

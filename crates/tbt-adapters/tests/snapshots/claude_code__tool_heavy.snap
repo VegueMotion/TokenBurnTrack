@@ -1,0 +1,101 @@
+---
+source: crates/tbt-adapters/tests/claude_code.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: f001a22b-ee17-44c8-ab5f-c1ab7bd4b32b
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/keen-lagoon-45/olive-meadow-b3
+    title: mollit occaecat ea adipiscing nisi eiusmod
+    git_branch: main
+    harness_version: 2.1.325
+    started_at: "2026-11-14T20:58:17.03Z"
+    ended_at: "2026-11-14T21:04:49.287Z"
+    has_baseline_hint: false
+event_count: 53
+totals:
+  (all):
+    calls: 53
+    input: 106
+    output: 39297
+    cache_write_5m: 0
+    cache_write_1h: 180598
+    cache_read: 7428127
+    reasoning: 19390
+    total: 7648128
+  anthropic/claude-opus-5-5:
+    calls: 53
+    input: 106
+    output: 39297
+    cache_write_5m: 0
+    cache_write_1h: 180598
+    cache_read: 7428127
+    reasoning: 19390
+    total: 7648128
+events:
+  - "2026-11-14T20:58:17.03Z msg_922Vu7GDGfSG8mwdgfbXKpfz:req_988Xf3CSNvCMWOVjC35AXHWE claude-opus-5-5 in=2 out=203 cw5m=0 cw1h=14405 cr=24768 rs=61"
+  - "2026-11-14T20:58:20.078Z msg_748Mu2FReJsoORibAsiXsfQi:req_317El2UEv34THvIEwNcAiqCk claude-opus-5-5 in=2 out=164 cw5m=0 cw1h=3756 cr=39173 rs=0"
+  - "2026-11-14T20:58:22.021Z msg_180Ic5PQaXtZqUPeIkNByTDx:req_537Mb1IFkQXUkDQn97O45xJK claude-opus-5-5 in=2 out=366 cw5m=0 cw1h=3371 cr=42929 rs=135"
+  - "2026-11-14T20:58:24.764Z msg_414Mg0GK7dZ155XfzjHlWGf2:req_873Vs3WK1sk2AjtXiVYD3540 claude-opus-5-5 in=2 out=228 cw5m=0 cw1h=647 cr=46300 rs=0"
+  - "2026-11-14T20:58:31.834Z msg_590Go8FVPhVRyaQQ8ZkVlsup:req_054Qi9RGVbIZD03inNooFjWX claude-opus-5-5 in=2 out=709 cw5m=0 cw1h=26407 cr=46947 rs=549"
+  - "2026-11-14T20:58:34.992Z msg_504Mn2YYjzsDIBu00Z1PuqBM:req_139Wy5GIgX3OQLeLyifC1Ofe claude-opus-5-5 in=2 out=220 cw5m=0 cw1h=4711 cr=73354 rs=14"
+  - "2026-11-14T20:58:43.074Z msg_796Oz3QH4CsyNr5HP36OGnWH:req_145Pj9QU20W7gk6Ino6PzeM8 claude-opus-5-5 in=2 out=645 cw5m=0 cw1h=3609 cr=78065 rs=528"
+  - "2026-11-14T20:58:46.849Z msg_496Cy1TZwT6o2DJ4QsBuWpFr:req_147Cg6CJkZGFlkr7wMyDxHcu claude-opus-5-5 in=2 out=252 cw5m=0 cw1h=3858 cr=81674 rs=0"
+  - "2026-11-14T20:58:48.809Z msg_304Jb6BYw6s80owjBYnclHsO:req_796Sy4SMna1LWOmWqE5AIT4f claude-opus-5-5 in=2 out=125 cw5m=0 cw1h=560 cr=85532 rs=0"
+  - "2026-11-14T20:58:50.169Z msg_972Vo5FYkYKzKM4ZC8WAF5ZW:req_841Wg8GEjKe8Bgbqpb9lRhiM claude-opus-5-5 in=2 out=226 cw5m=0 cw1h=5100 cr=86092 rs=46"
+  - "2026-11-14T20:59:07.942Z msg_360Lm2RSVvWr6dTEa7DcXSrn:req_364Sg8UIJhXv9YTnJKtMFgLs claude-opus-5-5 in=2 out=1752 cw5m=0 cw1h=2417 cr=91192 rs=1567"
+  - "2026-11-14T20:59:13.009Z msg_952Io3CRK6Xsf3CrOjJabORq:req_412Ly1EEQhFik0dxvNsnq4Hh claude-opus-5-5 in=2 out=558 cw5m=0 cw1h=2470 cr=93609 rs=237"
+  - "2026-11-14T20:59:18.987Z msg_940Qe4VFkRMTuJqEg3dFJDab:req_841Im8PBsHTpISbBWGGMy7BH claude-opus-5-5 in=2 out=540 cw5m=0 cw1h=6855 cr=96079 rs=314"
+  - "2026-11-14T20:59:22.21Z msg_659Lf0KDMna26VCLX8c0jm28:req_292As8PASLV3Rta9D4kbdW7K claude-opus-5-5 in=2 out=275 cw5m=0 cw1h=3097 cr=102934 rs=71"
+  - "2026-11-14T20:59:27.16Z msg_720Fg0XAKx0VavzKGSuKyjfF:req_637Tz3JVJiuNM9i7wwOmCN6b claude-opus-5-5 in=2 out=329 cw5m=0 cw1h=1178 cr=106031 rs=213"
+  - "2026-11-14T20:59:29.981Z msg_412Li8OVwcB1kZFLaNUw60qe:req_218Lj5AMyy69Ui8nuACpE8i2 claude-opus-5-5 in=2 out=212 cw5m=0 cw1h=5171 cr=107209 rs=0"
+  - "2026-11-14T20:59:31.785Z msg_590Na5PE0Lvtud7El6gZcaJj:req_294Jl0CX6VGPGHbmsbQFO83O claude-opus-5-5 in=2 out=139 cw5m=0 cw1h=2072 cr=112380 rs=0"
+  - "2026-11-14T20:59:36.037Z msg_562Sa9BDJ7cw8GRt59W6GVZN:req_761Dm0YY6eGgI7EyranSEgTm claude-opus-5-5 in=2 out=433 cw5m=0 cw1h=5561 cr=114452 rs=351"
+  - "2026-11-14T20:59:43.884Z msg_558Za9FBDtGhFnAviQlsodyU:req_420Dp4FIOgSuxhvLCJvJUrsh claude-opus-5-5 in=2 out=797 cw5m=0 cw1h=21755 cr=120013 rs=656"
+  - "2026-11-14T20:59:46.252Z msg_923Fc0BR7e3cW4Jcd9mu81G0:req_814Wv4MR0uviPfyJ4eg4bVIe claude-opus-5-5 in=2 out=240 cw5m=0 cw1h=1342 cr=141768 rs=64"
+  - "2026-11-14T20:59:49.858Z msg_445My3WCEWC61jq6iLvqbnem:req_830An0XGWSPTUgGQ5BLKe3F6 claude-opus-5-5 in=2 out=198 cw5m=0 cw1h=1079 cr=143110 rs=0"
+  - "2026-11-14T20:59:54.109Z msg_216Wf9UNDdPQ1CCduYOg58si:req_571Mo6XULm4FCT5GxfJ8mBhD claude-opus-5-5 in=2 out=484 cw5m=0 cw1h=2251 cr=144189 rs=250"
+  - "2026-11-14T20:59:57.408Z msg_522Ro5FZlFE7wKJbPcF1WVut:req_321Tv1LSd8FQ98sFLm8RZZje claude-opus-5-5 in=2 out=140 cw5m=0 cw1h=902 cr=146440 rs=0"
+  - "2026-11-14T20:59:59.458Z msg_442Qj6YO45sR6TW2JxXUNf6p:req_673Ak1CE1aRGKJfcfLlQmNu1 claude-opus-5-5 in=2 out=281 cw5m=0 cw1h=679 cr=147342 rs=98"
+  - "2026-11-14T21:00:16.204Z msg_853Nv9EKZlQ82m62REHkgHbe:req_925Md6AVQMoSJ31gHkOCFsiI claude-opus-5-5 in=2 out=1606 cw5m=0 cw1h=2039 cr=148021 rs=1401"
+  - "2026-11-14T21:00:19.856Z msg_870Ns0ZqRn9kLQcCUnIIL6mr:req_367Ny1GqAfnEReHOvQiBTzv6 claude-opus-5-5 in=2 out=492 cw5m=0 cw1h=1778 cr=150060 rs=104"
+  - "2026-11-14T21:00:28.017Z msg_145Ij7Lf0MFAnsOIpSEkWAZZ:req_731Mo2Tb5Bn5KaauQByUzOaV claude-opus-5-5 in=2 out=1007 cw5m=0 cw1h=639 cr=151838 rs=86"
+  - "2026-11-14T21:00:59.259Z msg_000Jp2Al3Rv4IsF5zeGzBptT:req_659Pg0Bs10u14vbXOqz5nmVv claude-opus-5-5 in=2 out=2308 cw5m=0 cw1h=1098 cr=152477 rs=1970"
+  - "2026-11-14T21:01:12.779Z msg_142Fx7SczudSUJKV4tt2rbZC:req_642Nk2RetDz7FOkynYEv7JJJ claude-opus-5-5 in=2 out=1266 cw5m=0 cw1h=3207 cr=153575 rs=997"
+  - "2026-11-14T21:01:24.915Z msg_615Dh1Iztm9Oqhj2yT3sSozd:req_267Fr7JkmwNBxhWR9fCcETwm claude-opus-5-5 in=2 out=1042 cw5m=0 cw1h=1652 cr=156782 rs=880"
+  - "2026-11-14T21:01:48.214Z msg_291Vo9LxlK3XvaaHCjt2IYtS:req_515Ca0Idk3qom7YDeltqGLNC claude-opus-5-5 in=2 out=2299 cw5m=0 cw1h=2156 cr=158434 rs=2052"
+  - "2026-11-14T21:01:51.396Z msg_778Na4NwESX5TKlsdgFX0RqQ:req_591Aa2IgM90VVuZjPBms8ANk claude-opus-5-5 in=2 out=231 cw5m=0 cw1h=2697 cr=160590 rs=87"
+  - "2026-11-14T21:01:54.049Z msg_767Eb8YjY6vXkvyQkQryI6h6:req_430Du9VlYzBuY4DyM2Iigeaw claude-opus-5-5 in=2 out=122 cw5m=0 cw1h=1690 cr=163287 rs=0"
+  - "2026-11-14T21:02:06.914Z msg_027Nn5HdlE0hnUZl6OkpdNZ1:req_998Qi3Mjf1Hi7a2smb7CMAD1 claude-opus-5-5 in=2 out=1256 cw5m=0 cw1h=2763 cr=164977 rs=1115"
+  - "2026-11-14T21:02:10.815Z msg_531Bv1IhzUtuasKEHAVdZUjG:req_578Rt3IikU00QQvKaRdQjUxv claude-opus-5-5 in=2 out=336 cw5m=0 cw1h=3872 cr=167740 rs=144"
+  - "2026-11-14T21:02:14.65Z msg_932Cb0QqwUpFhvN1w9v8mbOU:req_258Mq9Jug5q8Id2R1pgjki5J claude-opus-5-5 in=2 out=325 cw5m=0 cw1h=3153 cr=171612 rs=197"
+  - "2026-11-14T21:02:17.318Z msg_686Qh1OsWblsDCU29mxjsrWi:req_352Pd2JfVtd9W1jkEbzbSB8T claude-opus-5-5 in=2 out=123 cw5m=0 cw1h=1259 cr=174765 rs=0"
+  - "2026-11-14T21:02:22.659Z msg_301Ru1OmS9YCXWxJdl76MkRk:req_414Zy9CxHwbIo0LLutSLAlek claude-opus-5-5 in=2 out=535 cw5m=0 cw1h=3248 cr=176024 rs=313"
+  - "2026-11-14T21:02:35.54Z msg_822Pn8Nnj8vkKcGwmvq7f6bP:req_253Yz2Bdwj9Grnmdza98NOVw claude-opus-5-5 in=2 out=1297 cw5m=0 cw1h=1727 cr=179272 rs=1076"
+  - "2026-11-14T21:02:38.117Z msg_413Qx3XwlEftZrn8axVwM58D:req_010Hx5QopYevyYrzxstRk8iF claude-opus-5-5 in=2 out=235 cw5m=0 cw1h=1939 cr=180999 rs=75"
+  - "2026-11-14T21:02:43.703Z msg_139Ak2Vez3ckvmpKxtSFiVhC:req_776Xv4XpnniH0L4t62uyjFkC claude-opus-5-5 in=2 out=531 cw5m=0 cw1h=1374 cr=182938 rs=320"
+  - "2026-11-14T21:02:54.616Z msg_605Yp4UcX7G4jAa1NwpWoEuS:req_447Ic0GcTlCgmqnssCzWiRYk claude-opus-5-5 in=2 out=3878 cw5m=0 cw1h=2643 cr=184312 rs=823"
+  - "2026-11-14T21:03:19.877Z msg_301Jd3FdqMFcNPPRB5Xylct6:req_040Sz7Oxt9dXQBrHiSpKiFu2 claude-opus-5-5 in=2 out=1198 cw5m=0 cw1h=4212 cr=186955 rs=377"
+  - "2026-11-14T21:03:28.473Z msg_907Ca7RlJVjzQBPhFuJgnsSm:req_319Me3AjAMxbvTE2sPSu8gq3 claude-opus-5-5 in=2 out=2661 cw5m=0 cw1h=1349 cr=191167 rs=42"
+  - "2026-11-14T21:03:49.909Z msg_808Oi1UwvwpgwSsOepWqq7FZ:req_100Wb3JizrnOqPuZ6Txrj5Mx claude-opus-5-5 in=2 out=497 cw5m=0 cw1h=3371 cr=192516 rs=294"
+  - "2026-11-14T21:03:58.998Z msg_603Ja8ZdOWuPMHVSNcAiqcLh:req_951Kh0EeQ1gYs33hhLTey2Wm claude-opus-5-5 in=2 out=1396 cw5m=0 cw1h=987 cr=195887 rs=813"
+  - "2026-11-14T21:04:07.369Z msg_289Ls8Mg9o5xTGfJT33ksiZq:req_113Ps9Hc8vcDxzIIom31WIyv claude-opus-5-5 in=2 out=2753 cw5m=0 cw1h=1570 cr=196874 rs=310"
+  - "2026-11-14T21:04:26.168Z msg_952Kr3Rlb0D3LSzpeAQMCRWu:req_685Nj6Jlgf9rrzgTodv63t1J claude-opus-5-5 in=2 out=589 cw5m=0 cw1h=2849 cr=198444 rs=211"
+  - "2026-11-14T21:04:31.267Z msg_449Og3Bc6qMNzieSnJObo5fm:req_871Oy5Im3fVPQGx0u7waI7sO claude-opus-5-5 in=2 out=324 cw5m=0 cw1h=880 cr=201293 rs=129"
+  - "2026-11-14T21:04:35.48Z msg_043Hj1YxOPjtiY1NRSsPw5OE:req_570Iw1ZkR6awCbDEcamVWuLo claude-opus-5-5 in=2 out=344 cw5m=0 cw1h=1757 cr=202173 rs=122"
+  - "2026-11-14T21:04:40.816Z msg_401Gv0Ezq0PGYT951dfAQvCb:req_890Bp9OpksVfqDGm03nlTJqj claude-opus-5-5 in=2 out=478 cw5m=0 cw1h=549 cr=203930 rs=237"
+  - "2026-11-14T21:04:47.093Z msg_566Ed6BqDevXJFkHE9KEPmMW:req_644Ny5PmRa3EQyzZzSc4rC9O claude-opus-5-5 in=2 out=158 cw5m=0 cw1h=645 cr=204479 rs=0"
+  - "2026-11-14T21:04:49.285Z msg_384Uc6VgRsz4ITL4q76F1ORR:req_093Bm0YrPnY0cfKAt481f08k claude-opus-5-5 in=2 out=494 cw5m=0 cw1h=242 cr=205124 rs=61"
+message_count: 132
+messages_by_kind:
+  assistant/text: 15
+  assistant/thinking: 48
+  assistant/tool_use: 69
+messages_linked_to_events: 132
+messages_with_preview: 90
+tools:
+  tool_use/Bash: 48
+  tool_use/Edit: 16
+  tool_use/Read: 5
+warnings: []

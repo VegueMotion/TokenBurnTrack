@@ -1,0 +1,68 @@
+---
+source: crates/tbt-adapters/tests/claude_code.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: ee7bdb9e-c647-49d2-837d-71810ebd64c7
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/noble-orchid-25/fern-meadow-c2
+    title: nulla non sunt laborum sed veni
+    git_branch: master
+    harness_version: 2.1.319
+    started_at: "2026-11-10T21:45:29.712Z"
+    ended_at: "2026-11-12T10:35:17.758Z"
+    has_baseline_hint: false
+event_count: 6
+totals:
+  (all):
+    calls: 6
+    input: 12
+    output: 12058
+    cache_write_5m: 0
+    cache_write_1h: 108733
+    cache_read: 294480
+    reasoning: 2960
+    total: 415283
+  anthropic/claude-fable-5-2:
+    calls: 4
+    input: 8
+    output: 10831
+    cache_write_5m: 0
+    cache_write_1h: 46111
+    cache_read: 189050
+    reasoning: 2731
+    total: 246000
+  anthropic/claude-opus-5-5:
+    calls: 2
+    input: 4
+    output: 1227
+    cache_write_5m: 0
+    cache_write_1h: 62622
+    cache_read: 105430
+    reasoning: 229
+    total: 169283
+events:
+  - "2026-11-10T21:45:32.228Z msg_177KxywjsDvMml4cLb2D0kvY:req_226EudkatGA4P3GdzftPbY4y claude-fable-5-2 in=2 out=261 cw5m=0 cw1h=15440 cr=27365 rs=67"
+  - "2026-11-10T21:45:34.423Z msg_946Iaqzj4haT7nPtT7boqcVQ:req_750Njlym9lTO5Q6XAyKeXwSt claude-fable-5-2 in=2 out=186 cw5m=0 cw1h=7548 cr=42805 rs=39"
+  - "2026-11-10T21:45:38.368Z msg_490Odmiq1WzpefmEhmQ7tLkv:req_773Ewcuf4PNtWDbbcvb31Wcb claude-fable-5-2 in=2 out=617 cw5m=0 cw1h=18174 cr=50353 rs=204"
+  - "2026-11-10T21:46:07.595Z msg_864NxlrqaLMzI1WFbJdxfNj9:req_636VwobsjZt5nqLvZwgNOT8U claude-fable-5-2 in=2 out=9767 cw5m=0 cw1h=4949 cr=68527 rs=2421"
+  - "2026-11-12T10:35:08.038Z msg_028VugmLI7sg9CkwsmqPaCKw:req_736NzkhSDKfyU5cX949VMh9i claude-opus-5-5 in=2 out=479 cw5m=0 cw1h=58440 cr=23495 rs=211"
+  - "2026-11-12T10:35:17.741Z msg_090MtzbEa1dPG3QQfpSTbYyx:req_108WplpCp7MFINHaD0L0i8WC claude-opus-5-5 in=2 out=748 cw5m=0 cw1h=4182 cr=81935 rs=18"
+message_count: 24
+messages_by_kind:
+  assistant/text: 2
+  assistant/thinking: 6
+  assistant/tool_use: 7
+  tool/tool_result: 7
+  user/text: 2
+messages_linked_to_events: 14
+messages_with_preview: 24
+tools:
+  tool_result/Bash: 3
+  tool_result/Read: 3
+  tool_result/Write: 1
+  tool_use/Bash: 3
+  tool_use/Read: 3
+  tool_use/Write: 1
+warnings: []
