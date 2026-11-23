@@ -1,0 +1,6 @@
+{"sessionId":"f4c2b3a1-6f7e-4d8c-9b0a-1f2e3d4c5b6a","projectHash":"a3827afff0e2c3d3dca297252932c975b5331f52833903f3935f73eb01cefb92","startTime":"2026-11-20T10:23:12.000Z","lastUpdated":"2026-11-20T10:23:12.000Z","kind":"subagent","directories":["/u/user/projects/amber-acorn-00"]}
+{"id":"b6e4d5c3-8b9a-4f0e-9d2c-3b4a5f6e7d8c","timestamp":"2026-11-20T10:23:12.050Z","type":"user","content":[{"text":"lorem ipsum dolor"}]}
+{"id":"c7f5e6d4-9c0b-4a1f-8e3d-4c5b6a7f8e9d","timestamp":"2026-11-20T10:23:18.770Z","type":"gemini","content":"","model":"gemini-2.5-flash","thoughts":[],"tokens":{"input":6021,"output":120,"cached":0,"thoughts":240,"tool":0,"total":6381},"toolCalls":[{"id":"glob-1795141398770-0","name":"glob","args":{"pattern":"lorem/**"},"status":"success","timestamp":"2026-11-20T10:23:18.770Z","result":[{"functionResponse":{"id":"glob-1795141398770-0","name":"glob","response":{"output":"lorem"}}}],"displayName":"FindFiles","description":"lorem","renderOutputAsMarkdown":true}]}
+{"$set":{"lastUpdated":"2026-11-20T10:23:18.771Z"}}
+{"id":"d8a6f7e5-0d1c-4b2a-9f4e-5d6c7b8a9f0e","timestamp":"2026-11-20T10:23:58.300Z","type":"gemini","content":"ipsum dolor sit amet","model":"gemini-2.5-flash","thoughts":[],"tokens":{"input":7433,"output":512,"cached":5888,"thoughts":96,"tool":0,"total":8041}}
+{"$set":{"lastUpdated":"2026-11-20T10:23:58.301Z"}}
