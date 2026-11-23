@@ -21,7 +21,7 @@ after the previous wave is merged and green.
 
 Local facts that shape the plan:
 - Rust 1.100 on Fedora 45 (Wayland) is available.
-- Real logs exist for Claude Code (333 files), Codex (168), OpenCode (11). **Gemini CLI is not installed**, so its fixtures must come from upstream docs/source and get lower confidence.
+- Real logs exist for Claude Code (216 files on 2026-11-23, of which 32 are subagent transcripts under `<session-id>/subagents/`; all from 2026-11, so older ones are already being cleaned up), Codex (168), OpenCode (SQLite `~/.local/share/opencode/opencode.db`: 15 sessions, 132 messages). **Gemini CLI is not installed**, so its fixtures must come from upstream docs/source and get lower confidence.
 
 ---
 
@@ -56,9 +56,15 @@ Max parallel agents per wave: W0 3, W1 4, W2 7, W3 5, W4 3.
 
 ### J0.2 Contracts — 1 agent
 Owns `crates/tbt-core/**`, stub signatures in `crates/tbt-store/src/api.rs`, `crates/tbt-pricing/src/api.rs`.
-- `tbt-core`: `HarnessId`, `SourceRef`, `Cursor` (serde, opaque JSON), `UsageEvent`, `SessionUpsert`, `MessageRecord`, `ReadBatch`, `ParseWarning`, `PrivacyLevel`, `Micros` newtype, error type, `HarnessAdapter` trait (exactly §3.1).
-- Shared JSONL helper `tbt-core::jsonl` (or `tbt-adapters::util`): incremental line reader with byte-offset cursor, inode/size/mtime check, truncation → restart from 0. Every adapter reuses it.
-- Store API stubs (`todo!()` bodies, real signatures): `open`, `begin_source_tx`, `upsert_session`, `insert_events`, `insert_messages`, `bump_hourly`, `save_cursor`, `cursor_for`, `start_run`/`finish_run`, plus read-side query types for the UI: `KpiSummary`, `CostBucket`, `SessionRow`, `SessionDetail`, `ModelStats`, `ProjectStats`, `HarnessStatus`.
+- `tbt-core`: `HarnessId`, `SourceRef`, `Cursor` (serde, opaque JSON), `UsageEvent`, `SessionUpsert`, `MessageRecord`, `ReadBatch`, `ParseWarning`, `PrivacyLevel`, `Micros` newtype, error type, `HarnessAdapter` trait (exactly §3.1). `SessionUpsert` carries an optional `parent_ext_id` so adapters can report subagent → parent links.
+- Shared JSONL helper `tbt-core::jsonl` (or `tbt-adapters::util`): incremental line reader with byte-offset cursor, inode/size/mtime check, truncation → restart from 0. Every JSONL adapter reuses it; DB-backed adapters (OpenCode) use a row-watermark cursor instead.
+- Store API stubs (`todo!()` bodies, real signatures). Every store call a later job needs is listed here, so no job has to change the frozen contract:
+  - Ingest (E): `open`, `open_read_only`, `begin_source_tx`, `upsert_project` (returns `0` for "no project"), `upsert_session`, `link_resumed_session(new, original)`, `set_parent_session(subagent, parent)`, `session_holding_dedup_key(harness, key) -> Option<SessionId>`, `last_cumulative_total(session)` / `save_cumulative_total` (Codex rebasing), `insert_events`, `insert_messages`, `bump_hourly`, `save_cursor`, `cursor_for`, `mark_source_missing`, `start_run` / `finish_run(stats, warnings)`.
+  - Harness config (E, N): `harnesses()`, `set_harness_enabled`, `set_harness_roots`.
+  - Prices (B, F, O): `model_prices()`, `insert_price`, `close_price(id, effective_to)`, `update_price`, `seed_prices_if_empty`.
+  - Recompute (F): `events_for_recompute(filter)` with filter by `price_id` / time range / unpriced model, `update_event_costs(&[(EventId, Micros, Option<PriceId>)])`, `rebuild_session_totals(&[SessionId])`, `rebuild_hourly(&[Hour])`.
+  - Maintenance (S): `drop_raw_json_older_than(days)`.
+  - Read-side query types for the UI: `KpiSummary`, `CostBucket`, `SessionRow`, `SessionDetail`, `ModelStats`, `ProjectStats`, `HarnessStatus`, `UnpricedModel`, `IngestRunSummary`.
 - Pricing API stubs: `PriceCatalog::load`, `price_for(provider, model, ts) -> PriceMatch`, `cost(&UsageEvent, &Price) -> Micros`, `import_litellm(json, now) -> Vec<PriceChange>`.
 - **Decide here:** how cumulative counters (Codex `token_count`) cross a resumed-session boundary. Proposal: adapter emits per-file deltas using state in its `Cursor`; `SessionUpsert` carries `resumed_from_ext_id` + `baseline_hint`, and the collector rebases the first delta against the linked session's last total.
 
@@ -71,8 +77,8 @@ Owns `crates/tbt-app/**` (throwaway content).
 
 ### J0.4 Fixture harvest — 1 agent, parallel with J0.2
 Owns `tests/fixtures/**`, `scripts/anonymize.*`.
-- Copy 3–5 representative files per harness (short, long, resumed session, multi-model, tool-heavy), record harness version.
-- Anonymizer script: rewrites paths, text content, IDs consistently (same input → same fake value, so dedup keys still collide where they should).
+- Copy 3–5 representative files per harness (short, long, resumed session, multi-model, tool-heavy, and for Claude Code a session with `subagents/`), record harness version. For OpenCode, copy a trimmed `opencode.db` (a few sessions) instead of files.
+- Anonymizer script: rewrites paths, text content, IDs consistently (same input → same fake value, so dedup keys still collide where they should), in JSONL files and in the rows of the OpenCode DB copy.
 - Gemini CLI: build fixtures from upstream source/docs; mark `confidence: low` in a `README` next to them.
 
 **Gate:** orchestrator reviews contracts, merges, tags `contracts-v1`.
@@ -83,9 +89,9 @@ Owns `tests/fixtures/**`, `scripts/anonymize.*`.
 
 | Job | Owns | Delivers | Tests |
 |---|---|---|---|
-| **A store** | `crates/tbt-store/**` | Migrations for the full §5 schema; WAL + FK pragmas; all write API from J0.2; hourly rollup upsert in the same tx; session totals + `active_seconds` (30-min gap rule); read queries for UI types; read-only connection constructor | Migration test empty→latest; ON CONFLICT dedup; rollup = sum of events; tx rollback leaves cursor unchanged |
+| **A store** | `crates/tbt-store/**` | Migrations for the full §5 schema; WAL + FK pragmas; seeded `project(id = 0)` "no project" row, `hourly_usage.project_id NOT NULL` (NULL in the PK would break `ON CONFLICT`); all store API from J0.2; hourly rollup upsert in the same tx; session totals + `active_seconds` (30-min gap rule); read queries for UI types; read-only connection constructor | Migration test empty→latest; ON CONFLICT dedup; rollup = sum of events, including events without a project (one bucket row, not one per event); tx rollback leaves cursor unchanged |
 | **B pricing** | `crates/tbt-pricing/**`, `assets/prices.toml` | TOML format + bundled prices for current Anthropic/OpenAI/Google models; exact → glob → unpriced matching; `effective_from/to` selection; long-context multiplier; `rust_decimal` math → micros; LiteLLM import diff (close row, open row, skip unchanged); priority user > imported > bundled | Tier boundaries; price switch mid-session; glob precedence; import idempotency |
-| **C claude-code adapter** | `crates/tbt-adapters/src/claude_code.rs`, `tests/fixtures/claude_code/**`, golden snapshots | `discover` over `~/.claude/projects/*/*.jsonl`; parse `assistant` lines; dedup key `message.id + requestId`; cache 5m/1h split; project path / branch / version; messages per privacy level; resumed sessions (copied IDs) | Golden (`insta`) per fixture; re-read from cursor yields no dupes; truncated file restarts |
+| **C claude-code adapter** | `crates/tbt-adapters/src/claude_code.rs`, `tests/fixtures/claude_code/**`, golden snapshots | Recursive `discover` over `~/.claude/projects/**/*.jsonl`, including `<session-id>/subagents/agent-*.jsonl`; subagent runs as their own sessions with `parent_session_id`; parse `assistant` lines; dedup key `message.id + requestId`; cache 5m/1h split; project path / branch / version; messages per privacy level; resumed sessions (copied IDs) | Golden (`insta`) per fixture, including a session with subagents; re-read from cursor yields no dupes; truncated file restarts |
 | **D UI shell + charts** | `crates/tbt-app/**` | Window, sidebar, top bar (date range, harness filter, Sync button stub), page router, dark theme, harness colour map; `charts` module: bar, stacked bar, line/area, heatmap, sparkline with hover tooltips; pages render from a `MockData` impl of the read query types | Snapshot/unit tests on chart scale math; manual screenshot in report |
 
 C establishes the adapter pattern (file layout, golden test harness) that Wave 2 adapters copy.
@@ -101,7 +107,7 @@ Merge order: A → B → C → D.
 | **E collector + daemon** | `crates/tbt-collector/src/{lib,pipeline,lock,scheduler,registry}.rs`, `crates/tbt-daemon/**` | §4 pipeline: lock file, `ingest_run`, adapters in parallel / sources sequential, skip unchanged sources, pricing applied, one tx per source, resumed-session linking, cumulative baseline rebasing, `IngestFinished` channel; `tbt-daemon --once` and loop mode; `tracing` to `$DATA_DIR/logs` | A, B, C |
 | **F recompute + seed** | `crates/tbt-collector/src/recompute.rs`, `crates/tbt-collector/src/price_seed.rs` | Seed `model_price` from bundled TOML on startup; recompute job by `price_id` / time range / unpriced model; rebuild session totals and affected `hourly_usage` hours | A, B |
 | **G codex adapter** | `adapters/src/codex.rs`, `fixtures/codex/**` | Cumulative `token_count` → deltas, reset handling, cursor state | C pattern |
-| **H opencode adapter** | `adapters/src/opencode.rs`, `fixtures/opencode/**` | Per-message JSON, `reported_cost` | C pattern |
+| **H opencode adapter** | `adapters/src/opencode.rs`, `fixtures/opencode/**` | Read `opencode.db` read-only (`session`, `message`, `part`); `SourceRef` = the DB file; row-watermark cursor (`time_updated` + rowid), not the JSONL helper; tolerate the DB being written to (WAL, busy timeout); `reported_cost`; fixture is a small anonymized copy of the DB. Legacy `storage/` per-message JSON only if a fixture of it turns up | C pattern (golden tests), own cursor |
 | **I gemini adapter** | `adapters/src/gemini_cli.rs`, `fixtures/gemini_cli/**` | Session JSON usage metadata; feature-gated; low-confidence note | C pattern |
 | **J generic JSONL** | `adapters/src/generic_jsonl.rs` | Field-path mapping config (serde), JSONPath-lite evaluator, dedup-key template | C pattern |
 | **K dashboard + sessions** | `crates/tbt-app/src/pages/{dashboard,sessions}.rs`, `crates/tbt-app/src/data.rs` | Swap `MockData` for real read-only store queries on `BackgroundExecutor`; KPI tiles, stacked hourly/daily cost bars, tokens-by-type area, top models/projects; virtualized sessions table with sort/filter/search | A, D |
@@ -156,6 +162,7 @@ Merge order: L → M → N → O → P.
 |---|---|
 | GPUI API churn / build issues on Wayland | J0.3 spike pins one version before any UI work |
 | Contract change mid-wave | Only the orchestrator edits frozen contracts; affected jobs rebase |
+| OpenCode storage format changed (JSON → SQLite) and may change again | H reads the DB schema version / `__drizzle_migrations`, warns on unknown versions; fixture per version |
 | Gemini format guessed without real logs | Feature-gated, low-confidence fixtures, revisit when installed |
 | Cumulative-counter rebasing across resumes | Decided in J0.2, property-tested in E |
 | Fixtures leaking private content | Anonymizer in J0.4; orchestrator greps fixtures for home paths before merge |

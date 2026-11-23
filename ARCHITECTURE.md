@@ -93,8 +93,9 @@ pub struct ReadBatch {
 ```
 
 A `SourceRef` is a single readable unit, such as a JSONL file, a JSON file or a SQLite DB.
-A `Cursor` is opaque to the collector but is usually
-`{ byte_offset, inode, size, mtime, last_line_hash }`.
+A `Cursor` is opaque to the collector. For log files it is usually
+`{ byte_offset, inode, size, mtime, last_line_hash }`; for a harness's own SQLite DB it is a
+row watermark such as `{ last_time_updated, last_rowid }`.
 
 ### 3.2 Normalized event
 
@@ -123,10 +124,10 @@ pub struct UsageEvent {
 
 | Harness | Typical source | Notes |
 |---|---|---|
-| Claude Code | `~/.claude/projects/<slug>/*.jsonl` | One file per session. `assistant` lines carry `message.usage`. The same `message.id` can repeat across content blocks, so dedup on `message.id + requestId` |
+| Claude Code | `~/.claude/projects/<slug>/*.jsonl` and `~/.claude/projects/<slug>/<session-id>/subagents/agent-*.jsonl` | One file per session, plus one per subagent run. Discovery is recursive. `assistant` lines carry `message.usage`. The same `message.id` can repeat across content blocks, so dedup on `message.id + requestId`. Subagent runs become their own `session` rows with `parent_session_id` set to the session in the `<session-id>` directory |
 | Codex CLI | `~/.codex/sessions/YYYY/MM/DD/*.jsonl` | `token_count` events can be **cumulative**, so store deltas |
 | Gemini CLI | `~/.gemini/tmp/<hash>/…` | Session/chat JSON with usage metadata |
-| OpenCode | `~/.local/share/opencode/storage/…` | Per-message JSON; sometimes includes cost |
+| OpenCode | `~/.local/share/opencode/opencode.db` | SQLite (`session`, `message`, `part` tables), opened read-only. Cursor is a row watermark, not a byte offset. Messages sometimes include cost. Older versions used per-message JSON under `storage/` |
 | Generic JSONL | configured in settings | Field-path mapping (`$.usage.input_tokens` → `input_tokens`) for new or in-house tools |
 
 Each adapter has fixture tests: real sample logs (anonymized) go in `tests/fixtures/<harness>/<version>/`,
@@ -159,7 +160,7 @@ Scheduler tick (hourly / startup / manual / fs-notify debounce)
 
 Properties:
 - **Idempotent.** Unique `(harness, dedup_key)` means a re-run, a crash mid-run or a reset cursor never double counts.
-- **Incremental.** The byte-offset cursor means each hourly run reads only new lines. If a file is truncated or rotated (inode changed or size < offset), the source is read again from 0, and dedup absorbs the repeats.
+- **Incremental.** The byte-offset cursor means each hourly run reads only new lines. If a file is truncated or rotated (inode changed or size < offset), the source is read again from 0, and dedup absorbs the repeats. DB sources (OpenCode) use a row watermark and re-read rows updated since it.
 - **Atomic per source.** The cursor and data commit in the same transaction.
 - **Missed hours.** The tick only asks "what is new since the cursor", so a laptop that sleeps for 10 hours catches up on the next tick without losing anything.
 - **Backfill.** On first run, the full history is ingested the same way.
@@ -212,6 +213,7 @@ CREATE TABLE session (
   ext_id TEXT NOT NULL, project_id INTEGER REFERENCES project(id),
   title TEXT, git_branch TEXT, harness_version TEXT,
   resumed_from_session_id INTEGER REFERENCES session(id),
+  parent_session_id INTEGER REFERENCES session(id),   -- subagent run → session that spawned it
   started_at TEXT NOT NULL, ended_at TEXT, active_seconds INTEGER NOT NULL DEFAULT 0,
   -- denormalized totals, maintained on ingest
   events INTEGER NOT NULL DEFAULT 0,
@@ -248,7 +250,7 @@ CREATE TABLE message (            -- optional session content
 
 CREATE TABLE hourly_usage (       -- rollup for fast charts
   hour TEXT NOT NULL, harness_id TEXT NOT NULL, model TEXT NOT NULL,
-  project_id INTEGER, events INTEGER NOT NULL,
+  project_id INTEGER NOT NULL REFERENCES project(id), events INTEGER NOT NULL,
   input_tokens INTEGER NOT NULL, output_tokens INTEGER NOT NULL,
   cache_write_tokens INTEGER NOT NULL, cache_read_tokens INTEGER NOT NULL,
   cost_micros INTEGER NOT NULL,
@@ -274,6 +276,7 @@ CREATE TABLE ingest_run (
 Notes:
 - Money is stored as integer **micro-USD**, so sums never drift.
 - `hourly_usage` is updated in the same transaction as the events. The dashboard reads rollups and never scans the event table for ranges.
+- `hourly_usage.project_id` is `NOT NULL`. Events without a project go to a seeded `project` row with `id = 0` ("no project"). SQLite treats NULLs in a primary key as distinct, so a nullable column would make `ON CONFLICT` upserts insert duplicate rows instead of adding to the bucket.
 - **Privacy setting:** `message` storage is off / metadata-only / truncated preview (default: metadata only, which means role, tool name and timestamps but no text).
 - Retention: events are kept forever. They are small (≈200 B per row without raw), so 1M events ≈ 200 MB. `raw_json` can be dropped after N days.
 
