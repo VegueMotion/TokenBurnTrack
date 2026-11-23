@@ -58,7 +58,7 @@ hourly tracking keeps running when the window is closed. A lock file
 ### Key crates
 | Concern | Crate |
 |---|---|
-| UI | `gpui` (+ optionally `gpui-component` for tables, inputs and charts) |
+| UI | `gpui-pre` + `gpui-pre-platform` (`wayland` feature; weekly snapshots of Zed's gpui, imported as `gpui` / `gpui_platform`) + `gpui-component` for tables, inputs and theme. All three are pinned with `=` and must be bumped together. The crates.io `gpui` 0.2.x is too old for current `gpui-component` |
 | DB | `rusqlite` (bundled, WAL) + `rusqlite_migration` — sync, simple, fast |
 | Async / timers | `smol` or GPUI's `BackgroundExecutor` in the app; `tokio` is not needed |
 | File watching (optional) | `notify` — triggers an early sync, never replaces the hourly sweep |
