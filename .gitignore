@@ -40,3 +40,4 @@ desktop.ini
 # Fixtures are committed on purpose
 !tests/fixtures/**/*.db
 !crates/*/tests/fixtures/**/*.db
+.claude/worktrees/

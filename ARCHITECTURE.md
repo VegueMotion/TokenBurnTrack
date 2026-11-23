@@ -220,6 +220,7 @@ CREATE TABLE session (
   input_tokens INTEGER NOT NULL DEFAULT 0, output_tokens INTEGER NOT NULL DEFAULT 0,
   cache_write_tokens INTEGER NOT NULL DEFAULT 0, cache_read_tokens INTEGER NOT NULL DEFAULT 0,
   cost_micros INTEGER NOT NULL DEFAULT 0,
+  cumulative_json TEXT,          -- last running total (Codex token_count), for resume rebasing
   UNIQUE(harness_id, ext_id)
 );
 
@@ -243,9 +244,11 @@ CREATE INDEX ix_event_session ON usage_event(session_id);
 
 CREATE TABLE message (            -- optional session content
   id INTEGER PRIMARY KEY, session_id INTEGER NOT NULL REFERENCES session(id),
-  ts TEXT NOT NULL, role TEXT NOT NULL, kind TEXT,   -- text / tool_use / tool_result
+  key TEXT NOT NULL,                                 -- stable per message, from harness IDs
+  ts TEXT NOT NULL, role TEXT NOT NULL, kind TEXT,   -- text / tool_use / tool_result / thinking
   tool_name TEXT, preview TEXT,                      -- truncated
-  usage_event_id INTEGER REFERENCES usage_event(id)
+  usage_event_id INTEGER REFERENCES usage_event(id),
+  UNIQUE(session_id, key)
 );
 
 CREATE TABLE hourly_usage (       -- rollup for fast charts
@@ -277,7 +280,9 @@ Notes:
 - Money is stored as integer **micro-USD**, so sums never drift.
 - `hourly_usage` is updated in the same transaction as the events. The dashboard reads rollups and never scans the event table for ranges.
 - `hourly_usage.project_id` is `NOT NULL`. Events without a project go to a seeded `project` row with `id = 0` ("no project"). SQLite treats NULLs in a primary key as distinct, so a nullable column would make `ON CONFLICT` upserts insert duplicate rows instead of adding to the bucket.
-- **Privacy setting:** `message` storage is off / metadata-only / truncated preview (default: metadata only, which means role, tool name and timestamps but no text).
+- **Privacy setting:** `message` storage is off / metadata-only / truncated preview (default: metadata only, which means role, tool name and timestamps but no text). Adapters always emit previews; the collector applies the privacy level before storing.
+- `message.key` makes message inserts idempotent the same way `dedup_key` does for events, so a re-read file or copied history does not duplicate messages.
+- `session.cumulative_json` holds the last running token total of sessions from harnesses that log cumulative counters. The collector uses it to rebase the first delta of a resumed session (see §4 *Resumed sessions* and `crates/tbt-core/CONTRACTS.md`).
 - Retention: events are kept forever. They are small (≈200 B per row without raw), so 1M events ≈ 200 MB. `raw_json` can be dropped after N days.
 
 ---
