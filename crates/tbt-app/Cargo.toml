@@ -11,3 +11,6 @@ tbt-core.workspace = true
 tbt-store.workspace = true
 anyhow.workspace = true
 jiff.workspace = true
+gpui.workspace = true
+gpui-platform.workspace = true
+gpui-component.workspace = true

@@ -15,7 +15,9 @@ tbt-pricing = { path = "crates/tbt-pricing" }
 tbt-store = { path = "crates/tbt-store" }
 tbt-collector = { path = "crates/tbt-collector" }
 
-gpui = "0.2.2"
+gpui = { package = "gpui-pre", version = "=0.3.14" }
+gpui-platform = { package = "gpui-pre-platform", version = "=0.3.14", features = ["wayland"] }
+gpui-component = "=0.11.0"
 rusqlite = { version = "0.41", features = ["bundled"] }
 rusqlite_migration = "2.7"
 serde = { version = "1", features = ["derive"] }
