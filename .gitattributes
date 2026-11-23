@@ -1,0 +1,132 @@
+* text=auto eol=lf
+
+# Source
+*.rs        text diff=rust
+*.toml      text
+*.sql       text
+*.wgsl      text
+*.glsl      text
+*.metal     text
+*.hlsl      text
+
+# Docs
+*.md        text diff=markdown
+*.txt       text
+*.adoc      text
+LICENSE*    text
+README*     text
+CHANGELOG*  text
+
+# Data and config
+*.json      text
+*.jsonl     text
+*.yaml      text
+*.yml       text
+*.csv       text
+*.ini       text
+*.cfg       text
+*.xml       text
+*.plist     text
+*.desktop   text
+*.service   text
+*.env.example text
+.editorconfig text
+.gitattributes text export-ignore
+.gitignore  text export-ignore
+.github/**  export-ignore
+
+# Web
+*.html      text diff=html
+*.css       text diff=css
+*.js        text
+*.ts        text
+
+# Scripts
+*.sh        text eol=lf
+*.bash      text eol=lf
+*.fish      text eol=lf
+*.py        text diff=python
+Makefile    text eol=lf
+justfile    text eol=lf
+Dockerfile  text eol=lf
+*.ps1       text eol=crlf
+*.psm1      text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Windows packaging
+*.rc        text eol=crlf
+*.wxs       text eol=crlf
+*.manifest  text eol=crlf
+
+# Generated
+Cargo.lock        text linguist-generated=true -diff merge=binary
+*.openflow.json   text linguist-generated=true -diff
+*.svg             text linguist-generated=true -diff
+
+# Test fixtures from harness logs
+**/fixtures/**    linguist-vendored=true
+**/testdata/**    linguist-vendored=true
+**/fixtures/**/*.jsonl  text eol=lf -diff
+**/testdata/**/*.jsonl  text eol=lf -diff
+
+# Images
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.bmp       binary
+*.ico       binary
+*.icns      binary
+*.tiff      binary
+*.psd       binary
+*.xcf       binary
+
+# Fonts
+*.ttf       binary
+*.otf       binary
+*.woff      binary
+*.woff2     binary
+*.eot       binary
+
+# Audio / video
+*.mp3       binary
+*.wav       binary
+*.ogg       binary
+*.mp4       binary
+*.webm      binary
+*.mov       binary
+
+# Archives
+*.zip       binary
+*.gz        binary
+*.tgz       binary
+*.xz        binary
+*.zst       binary
+*.7z        binary
+*.tar       binary
+*.bz2       binary
+
+# Databases
+*.db        binary
+*.db-shm    binary
+*.db-wal    binary
+*.sqlite    binary
+*.sqlite3   binary
+
+# Executables and packages
+*.exe       binary
+*.dll       binary
+*.so        binary
+*.dylib     binary
+*.a         binary
+*.lib       binary
+*.o         binary
+*.wasm      binary
+*.msi       binary
+*.dmg       binary
+*.deb       binary
+*.rpm       binary
+*.AppImage  binary
+*.pdf       binary
