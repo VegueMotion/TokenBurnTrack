@@ -12,7 +12,6 @@ use jiff::tz::TimeZone;
 use tbt_core::{Micros, SessionId, TokenCounts};
 use tbt_store::{EventRow, MessageRow, SessionDetail, SessionRow};
 
-use super::dashboard::{cost_with_unpriced, unpriced_badge};
 use super::sessions::wall_secs;
 use super::{Loadable, spawn_load};
 use crate::app_state::{AppState, AppStateEvent};
@@ -124,7 +123,6 @@ pub struct Chain {
     pub links: Vec<SessionRow>,
     pub current: usize,
     pub total: Micros,
-    pub unpriced: u64,
 }
 
 impl Chain {
@@ -132,7 +130,6 @@ impl Chain {
         let current = links.iter().position(|r| r.id == session).unwrap_or(0);
         Chain {
             total: chain_total(&links),
-            unpriced: links.iter().map(|r| r.unpriced_events).sum(),
             links,
             current,
         }
@@ -232,14 +229,7 @@ pub fn call_tooltip(e: &EventRow, cumulative: f64) -> Vec<TipRow> {
             fmt_tokens(e.tokens.reasoning),
         ));
     }
-    rows.push(TipRow::new(
-        "Cost",
-        if e.price_id.is_none() {
-            "unpriced".to_owned()
-        } else {
-            fmt_micros(e.cost)
-        },
-    ));
+    rows.push(TipRow::new("Cost", fmt_micros(e.cost)));
     if let Some(r) = e.reported_cost {
         rows.push(TipRow::new("Reported", fmt_micros(r)));
     }
@@ -436,14 +426,9 @@ impl SessionDetailPage {
             .ended_at
             .map(|e| fmt_stamp(e, &d.tz))
             .unwrap_or_else(|| "–".into());
-        let cost_value = if s.unpriced_events > 0 && s.cost == Micros::ZERO {
-            "–".to_owned()
-        } else {
-            fmt_micros(s.cost)
-        };
+        let cost_value = fmt_micros(s.cost);
         let cost_sub = match d.compare.label() {
             Some(l) => l,
-            None if s.unpriced_events > 0 => "unpriced calls not counted".to_owned(),
             None => "API-equivalent cost".to_owned(),
         };
         let mut token_sub = format!(
@@ -510,12 +495,7 @@ impl SessionDetailPage {
                     ))
                     .child(stat(
                         "Cost",
-                        h_flex()
-                            .gap_2()
-                            .items_center()
-                            .child(cost_value)
-                            .children(unpriced_badge(s.unpriced_events, cx))
-                            .into_any_element(),
+                        cost_value.into_any_element(),
                         Some(cost_sub),
                         cx,
                     )),
@@ -651,7 +631,7 @@ impl SessionDetailPage {
                     .w(px(110.))
                     .flex()
                     .justify_end()
-                    .child(cost_with_unpriced(row.cost, row.unpriced_events)),
+                    .child(fmt_micros(row.cost)),
             )
             .into_any_element()
     }
@@ -720,7 +700,7 @@ impl SessionDetailPage {
                 .child(ui::muted_text(
                     format!(
                         "Combined: {} across {} sessions",
-                        cost_with_unpriced(c.total, c.unpriced),
+                        fmt_micros(c.total),
                         c.links.len()
                     ),
                     cx,
@@ -729,7 +709,6 @@ impl SessionDetailPage {
         let subs = &d.detail.subagents;
         if !subs.is_empty() {
             any = true;
-            let unpriced = subs.iter().map(|r| r.unpriced_events).sum();
             card = card
                 .child(Self::section("Subagents", cx))
                 .children(subs.iter().map(|r| self.link("sub", r, false, d, cx)))
@@ -737,7 +716,7 @@ impl SessionDetailPage {
                     format!(
                         "{} subagents · {}",
                         subs.len(),
-                        cost_with_unpriced(d.subagents_total(), unpriced)
+                        fmt_micros(d.subagents_total())
                     ),
                     cx,
                 ));
@@ -1045,12 +1024,12 @@ mod tests {
     }
 
     #[test]
-    fn tooltip_marks_unpriced_calls() {
+    fn tooltip_counts_unpriced_calls_as_zero() {
         let mut e = event(1, 0, 10, 0, 0);
         e.price_id = None;
         let rows = call_tooltip(&e, 0.0);
         let cost = rows.iter().find(|r| r.label.as_ref() == "Cost").unwrap();
-        assert_eq!(cost.value.as_ref(), "unpriced");
+        assert_eq!(cost.value.as_ref(), "$0.00");
         assert!(rows.iter().all(|r| r.label.as_ref() != "Output"));
         let priced = call_tooltip(&event(1, 1_230_000, 10, 4, 0), 2.0);
         let labels: Vec<&str> = priced.iter().map(|r| r.label.as_ref()).collect();

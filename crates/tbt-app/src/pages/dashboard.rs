@@ -7,7 +7,7 @@ use gpui::{
     Styled, Subscription, Task, Window, div, px,
 };
 use gpui_component::{ActiveTheme, StyledExt, h_flex, v_flex};
-use tbt_core::{HarnessId, Micros};
+use tbt_core::HarnessId;
 use tbt_store::{BucketGroup, KpiSummary, ModelStats, ProjectStats, QueryFilter};
 
 use super::{Loadable, spawn_load};
@@ -123,31 +123,6 @@ pub fn burn_rate(kpi: &KpiSummary) -> Option<f64> {
     (kpi.active_hours > 0).then(|| micros_to_usd(kpi.cost) / kpi.active_hours as f64)
 }
 
-pub fn cost_with_unpriced(cost: Micros, unpriced: u64) -> String {
-    match unpriced {
-        0 => fmt_micros(cost),
-        n if cost == Micros::ZERO => format!("{n} unpriced"),
-        n => format!("{} + {n} unpriced", fmt_micros(cost)),
-    }
-}
-
-pub fn unpriced_badge(unpriced: u64, cx: &App) -> Option<AnyElement> {
-    let t = cx.theme();
-    (unpriced > 0).then(|| {
-        div()
-            .flex_none()
-            .px_1p5()
-            .rounded(px(4.))
-            .border_1()
-            .border_color(t.warning.opacity(0.5))
-            .bg(t.warning.opacity(0.12))
-            .text_xs()
-            .text_color(t.warning)
-            .child(format!("⚠ + {} unpriced", fmt_count(unpriced)))
-            .into_any_element()
-    })
-}
-
 #[derive(Default)]
 struct Hovers {
     cost: Hover,
@@ -202,7 +177,6 @@ impl DashboardPage {
 fn kpi_tile(
     label: &'static str,
     value: String,
-    badge: Option<AnyElement>,
     sub: Option<String>,
     extra: Option<AnyElement>,
     cx: &App,
@@ -219,17 +193,11 @@ fn kpi_tile(
         .bg(t.secondary.opacity(0.35))
         .child(div().text_xs().text_color(t.muted_foreground).child(label))
         .child(
-            h_flex()
-                .gap_2()
-                .items_center()
-                .child(
-                    div()
-                        .text_2xl()
-                        .font_semibold()
-                        .text_color(t.foreground)
-                        .child(value),
-                )
-                .children(badge),
+            div()
+                .text_2xl()
+                .font_semibold()
+                .text_color(t.foreground)
+                .child(value),
         )
         .child(
             div()
@@ -244,7 +212,6 @@ fn ranked_row(
     name: String,
     detail: String,
     value: String,
-    badge: Option<AnyElement>,
     fraction: f64,
     color: Hsla,
     cx: &App,
@@ -266,7 +233,6 @@ fn ranked_row(
                         .child(name),
                 )
                 .child(div().text_xs().text_color(t.muted_foreground).child(detail))
-                .children(badge)
                 .child(
                     div()
                         .w(px(72.))
@@ -292,12 +258,7 @@ impl DashboardPage {
             .child(kpi_tile(
                 "Cost in range",
                 fmt_micros(k.cost),
-                unpriced_badge(k.unpriced_events, cx),
-                Some(if k.unpriced_events > 0 {
-                    "unpriced calls not counted".into()
-                } else {
-                    "API-equivalent cost".into()
-                }),
+                Some("API-equivalent cost".into()),
                 Some(
                     sparkline(d.cost_per_bucket.clone(), categorical(0))
                         .w_full()
@@ -309,7 +270,6 @@ impl DashboardPage {
             .child(kpi_tile(
                 "Total tokens",
                 fmt_tokens(k.tokens.total()),
-                None,
                 Some(format!(
                     "{} in · {} out",
                     fmt_tokens(k.tokens.input + k.tokens.cache_write + k.tokens.cache_read),
@@ -321,7 +281,6 @@ impl DashboardPage {
             .child(kpi_tile(
                 "Sessions",
                 fmt_count(k.sessions),
-                None,
                 Some(format!("{} calls", fmt_count(k.events))),
                 None,
                 cx,
@@ -332,7 +291,6 @@ impl DashboardPage {
                     .cache_hit_ratio()
                     .map(fmt_pct)
                     .unwrap_or_else(|| "–".into()),
-                None,
                 Some("of prompt tokens".into()),
                 None,
                 cx,
@@ -342,7 +300,6 @@ impl DashboardPage {
                 burn_rate(k)
                     .map(|r| format!("{}/h", fmt_usd(r)))
                     .unwrap_or_else(|| "–".into()),
-                None,
                 Some(format!("over {} active hours", k.active_hours)),
                 None,
                 cx,
@@ -373,12 +330,7 @@ impl DashboardPage {
                         ranked_row(
                             m.model.clone(),
                             format!("{} tok", fmt_tokens(m.tokens.total())),
-                            if m.unpriced_events > 0 && m.cost == Micros::ZERO {
-                                "–".into()
-                            } else {
-                                fmt_micros(m.cost)
-                            },
-                            unpriced_badge(m.unpriced_events, cx),
+                            fmt_micros(m.cost),
                             safe_ratio(micros_to_usd(m.cost), max_model),
                             categorical(0),
                             cx,
@@ -405,7 +357,6 @@ impl DashboardPage {
                                 p.name.clone().unwrap_or_else(|| "(no project)".into()),
                                 format!("{} sessions", p.sessions),
                                 fmt_micros(p.cost),
-                                None,
                                 safe_ratio(micros_to_usd(p.cost), max_project),
                                 categorical(0),
                                 cx,
@@ -480,7 +431,7 @@ mod tests {
     use super::*;
     use crate::data::MockData;
     use jiff::Timestamp;
-    use tbt_core::TimeRange;
+    use tbt_core::{Micros, TimeRange};
     use tbt_store::BucketSize;
 
     #[test]
@@ -514,16 +465,5 @@ mod tests {
         assert_eq!(tokens as u64, d.kpi.tokens.total());
         assert!(d.top_models.len() <= TOP_N);
         assert!(!d.no_data);
-    }
-
-    #[test]
-    fn unpriced_cost_is_not_shown_as_zero() {
-        assert_eq!(cost_with_unpriced(Micros(12_340_000), 0), "$12.34");
-        assert_eq!(
-            cost_with_unpriced(Micros(12_340_000), 5),
-            "$12.34 + 5 unpriced"
-        );
-        assert_eq!(cost_with_unpriced(Micros::ZERO, 3), "3 unpriced");
-        assert_eq!(cost_with_unpriced(Micros::ZERO, 0), "$0.00");
     }
 }

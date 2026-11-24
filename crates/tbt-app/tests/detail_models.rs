@@ -210,7 +210,7 @@ fn unknown_session_is_not_found() {
 }
 
 #[test]
-fn unpriced_subagent_shows_unpriced_calls_not_zero_cost() {
+fn unpriced_subagent_counts_calls_as_zero_cost() {
     let fx = fixture(&[HAIKU]);
     let data = StoreData::new(fx.db.clone());
     let sub = data
@@ -221,12 +221,10 @@ fn unpriced_subagent_shows_unpriced_calls_not_zero_cost() {
         .unwrap();
     let d = load(&data, sub.id);
     assert_eq!(d.detail.session.unpriced_events, d.detail.session.events);
-    assert!(
-        d.timeline
-            .tooltips
-            .iter()
-            .all(|rows| rows.iter().any(|r| r.value.as_ref() == "unpriced"))
-    );
+    assert!(d.timeline.tooltips.iter().all(|rows| {
+        rows.iter()
+            .any(|r| r.label.as_ref() == "Cost" && r.value.as_ref() == "$0.00")
+    }));
     let p = load(&data, sub.parent.unwrap());
     assert_eq!(p.subagents_total(), Micros::ZERO);
     assert_eq!(p.detail.subagents[0].unpriced_events, sub.events);
@@ -241,7 +239,6 @@ fn models_page_totals_match_kpi() {
     let m = ModelsData::load(&data, &f).unwrap();
     assert!(!m.no_data);
     assert_eq!(m.cost_total, kpi.cost);
-    assert_eq!(m.unpriced, kpi.unpriced_events);
     let charted: f64 = m.cost.series.iter().flat_map(|s| s.values.iter()).sum();
     assert!((charted - micros_to_usd(kpi.cost)).abs() < 1e-6);
     let tokens: f64 = m.tokens.series.iter().flat_map(|s| s.values.iter()).sum();

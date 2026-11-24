@@ -17,8 +17,8 @@ the snapshots going while the app is closed.
   linked to the session that started them.
 - Cost per API call, from bundled prices (`assets/prices.toml`), an optional LiteLLM
   price import and your own overrides. Prices are versioned by date, so a price change
-  does not rewrite old costs. Models without a price are flagged as *unpriced*, not
-  counted as $0. When a harness logs its own cost, both values are kept.
+  does not rewrite old costs. Calls to models without a price count as $0;
+  those models are listed under Settings → Prices so you can add a price. When a harness logs its own cost, both values are kept.
 - Desktop app: dashboard (KPIs, hourly/daily cost bars, tokens by type, top models and
   projects, weekday × hour heatmap), sessions table and session detail, models,
   projects, harnesses and settings pages, CSV/JSON export. While it is open, the app

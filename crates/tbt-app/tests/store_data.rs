@@ -6,7 +6,7 @@ use std::sync::Arc;
 use jiff::Timestamp;
 use tbt_app::charts::format::micros_to_usd;
 use tbt_app::data::{DataSource, StoreData};
-use tbt_app::pages::dashboard::{DashboardData, cost_with_unpriced};
+use tbt_app::pages::dashboard::DashboardData;
 use tbt_app::pages::sessions::{SessionTable, SortKey};
 use tbt_core::{HarnessId, Micros, TimeRange};
 use tbt_store::{BucketSize, QueryFilter, Store};
@@ -119,7 +119,7 @@ fn day_and_hour_buckets_sum_to_kpi() {
 }
 
 #[test]
-fn unpriced_events_are_not_counted_as_zero() {
+fn unpriced_events_count_as_zero_cost() {
     let priced = fixture(&[]);
     let partly = fixture(&[HAIKU]);
     let f = all_time();
@@ -130,14 +130,6 @@ fn unpriced_events_are_not_counted_as_zero() {
     assert_eq!(k.events, full.events);
     assert!(k.unpriced_events > 0);
     assert!(k.cost < full.cost);
-    assert_eq!(
-        cost_with_unpriced(k.cost, k.unpriced_events),
-        format!(
-            "{} + {} unpriced",
-            tbt_app::charts::format::fmt_micros(k.cost),
-            k.unpriced_events
-        )
-    );
     assert_buckets_match_kpi(&d);
 
     let haiku = data
@@ -151,8 +143,6 @@ fn unpriced_events_are_not_counted_as_zero() {
     assert_eq!(haiku.events, k.unpriced_events);
 
     let table = SessionTable::load(&data, &f).unwrap();
-    let view = table.view("", SortKey::Start, true);
-    assert_eq!(view.unpriced, k.unpriced_events);
     let sub = table
         .rows
         .iter()
