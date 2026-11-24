@@ -395,12 +395,7 @@ impl Render for SessionsPage {
                             .w(px(360.))
                             .child(Input::new(&self.search).cleanable(true)),
                     )
-                    .child(
-                        div()
-                            .text_sm()
-                            .text_color(muted)
-                            .child(summary),
-                    ),
+                    .child(div().text_sm().text_color(muted).child(summary)),
             )
             .child(
                 v_flex()

@@ -229,10 +229,7 @@ pub fn call_tooltip(e: &EventRow, cumulative: f64) -> Vec<TipRow> {
             fmt_tokens(e.tokens.reasoning),
         ));
     }
-    rows.push(TipRow::new(
-        "Cost",
-        fmt_micros(e.cost),
-    ));
+    rows.push(TipRow::new("Cost", fmt_micros(e.cost)));
     if let Some(r) = e.reported_cost {
         rows.push(TipRow::new("Reported", fmt_micros(r)));
     }
