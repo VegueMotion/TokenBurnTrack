@@ -10,6 +10,7 @@ finish-args:
   - --share=network
   - --filesystem=~/.claude:ro
   - --filesystem=~/.codex:ro
+  - --filesystem=~/.copilot/session-state:ro
   - --filesystem=~/.gemini:ro
   - --filesystem=xdg-data/opencode
   - --filesystem=xdg-config/Cursor/User:ro

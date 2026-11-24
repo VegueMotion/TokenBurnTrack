@@ -10,6 +10,7 @@ pub struct HarnessId(Cow<'static, str>);
 impl HarnessId {
     pub const CLAUDE_CODE: HarnessId = HarnessId(Cow::Borrowed("claude_code"));
     pub const CODEX: HarnessId = HarnessId(Cow::Borrowed("codex"));
+    pub const COPILOT_CLI: HarnessId = HarnessId(Cow::Borrowed("copilot_cli"));
     pub const CURSOR: HarnessId = HarnessId(Cow::Borrowed("cursor"));
     pub const GEMINI_CLI: HarnessId = HarnessId(Cow::Borrowed("gemini_cli"));
     pub const OPENCODE: HarnessId = HarnessId(Cow::Borrowed("opencode"));

@@ -53,13 +53,18 @@ options are in [docs/install.md](docs/install.md). Settings are in
 | Gemini CLI | `~/.gemini/tmp/<project>/chats/*.jsonl` and legacy `session-*.json` (macOS also `~/.cache/.gemini/tmp`) | `GEMINI_CLI_HOME` |
 | OpenCode | `~/.local/share/opencode/opencode.db` (opened read-only) | `XDG_DATA_HOME` |
 | Cursor | `~/.config/Cursor/User/globalStorage/state.vscdb` (opened read-only; macOS `~/Library/Application Support/Cursor`, Windows `%APPDATA%\Cursor`) | `XDG_CONFIG_HOME` |
+| GitHub Copilot CLI | `~/.copilot/session-state/<session-id>/events.jsonl` | `COPILOT_HOME` |
 | Generic JSONL | any JSONL log you describe in `config.toml` | `[[generic_jsonl]]` |
 
 Source files are only ever read. Roots can be changed per harness on the Harnesses page.
 The Gemini CLI parser was built from upstream source rather than real logs, so treat its
 numbers with more caution. The same goes for Cursor, whose chat database format is not
 documented: it reads the agent and chat panel's per-message `tokenCount`, which Cursor
-does not fill in for every model, and it does not read the `cursor-agent` CLI.
+does not fill in for every model, and it does not read the `cursor-agent` CLI. The GitHub
+Copilot CLI parser was also built from the published event schema, not real logs. Copilot
+does not write per-call usage to disk, only per-model running totals at checkpoints and at
+shutdown, so each usage row covers the calls since the previous total, and only the CLI is
+read, not Copilot in VS Code or other editors.
 
 ## Privacy
 

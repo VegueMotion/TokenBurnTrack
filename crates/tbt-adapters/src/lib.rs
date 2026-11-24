@@ -27,6 +27,15 @@ pub mod cursor;
 #[cfg(feature = "cursor")]
 pub use cursor::CursorAdapter;
 
+#[cfg(any(feature = "cursor", feature = "copilot_cli"))]
+mod models;
+
+#[cfg(feature = "copilot_cli")]
+pub mod copilot_cli;
+
+#[cfg(feature = "copilot_cli")]
+pub use copilot_cli::CopilotCliAdapter;
+
 #[cfg(feature = "gemini_cli")]
 pub mod gemini_cli;
 

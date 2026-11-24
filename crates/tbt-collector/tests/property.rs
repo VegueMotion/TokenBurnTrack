@@ -37,6 +37,11 @@ const FIXTURE_SETS: &[FixtureSet] = &[
         split_jsonl: false,
     },
     FixtureSet {
+        adapter: copilot_cli,
+        root: "copilot_cli/1.0.4/session-state",
+        split_jsonl: true,
+    },
+    FixtureSet {
         adapter: cursor,
         root: "cursor/3.31.15/User/globalStorage",
         split_jsonl: false,
@@ -49,6 +54,10 @@ fn codex() -> Arc<dyn HarnessAdapter> {
 
 fn opencode() -> Arc<dyn HarnessAdapter> {
     Arc::new(tbt_adapters::OpenCodeAdapter::new())
+}
+
+fn copilot_cli() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::CopilotCliAdapter::new())
 }
 
 fn cursor() -> Arc<dyn HarnessAdapter> {
@@ -229,6 +238,7 @@ fn reference_matches_golden_counts() {
         [
             ("claude_code", claude_golden_total()),
             ("codex", 381),
+            ("copilot_cli", 6),
             ("cursor", 3),
             ("gemini_cli", 12),
             ("opencode", 33),

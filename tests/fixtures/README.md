@@ -1,8 +1,8 @@
 # Adapter fixtures
 
 Real harness logs from one machine (harvested 2026-11-23), anonymized with
-`scripts/anonymize.py`. Gemini CLI fixtures are synthetic (see
-`gemini_cli/README.md`, confidence: low). The Cursor fixture is synthetic too:
+`scripts/anonymize.py`. Gemini CLI fixtures are synthetic (see `gemini_cli/README.md`,
+confidence: low), and so are the GitHub Copilot CLI ones (see below). The Cursor fixture is synthetic too:
 `cursor/3.31.15/User/globalStorage/state.vscdb` is built from `cursor/fixture.sql`
 (`sqlite3 state.vscdb < fixture.sql`) with the table layout of a real Cursor 3.31.15
 database, and holds 2 chats and 3 calls with token counts.
@@ -192,6 +192,46 @@ Format notes:
 ## Gemini CLI (`gemini_cli/`)
 
 Synthetic, built from upstream source. See `gemini_cli/README.md`.
+
+## GitHub Copilot CLI (`copilot_cli/1.0.4/session-state/<session-id>/events.jsonl`)
+
+**confidence: low.** Synthetic: Copilot CLI is not installed on the harvest machine. Written by
+hand from the event types generated from `session-events.schema.json` in `github/copilot-sdk`
+(`nodejs/src/generated/session-events.ts`, `main`, read 2026-11-25) and the Copilot CLI
+config-dir docs. Text is lorem, ids and token numbers are invented, and the version number is
+made up.
+
+| Session | Scenario |
+|---|---|
+| `3b0f6c2e-…` | model switch (`claude-sonnet-4.5` → `gpt-5`), 2 `session.usage_checkpoint` + `session.shutdown`, tool calls incl. a failed one |
+| `7d9e1a2b-…` | shutdown, `session.resume` on another day with a branch change, then a second shutdown whose totals continue from the first; a subagent message (`agentId`), an ephemeral `session.idle` and an unknown event type |
+
+Format notes:
+
+- Location: `~/.copilot/session-state/<session-id>/events.jsonl` (`COPILOT_HOME` replaces
+  `~/.copilot`). A session dir also holds workspace artifacts; `session.journal_link` names a
+  numbered predecessor log in the same dir.
+- Line = `{type, id, parentId, timestamp, data}` plus optional `ephemeral`, `agentId`
+  (subagent events). `session.start.data`: `sessionId`, `copilotVersion`, `startTime`,
+  `selectedModel`, `context{cwd, gitRoot, branch, repository}`; `session.resume.data` has
+  `context` too. `session.model_change.data.newModel`.
+- `assistant.usage` (per call: `model`, `inputTokens`, `outputTokens`, `cacheReadTokens`,
+  `cacheWriteTokens`, `reasoningTokens`, `apiCallId`) is marked `ephemeral: true` in the
+  schema, which means it is not written to `events.jsonl`. What is written: per-model running
+  totals in `session.usage_checkpoint.data.accountingSnapshot.modelMetrics` and
+  `session.shutdown.data.modelMetrics`, keyed by model id, each `{requests{count, cost},
+  usage{inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens, reasoningTokens?}}`.
+  The adapter emits one event per model whenever its total changes, with the difference from
+  the previous total (the full total if any count went down). The dedup key is
+  `<session>:<model>:<running total>`.
+- The schema doesn't say whether `inputTokens` includes cache reads/writes. The adapter
+  subtracts them from each difference when its `inputTokens` is at least their sum, and
+  otherwise takes it as uncached input. `requests.cost` is a premium-request multiplier, not money, so no
+  reported cost is set. Claude model ids use dots (`claude-sonnet-4.5`) and are mapped to
+  the API names (`claude-sonnet-4-5`).
+- Messages: `user.message.data.content`, `assistant.message.data{content, toolRequests[{toolCallId,
+  name, arguments}]}`, `assistant.reasoning.data.content`,
+  `tool.execution_complete.data{toolCallId, success, result{content}, error{message}}`.
 
 ## Database snapshots (`db/`)
 
