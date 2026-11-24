@@ -25,6 +25,7 @@ pub const BUILTIN_SETS: &[(HarnessId, &str)] = &[
     (HarnessId::GEMINI_CLI, "gemini_cli/0.71.0-nightly"),
     (HarnessId::CURSOR, "cursor/3.31.15/User/globalStorage"),
     (HarnessId::COPILOT_CLI, "copilot_cli/1.0.4/session-state"),
+    (HarnessId::GROK_BUILD, "grok_build/1.0.45"),
 ];
 
 pub const GENERIC_SETS: &[(&str, &str)] = &[
@@ -38,15 +39,22 @@ pub const GOLDEN: &[(&str, i64)] = &[
     ("copilot_cli", 6),
     ("cursor", 3),
     ("gemini_cli", 12),
+    ("grok_build", 6),
     (IN_HOUSE, 4),
     (LLM_PROXY, 6),
     ("opencode", 33),
 ];
 
-pub const GOLDEN_TOTAL: u64 = 649;
-pub const SOURCES: u64 = 29;
+pub const GOLDEN_TOTAL: u64 = 655;
+pub const SOURCES: u64 = 33;
 
 pub const KNOWN_WARNINGS: &[(&str, &str, u64, &str)] = &[
+    (
+        "grok_build",
+        "usage.json",
+        0,
+        "turns[1] has no valid `endedAt`: \"\"",
+    ),
     (
         IN_HOUSE,
         "s-0001.jsonl",

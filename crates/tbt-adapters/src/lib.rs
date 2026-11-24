@@ -27,7 +27,7 @@ pub mod cursor;
 #[cfg(feature = "cursor")]
 pub use cursor::CursorAdapter;
 
-#[cfg(any(feature = "cursor", feature = "copilot_cli"))]
+#[cfg(any(feature = "cursor", feature = "copilot_cli", feature = "grok_build"))]
 mod models;
 
 #[cfg(feature = "copilot_cli")]
@@ -41,6 +41,12 @@ pub mod gemini_cli;
 
 #[cfg(feature = "gemini_cli")]
 pub use gemini_cli::GeminiCliAdapter;
+
+#[cfg(feature = "grok_build")]
+pub mod grok_build;
+
+#[cfg(feature = "grok_build")]
+pub use grok_build::GrokBuildAdapter;
 
 #[cfg(feature = "generic_jsonl")]
 pub mod generic_jsonl;

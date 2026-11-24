@@ -10,10 +10,11 @@ use super::path::{JsonPath, PathError, as_text};
 
 pub const DEFAULT_GLOB: &str = "**/*.jsonl";
 
-const BUILTIN_IDS: [HarnessId; 4] = [
+const BUILTIN_IDS: [HarnessId; 5] = [
     HarnessId::CLAUDE_CODE,
     HarnessId::CODEX,
     HarnessId::GEMINI_CLI,
+    HarnessId::GROK_BUILD,
     HarnessId::OPENCODE,
 ];
 const MAX_ID_LEN: usize = 64;
@@ -504,6 +505,7 @@ mod tests {
             ("claude_code", "is a built-in harness id"),
             ("codex", "is a built-in harness id"),
             ("gemini_cli", "is a built-in harness id"),
+            ("grok_build", "is a built-in harness id"),
             ("opencode", "is a built-in harness id"),
         ] {
             assert_eq!(

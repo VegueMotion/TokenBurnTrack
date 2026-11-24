@@ -17,7 +17,8 @@ pub fn harness_slot(id: &HarnessId) -> usize {
         "codex" => 0,
         "gemini_cli" => 2,
         "opencode" => 3,
-        other => 4 + (fnv1a(other) % 4) as usize,
+        "grok_build" => 4,
+        other => 5 + (fnv1a(other) % 3) as usize,
     }
 }
 
@@ -33,6 +34,7 @@ pub fn harness_label(id: &HarnessId) -> String {
         "opencode" => "OpenCode".to_owned(),
         "cursor" => "Cursor".to_owned(),
         "copilot_cli" => "Copilot CLI".to_owned(),
+        "grok_build" => "Grok Build".to_owned(),
         other => other.to_owned(),
     }
 }
@@ -107,9 +109,10 @@ mod tests {
             HarnessId::CODEX,
             HarnessId::GEMINI_CLI,
             HarnessId::OPENCODE,
+            HarnessId::GROK_BUILD,
         ];
         let slots: Vec<usize> = ids.iter().map(harness_slot).collect();
-        assert_eq!(slots, vec![1, 0, 2, 3]);
+        assert_eq!(slots, vec![1, 0, 2, 3, 4]);
         assert_eq!(
             harness_color(&HarnessId::new("claude_code")),
             harness_color(&HarnessId::CLAUDE_CODE)
@@ -120,7 +123,7 @@ mod tests {
     fn custom_harness_color_is_stable_and_outside_builtin_slots() {
         let a = harness_slot(&HarnessId::new("my_tool"));
         assert_eq!(a, harness_slot(&HarnessId::new("my_tool")));
-        assert!((4..8).contains(&a));
+        assert!((5..8).contains(&a));
     }
 
     #[test]
