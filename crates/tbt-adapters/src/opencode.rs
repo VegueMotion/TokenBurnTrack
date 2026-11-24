@@ -176,7 +176,22 @@ impl OpenCodeAdapter {
         state: State,
         now_ms: i64,
     ) -> rusqlite::Result<(ReadBatch, State)> {
-        let conn = open_read_only(&src.path)?;
+        match self.read_db_with(src, state.clone(), now_ms, false) {
+            Err(e) if is_read_only(&e) && !wal_path(&src.path).exists() => {
+                self.read_db_with(src, state, now_ms, true)
+            }
+            other => other,
+        }
+    }
+
+    fn read_db_with(
+        &self,
+        src: &SourceRef,
+        state: State,
+        now_ms: i64,
+        immutable: bool,
+    ) -> rusqlite::Result<(ReadBatch, State)> {
+        let conn = open_read_only(&src.path, immutable)?;
         conn.busy_timeout(self.busy_timeout)?;
         let tx = conn.unchecked_transaction()?;
         let mut reader = Reader::new(src, &tx, state, now_ms, self.stale_after);
@@ -190,14 +205,20 @@ impl OpenCodeAdapter {
     }
 }
 
-fn open_read_only(path: &Path) -> rusqlite::Result<Connection> {
+fn open_read_only(path: &Path, immutable: bool) -> rusqlite::Result<Connection> {
     let flags = OpenFlags::SQLITE_OPEN_READ_ONLY
         | OpenFlags::SQLITE_OPEN_URI
         | OpenFlags::SQLITE_OPEN_NO_MUTEX;
-    Connection::open_with_flags(read_only_uri(path), flags)
+    Connection::open_with_flags(read_only_uri(path, immutable), flags)
 }
 
-fn read_only_uri(path: &Path) -> String {
+fn wal_path(path: &Path) -> PathBuf {
+    let mut wal = path.as_os_str().to_owned();
+    wal.push("-wal");
+    PathBuf::from(wal)
+}
+
+fn read_only_uri(path: &Path, immutable: bool) -> String {
     let path = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
     let mut uri = String::from("file:");
     for c in path.to_string_lossy().chars() {
@@ -208,6 +229,9 @@ fn read_only_uri(path: &Path) -> String {
         }
     }
     uri.push_str("?mode=ro");
+    if immutable {
+        uri.push_str("&immutable=1");
+    }
     uri
 }
 
@@ -216,6 +240,10 @@ fn is_busy(e: &rusqlite::Error) -> bool {
         e.sqlite_error_code(),
         Some(ErrorCode::DatabaseBusy | ErrorCode::DatabaseLocked)
     )
+}
+
+fn is_read_only(e: &rusqlite::Error) -> bool {
+    e.sqlite_error_code() == Some(ErrorCode::ReadOnly)
 }
 
 fn is_db_name(path: &Path) -> bool {
@@ -853,8 +881,12 @@ mod tests {
     #[test]
     fn uri_escapes_special_characters() {
         assert_eq!(
-            read_only_uri(Path::new("/a b/x?y#z%.db")),
+            read_only_uri(Path::new("/a b/x?y#z%.db"), false),
             "file:/a%20b/x%3Fy%23z%25.db?mode=ro"
+        );
+        assert_eq!(
+            read_only_uri(Path::new("/d/opencode.db"), true),
+            "file:/d/opencode.db?mode=ro&immutable=1"
         );
     }
 

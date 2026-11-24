@@ -112,6 +112,27 @@ fn insert_assistant(conn: &Connection, session: &str, id: &str, ts: i64, complet
     }
 }
 
+#[cfg(unix)]
+#[test]
+fn closed_wal_database_in_a_read_only_directory_is_readable() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let (_dir, path) = temp_db();
+    writer(&path)
+        .query_row("PRAGMA journal_mode = WAL", [], |_| Ok(()))
+        .unwrap();
+    let parent = path.parent().unwrap().to_path_buf();
+    assert!(!parent.join("opencode.db-wal").exists());
+    let mode = |m| std::fs::Permissions::from_mode(m);
+    std::fs::set_permissions(&parent, mode(0o555)).unwrap();
+    let result = adapter().read(&src(&path), &Cursor::empty());
+    std::fs::set_permissions(&parent, mode(0o755)).unwrap();
+
+    let batch = result.unwrap();
+    assert!(batch.warnings.is_empty(), "{:?}", batch.warnings);
+    assert_eq!(batch.events.len(), FIXTURE_EVENTS);
+}
+
 #[test]
 fn golden_fixture() {
     let batch = read_file(&adapter(), &fixture(DB));
