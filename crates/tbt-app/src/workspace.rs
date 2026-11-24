@@ -1,14 +1,16 @@
 use std::sync::Arc;
 
 use gpui::{
-    AnyView, App, Context, Entity, Hsla, IntoElement, ParentElement, Render, SharedString, Styled,
-    Window, div, prelude::*, px,
+    AnyView, App, Context, Decorations, Entity, Hsla, IntoElement, MouseButton, MouseMoveEvent,
+    ParentElement, Render, SharedString, Styled, Window, div, prelude::*, px,
 };
 use gpui_component::button::{Button, ButtonVariants};
 use gpui_component::calendar::{Calendar, CalendarEvent, CalendarState, Date, Matcher};
 use gpui_component::popover::Popover;
 use gpui_component::tooltip::Tooltip;
-use gpui_component::{ActiveTheme, Disableable, Selectable, Sizable, StyledExt, h_flex, v_flex};
+use gpui_component::{
+    ActiveTheme, Disableable, InteractiveElementExt, Selectable, Sizable, StyledExt, h_flex, v_flex,
+};
 use jiff::Timestamp;
 use jiff::civil::Weekday;
 use tbt_core::{HarnessId, SessionId};
@@ -35,6 +37,46 @@ pub struct Workspace {
     sync: Entity<CollectorBridge>,
     calendar: Entity<CalendarState>,
     custom_open: bool,
+    title_drag: bool,
+}
+
+#[derive(Clone, Copy)]
+enum WindowControl {
+    Minimize,
+    Maximize,
+    Close,
+}
+
+impl WindowControl {
+    const ALL: [WindowControl; 3] = [
+        WindowControl::Minimize,
+        WindowControl::Maximize,
+        WindowControl::Close,
+    ];
+
+    fn id(self) -> &'static str {
+        match self {
+            WindowControl::Minimize => "window-minimize",
+            WindowControl::Maximize => "window-maximize",
+            WindowControl::Close => "window-close",
+        }
+    }
+
+    fn glyph(self) -> &'static str {
+        match self {
+            WindowControl::Minimize => "\u{2014}",
+            WindowControl::Maximize => "\u{25C7}",
+            WindowControl::Close => "\u{2715}",
+        }
+    }
+
+    fn run(self, window: &mut Window) {
+        match self {
+            WindowControl::Minimize => window.minimize_window(),
+            WindowControl::Maximize => window.zoom_window(),
+            WindowControl::Close => window.remove_window(),
+        }
+    }
 }
 
 impl Workspace {
@@ -96,6 +138,7 @@ impl Workspace {
             sync,
             calendar,
             custom_open: false,
+            title_drag: false,
         }
     }
 
@@ -182,6 +225,90 @@ impl Workspace {
 
     fn sync_now(&mut self, cx: &mut Context<Self>) {
         self.sync.update(cx, |b, cx| b.sync_now(cx));
+    }
+
+    /// Replaces the system title bar: window controls on the left, the rest of the
+    /// strip drags the window. Only drawn when the window got client-side
+    /// decorations; otherwise the compositor already draws its own bar.
+    fn render_title_bar(
+        &self,
+        window: &Window,
+        cx: &mut Context<Self>,
+    ) -> Option<gpui::AnyElement> {
+        if !matches!(window.window_decorations(), Decorations::Client { .. }) {
+            return None;
+        }
+        let t = cx.theme();
+        let (bg, border, fg, hover, danger) = (
+            t.sidebar,
+            t.sidebar_border,
+            t.foreground,
+            t.secondary_hover,
+            t.danger,
+        );
+        let supported = window.window_controls();
+        let controls = WindowControl::ALL.into_iter().filter(move |c| match c {
+            WindowControl::Minimize => supported.minimize,
+            WindowControl::Maximize => supported.maximize,
+            WindowControl::Close => true,
+        });
+        Some(
+            h_flex()
+                .id("title-bar")
+                .debug_selector(|| "title-bar".into())
+                .w_full()
+                .flex_none()
+                .h(px(34.))
+                .items_center()
+                .bg(bg)
+                .border_b_1()
+                .border_color(border)
+                .on_double_click(|_, window, _| window.zoom_window())
+                .on_mouse_down(
+                    MouseButton::Left,
+                    cx.listener(|this, _, window, _| this.title_drag = !window.default_prevented()),
+                )
+                .on_mouse_up(
+                    MouseButton::Left,
+                    cx.listener(|this, _, _, _| this.title_drag = false),
+                )
+                .on_mouse_down_out(cx.listener(|this, _, _, _| this.title_drag = false))
+                .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, window, _| {
+                    if ev.pressed_button != Some(MouseButton::Left) {
+                        this.title_drag = false;
+                    } else if this.title_drag {
+                        this.title_drag = false;
+                        window.start_window_move();
+                    }
+                }))
+                .on_mouse_down(MouseButton::Right, |ev, window, _| {
+                    window.show_window_menu(ev.position)
+                })
+                .child(h_flex().h_full().pl_1().children(controls.map(|c| {
+                    let close = matches!(c, WindowControl::Close);
+                    div()
+                        .id(c.id())
+                        .debug_selector(|| c.id().into())
+                        .h_full()
+                        .w(px(34.))
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .text_sm()
+                        .text_color(fg)
+                        .hover(move |s| if close { s.bg(danger) } else { s.bg(hover) })
+                        .on_mouse_down(MouseButton::Left, |_, window, cx| {
+                            window.prevent_default();
+                            cx.stop_propagation();
+                        })
+                        .on_click(move |_, window, cx| {
+                            cx.stop_propagation();
+                            c.run(window);
+                        })
+                        .child(c.glyph())
+                })))
+                .into_any_element(),
+        )
     }
 
     fn render_sidebar(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -383,18 +510,25 @@ impl Render for Workspace {
         };
         let t = cx.theme();
         let (bg, fg) = (t.background, t.foreground);
-        h_flex()
+        v_flex()
             .size_full()
             .bg(bg)
             .text_color(fg)
-            .child(self.render_sidebar(cx))
+            .children(self.render_title_bar(window, cx))
             .child(
-                v_flex()
+                h_flex()
                     .flex_1()
-                    .h_full()
-                    .min_w_0()
-                    .child(self.render_top_bar(cx))
-                    .child(div().flex_1().min_h_0().child(page)),
+                    .min_h_0()
+                    .w_full()
+                    .child(self.render_sidebar(cx))
+                    .child(
+                        v_flex()
+                            .flex_1()
+                            .h_full()
+                            .min_w_0()
+                            .child(self.render_top_bar(cx))
+                            .child(div().flex_1().min_h_0().child(page)),
+                    ),
             )
     }
 }
@@ -413,8 +547,10 @@ pub fn open_main_window(
             app_id: Some(tbt_core::APP_ID.into()),
             titlebar: Some(gpui::TitlebarOptions {
                 title: Some("TokenBurnTrack".into()),
+                appears_transparent: true,
                 ..Default::default()
             }),
+            window_decorations: Some(gpui::WindowDecorations::Client),
             ..Default::default()
         },
         |window, cx| {
