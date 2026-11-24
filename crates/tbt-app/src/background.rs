@@ -24,6 +24,31 @@ pub async fn request_autostart(enable: bool) -> anyhow::Result<bool> {
     Ok(response.auto_start())
 }
 
+#[cfg(target_os = "linux")]
+pub async fn spawn_daemon() -> anyhow::Result<()> {
+    use ashpd::flatpak::{Flatpak, SpawnFlags, SpawnOptions};
+    use std::collections::HashMap;
+    use std::os::fd::BorrowedFd;
+
+    Flatpak::new()
+        .await?
+        .spawn(
+            "/",
+            &[DAEMON_COMMAND],
+            HashMap::<u32, BorrowedFd<'_>>::new(),
+            HashMap::new(),
+            SpawnFlags::NoNetwork.into(),
+            SpawnOptions::default(),
+        )
+        .await?;
+    Ok(())
+}
+
+#[cfg(not(target_os = "linux"))]
+pub async fn spawn_daemon() -> anyhow::Result<()> {
+    anyhow::bail!("starting tbt-daemon through the portal is only available on Linux")
+}
+
 #[cfg(not(target_os = "linux"))]
 pub async fn request_autostart(_enable: bool) -> anyhow::Result<bool> {
     anyhow::bail!("background collection through the portal is only available on Linux")

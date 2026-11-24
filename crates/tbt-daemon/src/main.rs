@@ -3,7 +3,9 @@ use std::process::ExitCode;
 
 use anyhow::{Context, bail};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use tbt_collector::{Collector, CollectorConfig, RunOutcome, RunTrigger, scheduler};
+use tbt_collector::{
+    Collector, CollectorConfig, CollectorLock, LockAttempt, RunOutcome, RunTrigger, scheduler,
+};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
@@ -158,6 +160,21 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         let trigger = cli.trigger.map_or(RunTrigger::Hourly, RunTrigger::from);
         return run_once(&collector, trigger);
     }
+
+    let _instance = match CollectorLock::try_acquire_daemon(&data_dir)
+        .context("cannot open the daemon lock")?
+    {
+        LockAttempt::Acquired(lock) => lock,
+        LockAttempt::Busy => {
+            let msg = format!(
+                "another tbt-daemon is already running for {}; exiting",
+                data_dir.display()
+            );
+            tracing::info!("{msg}");
+            println!("{msg}");
+            return Ok(());
+        }
+    };
 
     let first = cli.trigger.map_or(RunTrigger::Startup, RunTrigger::from);
     let (_stop_tx, stop_rx) = crossbeam_channel::bounded::<()>(1);

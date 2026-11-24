@@ -3,6 +3,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 pub const LOCK_FILE: &str = "collector.lock";
+pub const DAEMON_LOCK_FILE: &str = "daemon.lock";
 
 pub fn lock_path(data_dir: &Path) -> PathBuf {
     data_dir.join(LOCK_FILE)
@@ -28,8 +29,16 @@ impl LockAttempt {
 
 impl CollectorLock {
     pub fn try_acquire(data_dir: &Path) -> std::io::Result<LockAttempt> {
+        Self::try_acquire_file(data_dir, LOCK_FILE)
+    }
+
+    pub fn try_acquire_daemon(data_dir: &Path) -> std::io::Result<LockAttempt> {
+        Self::try_acquire_file(data_dir, DAEMON_LOCK_FILE)
+    }
+
+    fn try_acquire_file(data_dir: &Path, name: &str) -> std::io::Result<LockAttempt> {
         std::fs::create_dir_all(data_dir)?;
-        let path = lock_path(data_dir);
+        let path = data_dir.join(name);
         let mut file = OpenOptions::new()
             .create(true)
             .read(true)
@@ -75,5 +84,21 @@ mod tests {
         assert!(CollectorLock::try_acquire(&data).unwrap().is_busy());
         drop(lock);
         assert!(!CollectorLock::try_acquire(&data).unwrap().is_busy());
+    }
+
+    #[test]
+    fn daemon_lock_is_independent_of_run_lock() {
+        let dir = tempfile::tempdir().unwrap();
+        let LockAttempt::Acquired(daemon) = CollectorLock::try_acquire_daemon(dir.path()).unwrap()
+        else {
+            panic!("first daemon should acquire");
+        };
+        assert_eq!(daemon.path(), dir.path().join(DAEMON_LOCK_FILE));
+        assert!(
+            CollectorLock::try_acquire_daemon(dir.path())
+                .unwrap()
+                .is_busy()
+        );
+        assert!(!CollectorLock::try_acquire(dir.path()).unwrap().is_busy());
     }
 }

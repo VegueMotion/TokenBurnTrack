@@ -124,7 +124,8 @@ flatpak override --user --filesystem=/path/to/logs:ro io.VagueMotion.TokenBurnTr
 
 `tbt-daemon install` does not work inside the sandbox. To collect while the app is
 closed, turn on *Settings → General → Collect while closed*: it asks the desktop's
-background portal to start `tbt-daemon` at login, which then syncs every
+background portal to start `tbt-daemon` at login, starts it right away in its own
+sandbox (so it outlives the app window), and it then syncs every
 `sync_interval_minutes`.
 
 ## Linux (AppImage)
@@ -181,5 +182,6 @@ tbt-daemon --once --trigger manual   # record the run as manual
 ```
 
 A run that finds the collector lock taken (the app is ingesting) prints a message and
-exits 0. The app and a long-running `tbt-daemon` re-read `config.toml` before each run,
+exits 0. A long-running `tbt-daemon` that finds another one already running for the
+same data directory (`daemon.lock` taken) exits 0 too. The app and a long-running `tbt-daemon` re-read `config.toml` before each run,
 so saved settings apply on the next sync (a `data_dir` change needs a restart).

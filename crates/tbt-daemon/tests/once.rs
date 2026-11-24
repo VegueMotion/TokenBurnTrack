@@ -108,6 +108,20 @@ fn once_with_busy_lock_exits_zero_and_skips() {
 }
 
 #[test]
+fn second_looping_daemon_exits_zero() {
+    let sb = Sandbox::new();
+    let LockAttempt::Acquired(lock) = CollectorLock::try_acquire_daemon(&sb.path("data")).unwrap()
+    else {
+        panic!("daemon lock should be free");
+    };
+    let out = sb.daemon(&[]);
+    assert!(out.status.success(), "{out:?}");
+    assert!(stdout(&out).contains("already running"), "{}", stdout(&out));
+    assert!(!sb.path("data/tbt.sqlite").exists());
+    drop(lock);
+}
+
+#[test]
 fn data_dir_flag_overrides_the_environment() {
     let sb = Sandbox::new();
     let other = sb.path("other");
