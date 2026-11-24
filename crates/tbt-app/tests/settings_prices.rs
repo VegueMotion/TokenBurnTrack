@@ -169,7 +169,11 @@ fn fix_in_place_reprices_whole_row() {
     let tz = TimeZone::UTC;
     let now = ts("2026-11-23T00:00:00Z");
     let first = form(OPUS, "50", "250", a).build(now, &tz).unwrap();
-    apply(&fx.db, &plan_save(SaveKind::New, None, first).unwrap(), None);
+    apply(
+        &fx.db,
+        &plan_save(SaveKind::New, None, first).unwrap(),
+        None,
+    );
     let row = user_row(&fx.db, a);
 
     let fixed = form(OPUS, "5", "25", a).build(now, &tz).unwrap();
@@ -179,7 +183,10 @@ fn fix_in_place_reprices_whole_row() {
         out.events_changed,
         before.iter().filter(|r| r.event.ts >= a).count()
     );
-    let prices = Store::open_read_only(&fx.db).unwrap().model_prices().unwrap();
+    let prices = Store::open_read_only(&fx.db)
+        .unwrap()
+        .model_prices()
+        .unwrap();
     assert_eq!(
         prices
             .iter()
