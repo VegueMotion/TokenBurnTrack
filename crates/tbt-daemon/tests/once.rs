@@ -61,7 +61,6 @@ fn stdout(o: &Output) -> String {
 }
 
 #[test]
-#[ignore = "needs job F's price_seed::sync_bundled_prices (branch w2/recompute)"]
 fn once_ingests_fixtures_into_the_data_dir() {
     let sb = Sandbox::new();
     let out = sb.daemon(&["--once"]);

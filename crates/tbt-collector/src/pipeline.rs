@@ -17,6 +17,7 @@ use tbt_store::{RunStats, RunTrigger, SourceTx, Store, paths};
 use crate::config::CollectorConfig;
 use crate::lock::{CollectorLock, LockAttempt};
 use crate::price_seed::{self, SeedReport};
+use crate::recompute;
 use crate::registry::{Registry, ResolvedAdapter};
 
 pub type PriceSeeder = fn(&mut Store) -> anyhow::Result<SeedReport>;
@@ -238,7 +239,18 @@ impl Collector {
         let mut errors = Vec::new();
 
         match (self.seeder)(&mut store) {
-            Ok(seed) => tracing::debug!(?seed, "price seed"),
+            Ok(seed) => {
+                tracing::debug!(?seed, "price seed");
+                for id in seed.added.iter().chain(&seed.corrected) {
+                    if let Err(e) = recompute::recompute_for_price(&mut store, *id) {
+                        errors.push(RunError {
+                            harness: None,
+                            source: None,
+                            message: format!("recompute for price {} failed: {e:#}", id.0),
+                        });
+                    }
+                }
+            }
             Err(e) => errors.push(RunError {
                 harness: None,
                 source: None,

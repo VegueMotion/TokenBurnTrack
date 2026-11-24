@@ -3,13 +3,38 @@ use std::fmt;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use tbt_adapters::generic_jsonl::{GenericJsonlAdapter, GenericJsonlConfig};
 use tbt_core::{HarnessAdapter, HarnessId};
 use tbt_store::{HarnessConfig, Store};
 
 use crate::config::CollectorConfig;
 
-pub fn builtin_adapters(_config: &CollectorConfig) -> Vec<Arc<dyn HarnessAdapter>> {
-    vec![Arc::new(tbt_adapters::ClaudeCodeAdapter::new())]
+pub fn builtin_adapters(config: &CollectorConfig) -> Vec<Arc<dyn HarnessAdapter>> {
+    let mut adapters: Vec<Arc<dyn HarnessAdapter>> = vec![
+        Arc::new(tbt_adapters::ClaudeCodeAdapter::new()),
+        Arc::new(tbt_adapters::CodexAdapter::new()),
+        Arc::new(tbt_adapters::OpenCodeAdapter::new()),
+        Arc::new(tbt_adapters::GeminiCliAdapter::new()),
+    ];
+    adapters.extend(generic_adapters(config));
+    adapters
+}
+
+pub fn generic_adapters(config: &CollectorConfig) -> Vec<Arc<dyn HarnessAdapter>> {
+    let mut seen = std::collections::HashSet::new();
+    let mut out: Vec<Arc<dyn HarnessAdapter>> = Vec::new();
+    for value in &config.generic_jsonl {
+        let parsed: Result<GenericJsonlConfig, _> = value.clone().try_into();
+        let adapter = parsed
+            .map_err(|e| e.to_string())
+            .and_then(|c| GenericJsonlAdapter::new(c).map_err(|e| e.to_string()));
+        match adapter {
+            Ok(a) if seen.insert(a.id()) => out.push(Arc::new(a)),
+            Ok(a) => tracing::warn!(harness = %a.id(), "duplicate generic_jsonl id; skipped"),
+            Err(e) => tracing::warn!(error = %e, "invalid generic_jsonl entry; skipped"),
+        }
+    }
+    out
 }
 
 #[derive(Clone, Default)]

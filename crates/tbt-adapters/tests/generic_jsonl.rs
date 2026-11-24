@@ -6,7 +6,7 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 use common::*;
-use serde_json::{Map, Value};
+use serde_json::Value;
 use tbt_adapters::generic_jsonl::{
     ConfigError, GenericJsonlAdapter, GenericJsonlConfig, TimestampFormat,
 };
@@ -17,8 +17,11 @@ const ANTHROPIC_S1: &str = "generic_jsonl/anthropic_style/projects/pale-fjord/s-
 
 fn example_configs() -> Vec<GenericJsonlConfig> {
     let text = std::fs::read_to_string(fixture("generic_jsonl/config.toml")).unwrap();
-    let doc = toml_subset::parse(&text);
-    serde_json::from_value(doc["generic_jsonl"].clone()).unwrap()
+    #[derive(serde::Deserialize)]
+    struct Doc {
+        generic_jsonl: Vec<GenericJsonlConfig>,
+    }
+    toml::from_str::<Doc>(&text).unwrap().generic_jsonl
 }
 
 fn config(id: &str) -> GenericJsonlConfig {
@@ -371,90 +374,4 @@ fn constant_session_and_missing_optional_fields() {
             && e.reported_cost.is_none()
             && e.reasoning_tokens == 0
     }));
-}
-
-mod toml_subset {
-    use super::*;
-
-    pub fn parse(text: &str) -> Value {
-        let mut root = Map::new();
-        let mut current: Option<(String, Map<String, Value>)> = None;
-        let flush = |root: &mut Map<String, Value>, cur: Option<(String, Map<String, Value>)>| {
-            if let Some((name, table)) = cur {
-                root.entry(name)
-                    .or_insert_with(|| Value::Array(Vec::new()))
-                    .as_array_mut()
-                    .unwrap()
-                    .push(Value::Object(table));
-            }
-        };
-        for (n, line) in text.lines().enumerate() {
-            let line = line.trim();
-            if line.is_empty() || line.starts_with('#') {
-                continue;
-            }
-            if let Some(name) = line.strip_prefix("[[").and_then(|l| l.strip_suffix("]]")) {
-                flush(&mut root, current.take());
-                current = Some((name.trim().to_owned(), Map::new()));
-                continue;
-            }
-            let (key, rest) = line
-                .split_once('=')
-                .unwrap_or_else(|| panic!("line {}: expected `key = value`", n + 1));
-            let mut chars = rest.trim().chars().peekable();
-            let value = value(&mut chars);
-            let tail: String = chars.collect();
-            assert!(
-                tail.trim().is_empty() || tail.trim().starts_with('#'),
-                "line {}: trailing `{tail}`",
-                n + 1
-            );
-            let table = &mut current.as_mut().expect("key outside a table").1;
-            table.insert(key.trim().to_owned(), value);
-        }
-        flush(&mut root, current);
-        Value::Object(root)
-    }
-
-    fn value(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Value {
-        while chars.next_if(|c| c.is_whitespace()).is_some() {}
-        match chars.next() {
-            Some('"') => {
-                let mut s = String::new();
-                loop {
-                    match chars.next().expect("unterminated string") {
-                        '"' => return Value::String(s),
-                        '\\' => match chars.next() {
-                            Some(c @ ('"' | '\\')) => s.push(c),
-                            other => panic!("unsupported escape {other:?}"),
-                        },
-                        c => s.push(c),
-                    }
-                }
-            }
-            Some('\'') => Value::String(chars.by_ref().take_while(|c| *c != '\'').collect()),
-            Some('[') => {
-                let mut items = Vec::new();
-                loop {
-                    while chars.next_if(|c| c.is_whitespace() || *c == ',').is_some() {}
-                    if chars.next_if_eq(&']').is_some() {
-                        return Value::Array(items);
-                    }
-                    items.push(value(chars));
-                }
-            }
-            Some(c) => {
-                let mut word = c.to_string();
-                while let Some(c) = chars.next_if(|c| c.is_alphanumeric() || *c == '_') {
-                    word.push(c);
-                }
-                match word.as_str() {
-                    "true" => Value::Bool(true),
-                    "false" => Value::Bool(false),
-                    n => Value::from(n.parse::<i64>().expect("unsupported value")),
-                }
-            }
-            None => panic!("missing value"),
-        }
-    }
 }

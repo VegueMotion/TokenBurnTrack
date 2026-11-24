@@ -12,12 +12,46 @@ use tbt_core::HarnessAdapter;
 struct FixtureSet {
     adapter: fn() -> Arc<dyn HarnessAdapter>,
     root: &'static str,
+    split_jsonl: bool,
 }
 
-const FIXTURE_SETS: &[FixtureSet] = &[FixtureSet {
-    adapter: claude,
-    root: CLAUDE_FIXTURES,
-}];
+const FIXTURE_SETS: &[FixtureSet] = &[
+    FixtureSet {
+        adapter: claude,
+        root: CLAUDE_FIXTURES,
+        split_jsonl: true,
+    },
+    FixtureSet {
+        adapter: codex,
+        root: "codex",
+        split_jsonl: true,
+    },
+    FixtureSet {
+        adapter: opencode,
+        root: "opencode/1.19.5",
+        split_jsonl: false,
+    },
+    FixtureSet {
+        adapter: gemini,
+        root: "gemini_cli/0.71.0-nightly",
+        split_jsonl: false,
+    },
+];
+
+fn codex() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::CodexAdapter::new())
+}
+
+fn opencode() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::OpenCodeAdapter::new())
+}
+
+fn gemini() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::GeminiCliAdapter::with_clock(
+        Duration::ZERO,
+        tbt_core::Timestamp::now,
+    ))
+}
 
 const APPENDABLE: &[&str] = &["jsonl"];
 
@@ -73,9 +107,18 @@ fn plan(env: &Env, rng: &mut Rng) -> Vec<Pending> {
                 .root(set.root)
                 .join(file.strip_prefix(&src_root).unwrap());
             let bytes = std::fs::read(&file).unwrap();
-            let appendable = file
-                .extension()
-                .is_some_and(|e| APPENDABLE.iter().any(|a| e == *a));
+            if file
+                .file_name()
+                .is_some_and(|n| n.to_string_lossy().starts_with('.'))
+            {
+                std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+                std::fs::write(&target, &bytes).unwrap();
+                continue;
+            }
+            let appendable = set.split_jsonl
+                && file
+                    .extension()
+                    .is_some_and(|e| APPENDABLE.iter().any(|a| e == *a));
             let chunks = if appendable {
                 let lines: Vec<&[u8]> = bytes.split_inclusive(|b| *b == b'\n').collect();
                 let mut cuts: Vec<usize> =
@@ -167,7 +210,22 @@ fn check(seed: u64, extra_runs: usize) {
 
 #[test]
 fn reference_matches_golden_counts() {
-    assert_eq!(reference().events, claude_golden_total());
+    let mut per_harness = std::collections::BTreeMap::new();
+    for ((_, harness, _, _), sums) in &reference().hourly {
+        *per_harness.entry(harness.as_str()).or_insert(0) += sums[0];
+    }
+    assert_eq!(per_harness["claude_code"], claude_golden_total());
+    assert_eq!(
+        per_harness,
+        [
+            ("claude_code", claude_golden_total()),
+            ("codex", 381),
+            ("gemini_cli", 12),
+            ("opencode", 33),
+        ]
+        .into_iter()
+        .collect()
+    );
 }
 
 proptest! {
