@@ -332,18 +332,24 @@ impl Workspace {
             .p_3()
             .gap_1()
             .child(
-                v_flex()
+                h_flex()
                     .px_2()
                     .pb_4()
                     .pt_1()
+                    .gap_2()
+                    .items_center()
+                    .child(gpui::img(crate::assets::APP_ICON).size_8().flex_none())
                     .child(
-                        div()
-                            .text_base()
-                            .font_semibold()
-                            .text_color(fg)
-                            .child("TokenBurnTrack"),
-                    )
-                    .child(div().text_xs().text_color(muted).child("AI usage & cost")),
+                        v_flex()
+                            .child(
+                                div()
+                                    .text_base()
+                                    .font_semibold()
+                                    .text_color(fg)
+                                    .child("TokenBurnTrack"),
+                            )
+                            .child(div().text_xs().text_color(muted).child("AI usage & cost")),
+                    ),
             )
             .children(Page::ALL.into_iter().map(|page| {
                 let active = page == self.page;

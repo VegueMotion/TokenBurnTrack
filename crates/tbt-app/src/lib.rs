@@ -1,4 +1,5 @@
 pub mod app_state;
+mod assets;
 pub mod background;
 pub mod charts;
 pub mod collector_bridge;
@@ -78,7 +79,7 @@ fn report_error(msg: &str) {
 pub fn run() {
     let (data, sync) = backend();
     gpui_platform::application()
-        .with_assets(gpui_kit_assets::Assets)
+        .with_assets(assets::AppAssets)
         .run(move |cx: &mut App| {
             gpui_component::init(cx);
             Theme::change(ThemeMode::Dark, None, cx);
