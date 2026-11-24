@@ -69,7 +69,7 @@ sandboxed: the file system is read-only except the data directory
 or the service cannot write to the new directory.
 
 User services do not see variables exported by your shell. If you set
-`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `GEMINI_CLI_HOME` or `TBT_DATA_DIR`, add them with
+`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `GEMINI_CLI_HOME` or `TBT_DATA_DIR`, add them with
 `systemctl --user edit tbt-daemon.service` (`[Service]` + `Environment=NAME=value`).
 
 ```sh
@@ -108,7 +108,7 @@ flatpak-builder --user --install --force-clean build-dir packaging/flatpak/io.Va
 flatpak run io.VagueMotion.TokenBurnTrack
 ```
 
-The sandbox can read `~/.claude`, `~/.codex` and `~/.gemini`, and can read and write
+The sandbox can read `~/.claude`, `~/.codex`, `~/.copilot/session-state` and `~/.gemini`, and can read and write
 `~/.local/share/opencode` (SQLite needs to create the `-shm` file of a database in WAL
 mode). Config and data stay in the usual host locations (`~/.config/tokenburntrack`,
 `~/.local/share/tokenburntrack`), so the Flatpak and a host-installed `tbt-daemon` share

@@ -16,6 +16,7 @@ pub fn builtin_adapters(config: &CollectorConfig) -> Vec<Arc<dyn HarnessAdapter>
         Arc::new(tbt_adapters::OpenCodeAdapter::new()),
         Arc::new(tbt_adapters::GeminiCliAdapter::new()),
         Arc::new(tbt_adapters::CursorAdapter::new()),
+        Arc::new(tbt_adapters::CopilotCliAdapter::new()),
     ];
     adapters.extend(generic_adapters(config));
     adapters

@@ -5,11 +5,12 @@ use std::time::{Duration, SystemTime};
 
 use tbt_collector::{CollectorLock, LockAttempt};
 
-const SOURCES: u64 = 27;
-const EVENTS: i64 = 643;
+const SOURCES: u64 = 29;
+const EVENTS: i64 = 649;
 const GOLDEN: &[(&str, i64)] = &[
     ("claude_code", 204),
     ("codex", 381),
+    ("copilot_cli", 6),
     ("cursor", 3),
     ("gemini_cli", 12),
     ("in_house_agent", 4),
@@ -73,6 +74,10 @@ impl Sandbox {
         copy_tree(
             &f.join("opencode/1.19.5/opencode.db"),
             &sb.path("home/.local/share/opencode/opencode.db"),
+        );
+        copy_tree(
+            &f.join("copilot_cli/1.0.4/session-state"),
+            &sb.path("home/.copilot/session-state"),
         );
         copy_tree(
             &f.join("cursor/3.31.15/User"),

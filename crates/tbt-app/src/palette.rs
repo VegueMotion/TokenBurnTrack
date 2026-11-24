@@ -32,6 +32,7 @@ pub fn harness_label(id: &HarnessId) -> String {
         "gemini_cli" => "Gemini CLI".to_owned(),
         "opencode" => "OpenCode".to_owned(),
         "cursor" => "Cursor".to_owned(),
+        "copilot_cli" => "Copilot CLI".to_owned(),
         other => other.to_owned(),
     }
 }

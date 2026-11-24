@@ -658,24 +658,7 @@ impl<'a> Reader<'a> {
 }
 
 pub fn provider_for(model: &str) -> &'static str {
-    let m = model.to_ascii_lowercase();
-    if m.starts_with("claude") {
-        "anthropic"
-    } else if m.starts_with("gpt")
-        || m.starts_with("o1")
-        || m.starts_with("o3")
-        || m.starts_with("o4")
-    {
-        "openai"
-    } else if m.starts_with("gemini") {
-        "google"
-    } else if m.starts_with("grok") {
-        "xai"
-    } else if m.starts_with("deepseek") {
-        "deepseek"
-    } else {
-        "cursor"
-    }
+    crate::models::known_provider(model).unwrap_or("cursor")
 }
 
 pub fn canonical_model(model: &str) -> String {
