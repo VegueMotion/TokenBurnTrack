@@ -1,0 +1,56 @@
+{
+  "sessionId": "019a6b25-1a2b-7c3d-9e4f-5a6b7c8d9e03",
+  "updatedAt": "2026-09-20T10:03:40.330051977+00:00",
+  "session": {
+    "inputTokens": 5400,
+    "outputTokens": 610,
+    "cachedReadTokens": 0,
+    "cacheCreationTokens": 0,
+    "reasoningTokens": 0,
+    "totalTokens": 6010,
+    "modelCalls": 1,
+    "costUsdTicks": 51000000,
+    "turnCount": 1,
+    "primaryModelId": "grok-3-fast",
+    "modelUsage": {
+      "grok-3-fast": {
+        "inputTokens": 5400,
+        "outputTokens": 610,
+        "cachedReadTokens": 0,
+        "cacheCreationTokens": 0,
+        "reasoningTokens": 0,
+        "totalTokens": 6010,
+        "modelCalls": 1,
+        "costUsdTicks": 51000000
+      }
+    }
+  },
+  "turns": [
+    {
+      "turnNumber": 1,
+      "endedAt": "2026-09-20T10:03:40.330051977+00:00",
+      "inputTokens": 5400,
+      "outputTokens": 610,
+      "cachedReadTokens": 0,
+      "cacheCreationTokens": 0,
+      "reasoningTokens": 0,
+      "totalTokens": 6010,
+      "modelCalls": 1,
+      "costUsdTicks": 51000000,
+      "turnCount": 1,
+      "primaryModelId": "grok-3-fast",
+      "modelUsage": {
+        "grok-3-fast": {
+          "inputTokens": 5400,
+          "outputTokens": 610,
+          "cachedReadTokens": 0,
+          "cacheCreationTokens": 0,
+          "reasoningTokens": 0,
+          "totalTokens": 6010,
+          "modelCalls": 1,
+          "costUsdTicks": 51000000
+        }
+      }
+    }
+  ]
+}

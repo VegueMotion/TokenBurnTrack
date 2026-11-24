@@ -42,6 +42,12 @@ pub mod gemini_cli;
 #[cfg(feature = "gemini_cli")]
 pub use gemini_cli::GeminiCliAdapter;
 
+#[cfg(feature = "grok_build")]
+pub mod grok_build;
+
+#[cfg(feature = "grok_build")]
+pub use grok_build::GrokBuildAdapter;
+
 #[cfg(feature = "generic_jsonl")]
 pub mod generic_jsonl;
 

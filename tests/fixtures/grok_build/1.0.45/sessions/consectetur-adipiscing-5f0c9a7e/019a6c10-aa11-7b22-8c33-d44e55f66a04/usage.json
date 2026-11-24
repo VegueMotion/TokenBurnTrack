@@ -1,0 +1,33 @@
+{
+  "sessionId": "019a6c10-aa11-7b22-8c33-d44e55f66a04",
+  "updatedAt": "2026-09-21T08:15:02.004411873+00:00",
+  "session": {
+    "inputTokens": 9700,
+    "outputTokens": 680,
+    "turnCount": 2
+  },
+  "turns": [
+    {
+      "turnNumber": 1,
+      "endedAt": "2026-09-21T08:15:02.004411873+00:00",
+      "inputTokens": 8800,
+      "outputTokens": 640,
+      "cachedReadTokens": 2000,
+      "cacheCreationTokens": 0,
+      "reasoningTokens": 120,
+      "totalTokens": 9440,
+      "modelCalls": 1,
+      "turnCount": 1,
+      "primaryModelId": "grok-4"
+    },
+    {
+      "turnNumber": 2,
+      "inputTokens": 900,
+      "outputTokens": 40,
+      "totalTokens": 940,
+      "modelCalls": 1,
+      "turnCount": 1,
+      "primaryModelId": "grok-4"
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+---
+source: crates/tbt-adapters/tests/grok_build.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 019a6b21-3c4d-7e5f-8a9b-0c1d2e3f4a01
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /home/user/projects/lorem
+    title: Lorem ipsum dolor refactor
+    git_branch: main
+    harness_version: ~
+    started_at: "2026-09-20T10:00:41.200518Z"
+    ended_at: "2026-09-20T10:09:31.003114Z"
+    has_baseline_hint: false
+  - ext_id: 019a6b4e-7f80-7a91-8b2c-3d4e5f6a7b02
+    parent_ext_id: ~
+    resumed_from_ext_id: 019a6b21-3c4d-7e5f-8a9b-0c1d2e3f4a01
+    project_path: /home/user/projects/lorem
+    title: Lorem ipsum dolor refactor
+    git_branch: feature/amet
+    harness_version: ~
+    started_at: "2026-09-20T11:18:02.880412Z"
+    ended_at: "2026-09-20T11:20:08.120001Z"
+    has_baseline_hint: false
+  - ext_id: 019a6c10-aa11-7b22-8c33-d44e55f66a04
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /home/user/projects/consectetur/adipiscing/elit/sed/do/eiusmod
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-09-21T08:15:02.004411873Z"
+    ended_at: "2026-09-21T08:15:02.004411873Z"
+    has_baseline_hint: false
+event_count: 9
+totals:
+  (all):
+    calls: 9
+    input: 67700
+    output: 11380
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 110500
+    reasoning: 3297
+    total: 189580
+  xai/grok-3-fast:
+    calls: 2
+    input: 10800
+    output: 1220
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 0
+    reasoning: 0
+    total: 12020
+  xai/grok-4:
+    calls: 1
+    input: 6800
+    output: 640
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 2000
+    reasoning: 120
+    total: 9440
+  xai/grok-4.5:
+    calls: 6
+    input: 50100
+    output: 9520
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 108500
+    reasoning: 3177
+    total: 168120
+events:
+  - "2026-09-20T10:01:12.481920311Z 2026-09-20T10:01:12.481920311+00:00:1:grok-4.5 grok-4.5 in=4400 out=950 cw5m=0 cw1h=0 cr=9800 rs=310 cost=0.0412000000"
+  - "2026-09-20T10:04:55.017733902Z 2026-09-20T10:04:55.017733902+00:00:2:grok-3-fast grok-3-fast in=5400 out=610 cw5m=0 cw1h=0 cr=0 rs=0 cost=0.0051000000"
+  - "2026-09-20T10:04:55.017733902Z 2026-09-20T10:04:55.017733902+00:00:2:grok-4.5 grok-4.5 in=4300 out=2210 cw5m=0 cw1h=0 cr=27500 rs=820 cost=0.0903000000"
+  - "2026-09-20T10:09:30.902114577Z 2026-09-20T10:09:30.902114577+00:00:3:grok-4.5 grok-4.5 in=2200 out=1480 cw5m=0 cw1h=0 cr=33900 rs=402 cost=0.0744000000"
+  - "2026-09-20T10:01:12.481920311Z 2026-09-20T10:01:12.481920311+00:00:1:grok-4.5 grok-4.5 in=4400 out=950 cw5m=0 cw1h=0 cr=9800 rs=310 cost=0.0412000000"
+  - "2026-09-20T10:04:55.017733902Z 2026-09-20T10:04:55.017733902+00:00:2:grok-3-fast grok-3-fast in=5400 out=610 cw5m=0 cw1h=0 cr=0 rs=0 cost=0.0051000000"
+  - "2026-09-20T10:04:55.017733902Z 2026-09-20T10:04:55.017733902+00:00:2:grok-4.5 grok-4.5 in=4300 out=2210 cw5m=0 cw1h=0 cr=27500 rs=820 cost=0.0903000000"
+  - "2026-09-20T11:20:07.660218054Z 2026-09-20T11:20:07.660218054+00:00:3:grok-4.5 grok-4.5 in=30500 out=1720 cw5m=0 cw1h=0 cr=0 rs=515"
+  - "2026-09-21T08:15:02.004411873Z 2026-09-21T08:15:02.004411873+00:00:1:grok-4 grok-4 in=6800 out=640 cw5m=0 cw1h=0 cr=2000 rs=120"
+message_count: 0
+messages_by_kind: {}
+messages_linked_to_events: 0
+messages_with_preview: 0
+tools: {}
+warnings:
+  - "line - @-: turns[1] has no valid `endedAt`: \"\""

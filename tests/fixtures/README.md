@@ -233,6 +233,10 @@ Format notes:
   name, arguments}]}`, `assistant.reasoning.data.content`,
   `tool.execution_complete.data{toolCallId, success, result{content}, error{message}}`.
 
+## Grok Build (`grok_build/`)
+
+Synthetic, built from upstream source. See `grok_build/README.md`.
+
 ## Database snapshots (`db/`)
 
 - `db/wave2/tbt.db`: a TokenBurnTrack database written by the Wave 2 code (`wave2-done` tag,
