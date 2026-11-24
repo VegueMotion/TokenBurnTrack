@@ -7,6 +7,7 @@ pub mod scale;
 mod sparkline;
 pub mod stack;
 pub mod time;
+pub mod timeline;
 
 use gpui::{Hsla, IntoElement, ParentElement, SharedString, Styled, div, px};
 use gpui_component::h_flex;
