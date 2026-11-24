@@ -37,18 +37,22 @@ tokenburntrack/
 ├─ crates/
 │  ├─ tbt-core/                # domain types, HarnessAdapter trait, errors
 │  ├─ tbt-adapters/            # one module per harness (feature-gated)
+│  │   ├─ discover.rs          # shared recursive source discovery
 │  │   ├─ claude_code.rs
 │  │   ├─ codex.rs
 │  │   ├─ gemini_cli.rs
 │  │   ├─ opencode.rs
-│  │   └─ generic_jsonl.rs     # config-driven adapter for simple JSONL formats
+│  │   └─ generic_jsonl/       # config-driven adapter: mod, config, path (JSONPath-lite), glob
 │  ├─ tbt-pricing/             # price catalog, cost engine, price import
 │  ├─ tbt-store/               # SQLite schema, migrations, repositories, rollups
 │  ├─ tbt-collector/           # scheduler, ingest pipeline, cursors, dedup
 │  ├─ tbt-app/                 # GPUI desktop app (bin)
 │  └─ tbt-daemon/              # headless collector (bin) for systemd/launchd
-└─ assets/
-   └─ prices.toml              # bundled default prices
+├─ assets/
+│  └─ prices.toml              # bundled default prices
+├─ packaging/                  # systemd, launchd, Task Scheduler, .desktop + icon (embedded in tbt-daemon)
+├─ scripts/                    # check.sh, cargo wrapper, anonymize.py
+└─ tests/fixtures/             # anonymized harness logs per harness/version, DB snapshots
 ```
 
 `tbt-collector` is a library. **Both** the GUI and the headless daemon use it, so
@@ -60,13 +64,14 @@ hourly tracking keeps running when the window is closed. A lock file
 |---|---|
 | UI | `gpui-pre` + `gpui-pre-platform` (`wayland` feature; weekly snapshots of Zed's gpui, imported as `gpui` / `gpui_platform`) + `gpui-component` for tables, inputs and theme. All three are pinned with `=` and must be bumped together. The crates.io `gpui` 0.2.x is too old for current `gpui-component` |
 | DB | `rusqlite` (bundled, WAL) + `rusqlite_migration` — sync, simple, fast |
-| Async / timers | `smol` or GPUI's `BackgroundExecutor` in the app; `tokio` is not needed |
+| Concurrency | collector: std threads + `crossbeam-channel`; app: GPUI `BackgroundExecutor`; no async runtime |
 | File watching (optional) | `notify` — triggers an early sync, never replaces the hourly sweep |
 | Parsing | `serde`, `serde_json` (streaming line by line), `toml` |
 | Money | `rust_decimal` — never `f64` for cost |
-| Time | `jiff` or `chrono` (store UTC, display local) |
+| Time | `jiff` (store UTC, display local) |
 | Paths | `directories` (XDG / macOS / Windows data dirs) |
 | Logging | `tracing` + `tracing-appender` |
+| Other | `fs4` (lock file), `blake3` (line hashes in cursors), `globset` (price patterns), `clap` (daemon CLI), `ureq` (LiteLLM fetch, only on click) |
 
 ---
 
@@ -95,7 +100,8 @@ pub struct ReadBatch {
 A `SourceRef` is a single readable unit, such as a JSONL file, a JSON file or a SQLite DB.
 A `Cursor` is opaque to the collector. For log files it is usually
 `{ byte_offset, inode, size, mtime, last_line_hash }`; for a harness's own SQLite DB it is a
-row watermark such as `{ last_time_updated, last_rowid }`.
+row watermark per table, e.g. OpenCode's `{ time_updated, id, done[] }` for `session`, `message`
+and `part`. Cursors are stored at every privacy level, so they must never contain message text.
 
 ### 3.2 Normalized event
 
@@ -126,8 +132,8 @@ pub struct UsageEvent {
 |---|---|---|
 | Claude Code | `~/.claude/projects/<slug>/*.jsonl` and `~/.claude/projects/<slug>/<session-id>/subagents/agent-*.jsonl` | One file per session, plus one per subagent run. Discovery is recursive. `assistant` lines carry `message.usage`. The same `message.id` can repeat across content blocks, so dedup on `message.id + requestId`. Subagent runs become their own `session` rows with `parent_session_id` set to the session in the `<session-id>` directory |
 | Codex CLI | `~/.codex/sessions/YYYY/MM/DD/*.jsonl` | One event per response: `token_usage_record` lines (0.155+, dedup key = `response_id`; also the only place compaction calls appear), else `token_count.last_token_usage` (key = thread id + running total; repeated totals are skipped). `cached_input_tokens` is part of `input_tokens` and is subtracted. A resume keeps the thread id, so both files are one session; a fork becomes a new session linked with `resumed_from` |
-| Gemini CLI | `~/.gemini/tmp/<project>/chats/*.jsonl` (current, append-only) and `session-*.json` (legacy) | A message is re-appended when it changes, so the adapter holds the newest message back until a later message arrives or the file has been idle for 10 minutes. Project path from the `.project_root` marker. Fixtures were built from upstream source, not real logs |
-| OpenCode | `~/.local/share/opencode/opencode.db` | SQLite (`session`, `message`, `part` tables), opened read-only. Cursor is a row watermark per table, not a byte offset. An assistant message is counted only once it is completed (or errored, or idle for 24 h), because a stored event is never updated. Messages sometimes include cost. Older versions used per-message JSON under `storage/` (not supported) |
+| Gemini CLI | `~/.gemini/tmp/<project>/chats/*.jsonl` (current, append-only) and `session-*.json` (legacy) | A message is re-appended when it changes, so the adapter holds the newest message back until a later message arrives or the file has been idle for 10 minutes. The held-back message is kept in the cursor without its text, so if it is finalized on a later run it is stored without a preview. Project path from the `.project_root` marker. Fixtures were built from upstream source, not real logs |
+| OpenCode | `~/.local/share/opencode/opencode.db` | SQLite (`session`, `message`, `part` tables), opened read-only. Cursor is a row watermark per table, not a byte offset. An assistant message is counted only once it is completed (or errored, or idle for 24 h), because a stored event is never updated. Messages sometimes include cost. If OpenCode is not running (no `-wal` file) and the directory is read-only (as in the hardened systemd unit), the DB is opened with `immutable=1`. Older versions used per-message JSON under `storage/` (not supported) |
 | Generic JSONL | configured in settings | Field-path mapping (`$.usage.input_tokens` → `input_tokens`) for new or in-house tools |
 
 Each adapter has fixture tests: real sample logs (anonymized) go in `tests/fixtures/<harness>/<version>/`,
@@ -143,7 +149,9 @@ Scheduler tick (hourly / startup / manual / fs-notify debounce)
      └─ sync bundled prices, recompute rows that were added or corrected
         ingest_run = start
         for adapter in registry (parallel per adapter, sequential per source):
-           sources = adapter.discover(roots)     # oldest mtime first
+           sources = adapter.discover(roots)
+           mark known sources that are gone as missing
+           sort sources by mtime, oldest first
            for src in sources:                   # every source, every run
               cursor = store.cursor(src)
               batch  = adapter.read(src, cursor) # cheap when nothing changed
@@ -157,7 +165,7 @@ Scheduler tick (hourly / startup / manual / fs-notify debounce)
                  upsert hourly_usage buckets touched
                  save cursor
               }
-        mark sources that disappeared as missing
+        if raw_json_retention_days: set raw_json = NULL on events older than N days
         ingest_run = finish(stats, warnings, per-source errors)
      └─ release lock, notify UI (channel → GPUI model refresh)
 ```
@@ -192,15 +200,16 @@ Rules:
 ### Scheduler
 - Ticks are on a UTC grid (`next_tick(now, interval)`): hourly means UTC `:00`. Sleeping happens in chunks of at most 30 s against the wall clock, so a suspended laptop notices the missed tick when it wakes.
 - In the app (`tbt-app::collector_bridge`): a startup run, then a GPUI background task that waits for the next tick; *Sync now* runs a manual one. Runs execute on the background executor and never overlap. When the daemon holds the lock, the app shows "Daemon is syncing…" and polls the newest `ingest_run` row (read-only) until the daemon's run lands, then refreshes. With `TBT_WATCH=1`, a debounced `notify` watcher on the enabled roots also triggers runs (30 s quiet period, at most one run per 2 min); it never replaces the hourly tick.
+- Config changes apply on the next run: the app and the long-running daemon re-read `config.toml` before each run and rebuild the collector when it changed; the app also re-reads the interval on every tick. A `data_dir` change needs a restart.
 - Headless: `tbt-daemon --once` launched by a systemd user timer (`OnCalendar=hourly`, `Persistent=true`) / launchd `StartInterval=3600` / Windows Task Scheduler. `tbt-daemon` can also run as a long-lived loop. It logs to `$DATA_DIR/logs/` (daily rotation) and exits 0 when the lock is busy.
-- `tbt-daemon install [--dry-run] [--no-enable] [--app <tbt-app>]` writes and enables the schedule for the current platform, and `uninstall` removes it. The unit, timer, plist, task XML, `.desktop` file and icon live in `packaging/` and are embedded into the binary, so the repo files are the single source.
+- `tbt-daemon install [--dry-run] [--no-enable] [--bin <path>] [--app <tbt-app>] [--data-dir <dir>] [--config <file>]` writes and enables the schedule for the current platform, and `uninstall [--dry-run]` removes it. The unit, timer, plist, task XML, `.desktop` file and icon live in `packaging/` and are embedded into the binary, so the repo files are the single source.
 - Settings live in `~/.config/tokenburntrack/config.toml` (`privacy`, `sync_interval_minutes`, `data_dir`, `raw_json_retention_days`, `[[generic_jsonl]]` adapters). The data dir is `--data-dir`, else `TBT_DATA_DIR`, else the config, else the platform default.
 
 ---
 
 ## 5. Storage (SQLite)
 
-File: `$XDG_DATA_HOME/tokenburntrack/tbt.sqlite`, with `journal_mode=WAL` and `foreign_keys=ON`.
+File: `$XDG_DATA_HOME/tokenburntrack/tbt.sqlite`, with `journal_mode=WAL`, `foreign_keys=ON`, `synchronous=NORMAL` and a 5 s busy timeout.
 
 ```sql
 CREATE TABLE harness (
@@ -302,9 +311,9 @@ Notes:
 - `hourly_usage` is updated in the same transaction as the events. The dashboard reads rollups and never scans the event table for ranges.
 - `hourly_usage.project_id` is `NOT NULL`. Events without a project go to a seeded `project` row with `id = 0` ("no project"). SQLite treats NULLs in a primary key as distinct, so a nullable column would make `ON CONFLICT` upserts insert duplicate rows instead of adding to the bucket.
 - **Privacy setting:** `message` storage is off / metadata-only / truncated preview (default: metadata only, which means role, tool name and timestamps but no text). Adapters always emit previews; the collector applies the privacy level before storing.
-- `message.key` makes message inserts idempotent the same way `dedup_key` does for events, so a re-read file or copied history does not duplicate messages.
+- `message.key` makes message inserts idempotent the same way `dedup_key` does for events, so a re-read file does not duplicate messages. Uniqueness is per session: history that Claude Code copies into a resumed session is stored again under the new session (its events are not, so costs are unaffected; tool counts in that session's detail include the copied history).
 - `session.cumulative_json` holds the last running token total of sessions from harnesses that log cumulative counters. The collector uses it to rebase the first delta of a resumed session (see §4 *Resumed sessions* and `crates/tbt-core/CONTRACTS.md`).
-- Retention: events are kept forever. They are small (≈200 B per row without raw), so 1M events ≈ 200 MB. `raw_json` can be dropped after N days.
+- Retention: events are kept forever. They are small (≈200 B per row without raw), so 1M events ≈ 200 MB. `raw_json_retention_days` (config, Settings → General) sets `raw_json` to NULL on events older than N days at the end of every ingest run.
 
 ---
 
@@ -321,10 +330,11 @@ cost = in   × p_in
     rate is billed at the input rate, including its multiplier)
 ```
 
-- **Model matching:** exact id first, then glob pattern (`claude-sonnet-4-5*`), then a provider-level fallback marked *unpriced*. Unpriced events show a warning badge in the UI and are not counted as $0.
+- **Model matching:** among rows of the event's provider that are effective at its timestamp, higher source priority wins (user > imported > bundled), then an exact id over a glob (`claude-sonnet-4-5*`), then the glob with the longest literal prefix, then the latest `effective_from`. No match → *unpriced*. Unpriced events show a warning badge in the UI and are not counted as $0.
 - **Where cost is stored:** prices are not stored per session or per day. Cost is calculated **per event** (one API call) at ingest and stored in `usage_event.cost_micros`, together with the `price_id` that was used. Session totals and `hourly_usage` (and the day and month views built from it) are sums of events.
 - **Versioned:** the price row is chosen by `effective_from <= event.ts < effective_to`. A session that spans a price change is costed correctly, call by call.
 - **Sources:** bundled `assets/prices.toml`, an optional import from the LiteLLM price list (`model_prices_and_context_window.json`, fetched on demand), and user overrides in Settings (for negotiated or enterprise rates). Priority: user > imported > bundled.
+- **Bundled rows** are re-synced at the start of every run (same provider + pattern + `effective_from` = same row); a changed bundled row is overwritten and its events recomputed. Settings edits only user rows; bundled and imported rows are overridden, not edited.
 - **Import never rewrites history:** the LiteLLM list has no dates. On import, a price that differs from the current row closes that row (`effective_to = now`) and adds a new row with `effective_from = now`. Unchanged prices are skipped.
 
 ### When a price changes
@@ -346,7 +356,7 @@ cost = in   × p_in
 TbtApp (Application)
 └─ Workspace window
    ├─ Sidebar: Dashboard · Sessions · Models · Projects · Harnesses · Settings
-   ├─ TopBar: date-range picker (Today / 7d / 30d / Custom), harness filter, "Sync now", last-sync status
+   ├─ TopBar: date range (Today / 7d / 30d; Custom is shown disabled), harness filter, "Sync now", last-sync status
    └─ Main view (one Entity per page)
 ```
 
@@ -356,7 +366,8 @@ queries on the `BackgroundExecutor` through a `DataSource` (`StoreData`: a small
 read-only SQLite connections; `MockData` with `TBT_MOCK=1`) and calls `cx.notify()` when the
 results arrive. After a finished sync, or after a page writes (harness toggles, prices,
 config), `DataChanged` makes visible pages re-query and refreshes the harness filter.
-Pages that write open a short-lived writable connection; price changes also hold
+Pages that write open a short-lived writable connection; harness enable and roots edits
+apply directly, while price changes also hold
 `collector.lock` so they never interleave with an ingest run.
 
 ### Pages
@@ -384,13 +395,14 @@ Theme: dark by default. Each harness gets a consistent categorical colour, and t
 ## 8. Error handling and observability
 - Parse errors are recorded per line and never abort a source. Warnings are stored in `ingest_run.warnings_json` and shown on the Harnesses page.
 - Unknown model ids → a list of *unpriced* models with a one-click "add price".
-- `tracing` logs go to `$DATA_DIR/logs/` with daily rotation.
+- The daemon logs to stderr and `$DATA_DIR/logs/tbt-daemon.<date>.log` (daily rotation, 30 files kept); the app writes no log files. Per-source errors are stored in `warnings_json` with an `error:` prefix.
 
 ## 9. Testing
 - Adapter golden tests against fixtures (per harness, per format version).
 - Collector property test: ingest the same sources N times in random order → identical DB totals.
 - Pricing unit tests, including tier boundaries and `effective_from` switching.
-- Store migration tests (empty DB → latest; previous release DB → latest).
+- Store migration tests (empty DB → latest; a Wave 2 database snapshot in `tests/fixtures/db/` → latest).
+- End-to-end tests: backfill of all harness fixtures, hourly re-runs, resumes in every harness, deleted sources, back-dated price overrides, and the daemon binary in a sandbox.
 
 ## 10. Milestones
 1. `tbt-core` + `tbt-store` + Claude Code adapter + `tbt-daemon --once` → data in SQLite.

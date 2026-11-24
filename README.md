@@ -186,7 +186,8 @@ tbt-daemon --once --trigger manual   # record the run as manual
 ```
 
 A run that finds the collector lock taken (the app is ingesting) prints a message and
-exits 0.
+exits 0. Both the app and a long-running `tbt-daemon` re-read `config.toml` before each
+run, so saved settings apply on the next sync (a `data_dir` change needs a restart).
 
 ## Configuration
 

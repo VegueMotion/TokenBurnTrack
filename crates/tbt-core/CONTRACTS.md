@@ -36,6 +36,7 @@ Frozen at the end of Wave 0. Changes go through the orchestrator.
   multiplier. OpenAI's 30-minute and 12-hour cache-write prices use the `cache_write_5m` and
   `cache_write_1h` slots.
 - **Dedup keys** come only from provider/harness IDs, never from session ID or file path.
+- **Cursors** never contain message text: they are stored in the DB at every privacy level.
 
 ## JSONL cursor
 
@@ -67,6 +68,9 @@ Adopted the plan's proposal, made concrete:
    last_total)` for every session with a hint, in the same `SourceTx`.
 4. Sources of one adapter are processed in ascending mtime order, so an original is normally
    ingested before the file that resumes it.
+
+No current adapter emits `baseline_hint`: Codex uses per-response `token_usage_record` /
+`last_token_usage`. The rebasing path is exercised by `tbt-collector/tests/rebasing.rs`.
 
 Known limits: if a resumed file resets its counter **and** its first total already exceeds the
 old total in every component, the delta is undercounted (the same ambiguity the architecture
