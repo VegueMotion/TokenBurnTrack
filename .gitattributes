@@ -61,7 +61,6 @@ Dockerfile  text eol=lf
 
 # Generated
 Cargo.lock        text linguist-generated=true -diff merge=binary
-*.openflow.json   text linguist-generated=true -diff
 *.svg             text linguist-generated=true -diff
 
 # Test fixtures from harness logs

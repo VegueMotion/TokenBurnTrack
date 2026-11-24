@@ -8,8 +8,6 @@ projects. Because the agents delete or rotate their logs, the hourly snapshot ke
 history after the source files are gone. A small headless collector, `tbt-daemon`, keeps
 the snapshots going while the app is closed.
 
-Design notes are in [`ARCHITECTURE.md`](ARCHITECTURE.md).
-
 ## Features
 
 - Hourly, incremental, idempotent collection: each run reads only what is new since the
