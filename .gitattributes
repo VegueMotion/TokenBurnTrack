@@ -113,6 +113,7 @@ Cargo.lock        text linguist-generated=true -diff merge=binary
 *.db-wal    binary
 *.sqlite    binary
 *.sqlite3   binary
+*.vscdb     binary
 
 # Executables and packages
 *.exe       binary

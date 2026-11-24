@@ -7,10 +7,11 @@ license.workspace = true
 publish = false
 
 [features]
-default = ["claude_code", "codex", "opencode", "gemini_cli", "generic_jsonl"]
+default = ["claude_code", "codex", "opencode", "cursor", "gemini_cli", "generic_jsonl"]
 claude_code = []
 codex = []
 opencode = ["dep:rusqlite"]
+cursor = ["dep:rusqlite"]
 gemini_cli = []
 generic_jsonl = []
 

@@ -1,5 +1,8 @@
 pub mod discover;
 
+#[cfg(any(feature = "opencode", feature = "cursor"))]
+mod sqlite;
+
 #[cfg(feature = "claude_code")]
 pub mod claude_code;
 
@@ -17,6 +20,12 @@ pub mod opencode;
 
 #[cfg(feature = "opencode")]
 pub use opencode::OpenCodeAdapter;
+
+#[cfg(feature = "cursor")]
+pub mod cursor;
+
+#[cfg(feature = "cursor")]
+pub use cursor::CursorAdapter;
 
 #[cfg(feature = "gemini_cli")]
 pub mod gemini_cli;

@@ -5,11 +5,12 @@ use std::time::{Duration, SystemTime};
 
 use tbt_collector::{CollectorLock, LockAttempt};
 
-const SOURCES: u64 = 26;
-const EVENTS: i64 = 640;
+const SOURCES: u64 = 27;
+const EVENTS: i64 = 643;
 const GOLDEN: &[(&str, i64)] = &[
     ("claude_code", 204),
     ("codex", 381),
+    ("cursor", 3),
     ("gemini_cli", 12),
     ("in_house_agent", 4),
     ("llm_proxy", 6),
@@ -72,6 +73,10 @@ impl Sandbox {
         copy_tree(
             &f.join("opencode/1.19.5/opencode.db"),
             &sb.path("home/.local/share/opencode/opencode.db"),
+        );
+        copy_tree(
+            &f.join("cursor/3.31.15/User"),
+            &sb.path("home/.config/Cursor/User"),
         );
         copy_tree(
             &f.join("gemini_cli/0.71.0-nightly/tmp"),

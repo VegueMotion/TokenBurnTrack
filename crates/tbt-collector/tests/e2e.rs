@@ -49,7 +49,7 @@ fn backfill_then_hourly_reruns_with_the_builtin_registry() {
     assert!(w.env.count("SELECT count(*) FROM model_price") > 0);
     assert_eq!(
         w.env
-            .count("SELECT count(*) FROM usage_event WHERE price_id IS NULL AND harness_id IN ('claude_code', 'codex', 'gemini_cli')"),
+            .count("SELECT count(*) FROM usage_event WHERE price_id IS NULL AND harness_id IN ('claude_code', 'codex', 'cursor', 'gemini_cli')"),
         0,
         "every built-in harness model except local OpenCode ones has a bundled price"
     );
@@ -766,16 +766,17 @@ fn wave2_database_continues_with_current_code_and_matches_a_fresh_backfill() {
 
     let wave2 = fixtures_root().join("db/wave2/tbt.db");
     let w = World::with_db(Some(&wave2));
+    let added_since = golden()["cursor"];
     assert_eq!(
         w.env.count("SELECT count(*) FROM usage_event"),
-        GOLDEN_TOTAL as i64
+        GOLDEN_TOTAL as i64 - added_since
     );
     let collector = w.builtin();
     let report = run_as(&collector, RunTrigger::Hourly);
     assert!(report.errors.is_empty(), "{:?}", report.errors);
-    assert_eq!(report.events_new, 0);
+    assert_eq!(report.events_new, added_since as u64);
     assert_eq!(report.sources_scanned, SOURCES);
-    assert_eq!(report.sources_missing, SOURCES);
+    assert_eq!(report.sources_missing, SOURCES - 1);
     assert_eq!(totals(&w.db()), want);
     w.assert_consistent();
     assert_quiet_rerun(&run_as(&collector, RunTrigger::Hourly));

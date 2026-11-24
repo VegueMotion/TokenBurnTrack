@@ -2,7 +2,10 @@
 
 Real harness logs from one machine (harvested 2026-11-23), anonymized with
 `scripts/anonymize.py`. Gemini CLI fixtures are synthetic (see
-`gemini_cli/README.md`, confidence: low).
+`gemini_cli/README.md`, confidence: low). The Cursor fixture is synthetic too:
+`cursor/3.31.15/User/globalStorage/state.vscdb` is built from `cursor/fixture.sql`
+(`sqlite3 state.vscdb < fixture.sql`) with the table layout of a real Cursor 3.31.15
+database, and holds 2 chats and 3 calls with token counts.
 
 Layout: `<harness>/<harness-version>/<path as the harness writes it, below its data dir>`.
 
