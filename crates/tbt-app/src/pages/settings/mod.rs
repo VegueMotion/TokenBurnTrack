@@ -638,6 +638,32 @@ impl SettingsPage {
         });
     }
 
+    fn set_autostart(&mut self, enable: bool, window: &mut Window, cx: &mut Context<Self>) {
+        self.info("Waiting for the system to answer…", cx);
+        self._side = cx.spawn_in(window, async move |this, cx| {
+            let result = crate::background::request_autostart(enable).await;
+            this.update(cx, |this, cx| match result {
+                Ok(true) => this.info(
+                    "Background collection is on: tbt-daemon starts at login and syncs on the configured interval.",
+                    cx,
+                ),
+                Ok(false) if enable => this.error(
+                    "Background collection was not allowed. You can change this in your desktop's app permissions.",
+                    cx,
+                ),
+                Ok(false) => this.info(
+                    "Background collection is off from the next login. A tbt-daemon that is running now keeps running until you log out.",
+                    cx,
+                ),
+                Err(e) => this.error(
+                    format!("The background portal is not available: {e:#}"),
+                    cx,
+                ),
+            })
+            .ok();
+        });
+    }
+
     fn export(&mut self, format: Format, cx: &mut Context<Self>) {
         let text = value(&self.export_path, cx);
         let Some(path) = export::target_path(&text, format, export::home_dir().as_deref()) else {

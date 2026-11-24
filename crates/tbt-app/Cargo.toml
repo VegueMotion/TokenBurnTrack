@@ -23,5 +23,8 @@ gpui.workspace = true
 gpui-platform.workspace = true
 gpui-component.workspace = true
 
+[target.'cfg(target_os = "linux")'.dependencies]
+ashpd = { workspace = true, features = ["background"] }
+
 [dev-dependencies]
 tempfile.workspace = true

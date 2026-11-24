@@ -50,8 +50,7 @@ pub enum ConfigError {
 }
 
 pub fn default_config_path() -> Option<PathBuf> {
-    directories::ProjectDirs::from("", "", "tokenburntrack")
-        .map(|d| d.config_dir().join(CONFIG_FILE))
+    tbt_store::paths::app_dir(tbt_core::sandbox::XdgDir::Config).map(|d| d.join(CONFIG_FILE))
 }
 
 impl CollectorConfig {

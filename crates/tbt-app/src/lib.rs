@@ -1,4 +1,5 @@
 pub mod app_state;
+pub mod background;
 pub mod charts;
 pub mod collector_bridge;
 pub mod data;

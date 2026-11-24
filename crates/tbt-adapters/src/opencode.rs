@@ -106,7 +106,10 @@ impl HarnessAdapter for OpenCodeAdapter {
     }
 
     fn default_roots(&self) -> Vec<PathBuf> {
-        default_roots_from(std::env::var_os("XDG_DATA_HOME"), std::env::home_dir())
+        default_roots_from(
+            tbt_core::sandbox::host_xdg_var(tbt_core::sandbox::XdgDir::Data),
+            std::env::home_dir(),
+        )
     }
 
     fn discover(&self, roots: &[PathBuf]) -> Result<Vec<SourceRef>> {

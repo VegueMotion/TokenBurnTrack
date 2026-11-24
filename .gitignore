@@ -41,3 +41,8 @@ desktop.ini
 !tests/fixtures/**/*.db
 !crates/*/tests/fixtures/**/*.db
 .claude/worktrees/
+
+# Flatpak builds
+.flatpak-builder/
+/build-dir/
+/repo/

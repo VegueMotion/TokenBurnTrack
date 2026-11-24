@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.VagueMotion.TokenBurnTrack</id>
+  <name>TokenBurnTrack</name>
+  <summary>Track token usage and cost of AI coding agents</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.VagueMotion">
+    <name>VagueMotion</name>
+  </developer>
+  <description>
+    <p>
+      TokenBurnTrack copies usage records from the local logs of AI coding agents
+      (Claude Code, Codex CLI, Gemini CLI, OpenCode and any JSONL log you describe)
+      into a database on your machine, prices each API call, and shows dashboards for
+      cost, tokens, sessions, models and projects. History is kept after the agents
+      delete or rotate their logs.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.VagueMotion.TokenBurnTrack.desktop</launchable>
+  <provides>
+    <binary>tbt-app</binary>
+    <binary>tbt-daemon</binary>
+  </provides>
+  <categories>
+    <category>Utility</category>
+    <category>Development</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-11-24"/>
+  </releases>
+</component>

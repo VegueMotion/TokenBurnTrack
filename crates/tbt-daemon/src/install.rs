@@ -8,8 +8,10 @@ use crate::templates;
 
 pub const SERVICE_FILE: &str = "tbt-daemon.service";
 pub const TIMER_FILE: &str = "tbt-daemon.timer";
-pub const DESKTOP_FILE: &str = "tbt-app.desktop";
-pub const ICON_FILE: &str = "tbt-app.svg";
+pub const DESKTOP_FILE: &str = "io.VagueMotion.TokenBurnTrack.desktop";
+pub const ICON_FILE: &str = "io.VagueMotion.TokenBurnTrack.svg";
+const LEGACY_DESKTOP_FILE: &str = "tbt-app.desktop";
+const LEGACY_ICON_FILE: &str = "tbt-app.svg";
 pub const LAUNCHD_LABEL: &str = "com.tokenburntrack.daemon";
 pub const TASK_NAME: &str = r"TokenBurnTrack\tbt-daemon";
 pub const TASK_FILE: &str = "tbt-daemon-task.xml";
@@ -210,6 +212,10 @@ pub fn install_plan(t: &Target, o: &InstallOptions) -> anyhow::Result<Vec<Action
             ));
             plan.push(Action::write(unit_dir.join(TIMER_FILE), templates::TIMER));
             if let Some(app) = &o.app {
+                plan.push(Action::Remove(
+                    t.applications_dir().join(LEGACY_DESKTOP_FILE),
+                ));
+                plan.push(Action::Remove(t.icon_dir().join(LEGACY_ICON_FILE)));
                 plan.push(Action::CreateDir(t.applications_dir()));
                 plan.push(Action::write(
                     t.applications_dir().join(DESKTOP_FILE),
@@ -278,6 +284,8 @@ pub fn uninstall_plan(t: &Target) -> Vec<Action> {
             Action::Remove(t.systemd_dir().join(SERVICE_FILE)),
             Action::Remove(t.applications_dir().join(DESKTOP_FILE)),
             Action::Remove(t.icon_dir().join(ICON_FILE)),
+            Action::Remove(t.applications_dir().join(LEGACY_DESKTOP_FILE)),
+            Action::Remove(t.icon_dir().join(LEGACY_ICON_FILE)),
             Action::try_run(systemctl(&["daemon-reload"])),
         ],
         Platform::Launchd => vec![
@@ -454,8 +462,8 @@ mod tests {
             [
                 "home/.config/systemd/user/tbt-daemon.service",
                 "home/.config/systemd/user/tbt-daemon.timer",
-                "home/.local/share/applications/tbt-app.desktop",
-                "home/.local/share/icons/hicolor/scalable/apps/tbt-app.svg",
+                "home/.local/share/applications/io.VagueMotion.TokenBurnTrack.desktop",
+                "home/.local/share/icons/hicolor/scalable/apps/io.VagueMotion.TokenBurnTrack.svg",
             ]
         );
         assert!(sb.path("home/.local/share/tokenburntrack").is_dir());
@@ -470,10 +478,13 @@ mod tests {
             sb.read("home/.config/systemd/user/tbt-daemon.timer"),
             templates::TIMER
         );
-        let desktop = sb.read("home/.local/share/applications/tbt-app.desktop");
+        let desktop =
+            sb.read("home/.local/share/applications/io.VagueMotion.TokenBurnTrack.desktop");
         assert!(desktop.contains(&format!("\nExec={}\n", sb.path("bin/tbt-app").display())));
         assert_eq!(
-            sb.read("home/.local/share/icons/hicolor/scalable/apps/tbt-app.svg"),
+            sb.read(
+                "home/.local/share/icons/hicolor/scalable/apps/io.VagueMotion.TokenBurnTrack.svg"
+            ),
             templates::ICON_SVG
         );
         assert_eq!(runner.calls, ["systemctl --user daemon-reload"]);
@@ -565,7 +576,7 @@ mod tests {
         )));
         assert!(out.contains("    OnCalendar=hourly\n"));
         assert!(out.contains("    Type=oneshot\n"));
-        assert!(out.contains("    StartupWMClass=tbt-app\n"));
+        assert!(out.contains("    StartupWMClass=io.VagueMotion.TokenBurnTrack\n"));
         assert!(out.contains("run systemctl --user daemon-reload\n"));
         assert!(out.contains("run systemctl --user enable --now tbt-daemon.timer\n"));
 
