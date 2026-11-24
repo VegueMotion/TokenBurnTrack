@@ -9,7 +9,8 @@ use gpui_component::calendar::{Calendar, CalendarEvent, CalendarState, Date, Mat
 use gpui_component::popover::Popover;
 use gpui_component::tooltip::Tooltip;
 use gpui_component::{
-    ActiveTheme, Disableable, InteractiveElementExt, Selectable, Sizable, StyledExt, h_flex, v_flex,
+    ActiveTheme, Disableable, Icon, InteractiveElementExt, Selectable, Sizable, StyledExt, h_flex,
+    v_flex,
 };
 use jiff::Timestamp;
 use jiff::civil::Weekday;
@@ -346,8 +347,10 @@ impl Workspace {
             )
             .children(Page::ALL.into_iter().map(|page| {
                 let active = page == self.page;
-                div()
+                h_flex()
                     .id(page.label())
+                    .gap_2()
+                    .items_center()
                     .px_3()
                     .py_1p5()
                     .rounded_md()
@@ -361,6 +364,7 @@ impl Workspace {
                         this.detail = None;
                         cx.notify();
                     }))
+                    .child(Icon::new(page.icon()).size_4())
                     .child(page.label())
             }))
     }

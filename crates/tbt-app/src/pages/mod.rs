@@ -7,6 +7,7 @@ pub mod sessions;
 pub mod settings;
 
 use gpui::{Context, Task};
+use gpui_component::IconName;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Page {
@@ -36,6 +37,17 @@ impl Page {
             Page::Projects => "Projects",
             Page::Harnesses => "Harnesses",
             Page::Settings => "Settings",
+        }
+    }
+
+    pub fn icon(self) -> IconName {
+        match self {
+            Page::Dashboard => IconName::LayoutDashboard,
+            Page::Sessions => IconName::SquareTerminal,
+            Page::Models => IconName::Bot,
+            Page::Projects => IconName::Folder,
+            Page::Harnesses => IconName::Cpu,
+            Page::Settings => IconName::Settings,
         }
     }
 

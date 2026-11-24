@@ -77,16 +77,19 @@ fn report_error(msg: &str) {
 
 pub fn run() {
     let (data, sync) = backend();
-    gpui_platform::application().run(move |cx: &mut App| {
-        gpui_component::init(cx);
-        Theme::change(ThemeMode::Dark, None, cx);
-        cx.on_window_closed(|cx, _| cx.quit()).detach();
-        if let Err(err) = workspace::open_main_window(data.clone(), sync.clone(), start_page(), cx)
-        {
-            report_error(&format!("failed to open window: {err:#}"));
-            cx.quit();
-        }
-    });
+    gpui_platform::application()
+        .with_assets(gpui_kit_assets::Assets)
+        .run(move |cx: &mut App| {
+            gpui_component::init(cx);
+            Theme::change(ThemeMode::Dark, None, cx);
+            cx.on_window_closed(|cx, _| cx.quit()).detach();
+            if let Err(err) =
+                workspace::open_main_window(data.clone(), sync.clone(), start_page(), cx)
+            {
+                report_error(&format!("failed to open window: {err:#}"));
+                cx.quit();
+            }
+        });
 }
 
 #[cfg(test)]
