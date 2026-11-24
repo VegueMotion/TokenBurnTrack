@@ -42,6 +42,13 @@ pub fn debug_open_session() -> Option<SessionId> {
         .map(SessionId)
 }
 
+pub fn debug_open_from_env(app_state: &Entity<AppState>, cx: &mut App) {
+    if let Some(id) = debug_open_session() {
+        let app_state = app_state.clone();
+        cx.defer(move |cx| app_state.update(cx, |s, cx| s.open_session(id, cx)));
+    }
+}
+
 pub fn cumulative_cost(events: &[EventRow]) -> Vec<f64> {
     events
         .iter()

@@ -231,6 +231,7 @@ impl ModelsPage {
             _subscription: subscription,
         };
         page.reload(cx);
+        super::session_detail::debug_open_from_env(&page.app_state, cx);
         page
     }
 
