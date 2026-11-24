@@ -227,7 +227,7 @@ impl Workspace {
         self.sync.update(cx, |b, cx| b.sync_now(cx));
     }
 
-    /// Replaces the system title bar: window controls on the left, the rest of the
+    /// Replaces the system title bar: window controls on the right, the rest of the
     /// strip drags the window. Only drawn when the window got client-side
     /// decorations; otherwise the compositor already draws its own bar.
     fn render_title_bar(
@@ -260,6 +260,7 @@ impl Workspace {
                 .flex_none()
                 .h(px(34.))
                 .items_center()
+                .justify_end()
                 .bg(bg)
                 .border_b_1()
                 .border_color(border)
@@ -284,7 +285,7 @@ impl Workspace {
                 .on_mouse_down(MouseButton::Right, |ev, window, _| {
                     window.show_window_menu(ev.position)
                 })
-                .child(h_flex().h_full().pl_1().children(controls.map(|c| {
+                .child(h_flex().h_full().pr_1().children(controls.map(|c| {
                     let close = matches!(c, WindowControl::Close);
                     div()
                         .id(c.id())

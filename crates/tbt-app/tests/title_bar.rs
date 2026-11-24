@@ -68,14 +68,14 @@ fn no_custom_bar_under_server_decorations(cx: &mut TestAppContext) {
 }
 
 #[gpui::test]
-fn controls_sit_on_the_left_in_order(cx: &mut TestAppContext) {
+fn controls_sit_on_the_right_in_order(cx: &mut TestAppContext) {
     let mut cx = open(cx, true);
     let bar = cx.debug_bounds("title-bar").expect("title bar is drawn");
     let min = center(&mut cx, "window-minimize");
     let max = center(&mut cx, "window-maximize");
     let close = center(&mut cx, "window-close");
     assert!(min.x < max.x && max.x < close.x);
-    assert!(close.x < bar.left() + px(150.));
+    assert!(close.x > bar.right() - px(150.));
 }
 
 #[gpui::test]
