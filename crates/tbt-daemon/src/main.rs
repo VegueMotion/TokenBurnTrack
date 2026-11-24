@@ -150,6 +150,20 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         .context("no data directory: pass --data-dir or set TBT_DATA_DIR")?;
     std::fs::create_dir_all(&data_dir)
         .with_context(|| format!("cannot create data directory {}", data_dir.display()))?;
+    let _instance = if cli.once {
+        None
+    } else {
+        match CollectorLock::try_acquire_daemon(&data_dir).context("cannot open the daemon lock")? {
+            LockAttempt::Acquired(lock) => Some(lock),
+            LockAttempt::Busy => {
+                println!(
+                    "another tbt-daemon is already running for {}; exiting",
+                    data_dir.display()
+                );
+                return Ok(());
+            }
+        }
+    };
     let _log_guard = init_logging(&data_dir)?;
     tracing::info!(data_dir = %data_dir.display(), once = cli.once, "tbt-daemon starting");
 
@@ -160,21 +174,6 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         let trigger = cli.trigger.map_or(RunTrigger::Hourly, RunTrigger::from);
         return run_once(&collector, trigger);
     }
-
-    let _instance = match CollectorLock::try_acquire_daemon(&data_dir)
-        .context("cannot open the daemon lock")?
-    {
-        LockAttempt::Acquired(lock) => lock,
-        LockAttempt::Busy => {
-            let msg = format!(
-                "another tbt-daemon is already running for {}; exiting",
-                data_dir.display()
-            );
-            tracing::info!("{msg}");
-            println!("{msg}");
-            return Ok(());
-        }
-    };
 
     let first = cli.trigger.map_or(RunTrigger::Startup, RunTrigger::from);
     let (_stop_tx, stop_rx) = crossbeam_channel::bounded::<()>(1);

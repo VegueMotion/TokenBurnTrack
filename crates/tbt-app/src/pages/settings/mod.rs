@@ -21,6 +21,7 @@ use self::price_form::{EffectiveFrom, LongContextForm, PriceForm, SaveKind, plan
 use self::prices::PriceFilter;
 use super::{Loadable, spawn_load};
 use crate::app_state::{AppState, AppStateEvent};
+use crate::background::Started;
 use crate::data::{self, DataSource};
 use crate::export::{self, Dataset, Format};
 use crate::ui;
@@ -647,16 +648,25 @@ impl SettingsPage {
                 _ => None,
             };
             this.update(cx, |this, cx| match result {
-                Ok(true) => match started {
+                Ok(true) if enable => match started {
+                    Some(Ok(Started::Running | Started::AlreadyRunning)) => this.info(
+                        "Background collection is on: tbt-daemon is running now, starts at every login and syncs on the configured interval.",
+                        cx,
+                    ),
+                    Some(Ok(Started::Failed)) => this.error(
+                        "Background collection is on from the next login, but tbt-daemon stopped right after starting. See the daemon log in the data directory's logs folder.",
+                        cx,
+                    ),
                     Some(Err(e)) => this.error(
                         format!("Background collection is on from the next login, but tbt-daemon could not be started now: {e:#}"),
                         cx,
                     ),
-                    _ => this.info(
-                        "Background collection is on: tbt-daemon is running now, starts at every login and syncs on the configured interval.",
-                        cx,
-                    ),
+                    None => {}
                 },
+                Ok(true) => this.error(
+                    "Background collection is still on. You can change this in your desktop's app permissions.",
+                    cx,
+                ),
                 Ok(false) if enable => this.error(
                     "Background collection was not allowed. You can change this in your desktop's app permissions.",
                     cx,
