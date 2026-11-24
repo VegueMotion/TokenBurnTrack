@@ -6937,6 +6937,7 @@ dependencies = [
  "ashpd",
  "crossbeam-channel",
  "gpui-component",
+ "gpui-kit-assets",
  "gpui-pre",
  "gpui-pre-platform",
  "jiff",
