@@ -292,7 +292,7 @@ proptest! {
         let maintained = rollups(&conn);
         conn.execute_batch(
             "DROP TABLE hourly_model_usage; DROP TABLE hourly_session_usage;
-             DROP INDEX ix_session_resumed;
+             DROP INDEX ix_session_resumed; DROP TABLE worktree;
              PRAGMA user_version = 1;",
         )
         .unwrap();

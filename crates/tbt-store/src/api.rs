@@ -174,6 +174,23 @@ impl Store {
         recompute::drop_raw_json_older_than(&self.conn, days, now)
     }
 
+    /// Folds projects stored under a git worktree path into the project of the
+    /// main checkout. Returns how many projects were folded.
+    pub fn merge_worktree_projects(&mut self) -> Result<usize> {
+        self.writable()?;
+        // Paths are resolved on the filesystem before the write lock is taken.
+        let plan = ingest::plan_worktree_merge(&self.conn)?;
+        if plan.is_empty() {
+            return Ok(0);
+        }
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let merged = ingest::apply_worktree_merge(&tx, &plan)?;
+        tx.commit()?;
+        Ok(merged)
+    }
+
     pub fn kpi_summary(&self, filter: &QueryFilter) -> Result<KpiSummary> {
         query::kpi_summary(&self.conn, filter)
     }

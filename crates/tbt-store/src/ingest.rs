@@ -9,6 +9,7 @@ use tbt_core::{
 
 use crate::api::{Result, StoreError};
 use crate::db::{DbTs, MAX_ACTIVE_GAP_SECS, fmt_ts, path_text, to_i64};
+use crate::worktree;
 
 pub(crate) fn ensure_harness(conn: &Connection, id: &str) -> Result<()> {
     conn.prepare_cached(
@@ -42,10 +43,70 @@ fn project_name(path: &str) -> Option<String> {
         .map(str::to_owned)
 }
 
+/// Reads what the worktree resolver needs from the store.
+pub(crate) struct DbLookup<'a>(pub(crate) &'a Connection);
+
+fn strings(conn: &Connection, sql: &str, args: impl rusqlite::Params) -> Result<Vec<String>> {
+    Ok(conn
+        .prepare_cached(sql)?
+        .query_map(args, |r| r.get(0))?
+        .collect::<rusqlite::Result<_>>()?)
+}
+
+impl worktree::Lookup for DbLookup<'_> {
+    fn recorded(&mut self) -> Result<Vec<(String, String)>> {
+        Ok(self
+            .0
+            .prepare_cached("SELECT path, main FROM worktree")?
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
+            .collect::<rusqlite::Result<_>>()?)
+    }
+
+    fn named(&mut self, name: &str) -> Result<Vec<String>> {
+        strings(
+            self.0,
+            "SELECT path FROM project WHERE name = ?1 AND id != 0",
+            [name],
+        )
+    }
+
+    fn projects(&mut self) -> Result<Vec<String>> {
+        strings(self.0, "SELECT path FROM project WHERE id != 0", [])
+    }
+}
+
+fn record_worktrees(conn: &Connection, learned: &[(String, String)]) -> Result<()> {
+    for (path, main) in learned {
+        conn.prepare_cached(
+            "INSERT INTO worktree(path, main) VALUES (?1, ?2)
+             ON CONFLICT(path) DO UPDATE SET main = excluded.main",
+        )?
+        .execute(params![path, main])?;
+    }
+    Ok(())
+}
+
 pub(crate) fn upsert_project(conn: &Connection, path: Option<&str>) -> Result<ProjectId> {
     let Some(path) = path.filter(|p| !p.is_empty()) else {
         return Ok(ProjectId::NONE);
     };
+    // A stored path was resolved when it was stored, and worktree projects stored
+    // before are folded by `merge_worktree_projects`, so the filesystem is only
+    // checked for new paths.
+    let stored: Option<i64> = conn
+        .prepare_cached("SELECT id FROM project WHERE path = ?1")?
+        .query_row([path], |r| r.get(0))
+        .optional()?;
+    if let Some(id) = stored {
+        return Ok(ProjectId(id));
+    }
+    let mut resolver = worktree::Resolver::new(DbLookup(conn));
+    let main = resolver.main_checkout(path)?;
+    record_worktrees(conn, &resolver.learned)?;
+    insert_project(conn, main.as_deref().unwrap_or(path))
+}
+
+fn insert_project(conn: &Connection, path: &str) -> Result<ProjectId> {
     conn.prepare_cached(
         "INSERT INTO project(path, name) VALUES (?1, ?2) ON CONFLICT(path) DO NOTHING",
     )?
@@ -54,6 +115,104 @@ pub(crate) fn upsert_project(conn: &Connection, path: Option<&str>) -> Result<Pr
         .prepare_cached("SELECT id FROM project WHERE path = ?1")?
         .query_row([path], |r| r.get(0))?;
     Ok(ProjectId(id))
+}
+
+/// Stored worktree projects to fold, found without holding the write lock.
+pub(crate) struct WorktreeMerge {
+    folds: Vec<(i64, String, String)>,
+    learned: Vec<(String, String)>,
+}
+
+impl WorktreeMerge {
+    pub(crate) fn is_empty(&self) -> bool {
+        self.folds.is_empty() && self.learned.is_empty()
+    }
+}
+
+/// Resolves every stored project path. This touches the filesystem, so it runs
+/// before the write transaction.
+pub(crate) fn plan_worktree_merge(conn: &Connection) -> Result<WorktreeMerge> {
+    let projects: Vec<(i64, String)> = conn
+        .prepare("SELECT id, path FROM project WHERE id != 0")?
+        .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
+        .collect::<rusqlite::Result<_>>()?;
+    let mut resolver = worktree::Resolver::new(DbLookup(conn));
+    let mut folds = Vec::new();
+    for (id, path) in projects {
+        if let Some(main) = resolver.main_checkout(&path)? {
+            folds.push((id, path, main));
+        }
+    }
+    Ok(WorktreeMerge {
+        folds,
+        learned: resolver.learned,
+    })
+}
+
+/// Folds the planned worktree projects into their main checkout's project.
+/// Returns how many projects were folded.
+pub(crate) fn apply_worktree_merge(conn: &Connection, plan: &WorktreeMerge) -> Result<usize> {
+    record_worktrees(conn, &plan.learned)?;
+    let mut merged = 0;
+    for (from, path, main) in &plan.folds {
+        // Skip a project that changed since it was resolved.
+        let still: Option<i64> = conn
+            .prepare_cached("SELECT id FROM project WHERE id = ?1 AND path = ?2")?
+            .query_row(params![from, path], |r| r.get(0))
+            .optional()?;
+        if still.is_none() {
+            continue;
+        }
+        let from = *from;
+        let to = insert_project(conn, main)?.0;
+        if to == from {
+            continue;
+        }
+        conn.execute(
+            "UPDATE session SET project_id = ?2 WHERE project_id = ?1",
+            params![from, to],
+        )?;
+        conn.execute(
+            "UPDATE usage_event SET project_id = ?2 WHERE project_id = ?1",
+            params![from, to],
+        )?;
+        conn.execute(
+            "INSERT INTO hourly_usage(hour, harness_id, model, project_id, events,
+               input_tokens, output_tokens, cache_write_tokens, cache_read_tokens,
+               cost_micros, unpriced_events)
+             SELECT hour, harness_id, model, ?2, events, input_tokens, output_tokens,
+                    cache_write_tokens, cache_read_tokens, cost_micros, unpriced_events
+             FROM hourly_usage WHERE project_id = ?1 AND true
+             ON CONFLICT(hour, harness_id, model, project_id) DO UPDATE SET
+               events = events + excluded.events,
+               input_tokens = input_tokens + excluded.input_tokens,
+               output_tokens = output_tokens + excluded.output_tokens,
+               cache_write_tokens = cache_write_tokens + excluded.cache_write_tokens,
+               cache_read_tokens = cache_read_tokens + excluded.cache_read_tokens,
+               cost_micros = cost_micros + excluded.cost_micros,
+               unpriced_events = unpriced_events + excluded.unpriced_events",
+            params![from, to],
+        )?;
+        conn.execute(
+            "INSERT INTO hourly_session_usage(hour, session_id, project_id, events,
+               cost_micros, last_ts)
+             SELECT hour, session_id, ?2, events, cost_micros, last_ts
+             FROM hourly_session_usage WHERE project_id = ?1 AND true
+             ON CONFLICT(hour, session_id, project_id) DO UPDATE SET
+               events = events + excluded.events,
+               cost_micros = cost_micros + excluded.cost_micros,
+               last_ts = max(last_ts, excluded.last_ts)",
+            params![from, to],
+        )?;
+        conn.execute("DELETE FROM hourly_usage WHERE project_id = ?1", [from])?;
+        conn.execute(
+            "DELETE FROM hourly_session_usage WHERE project_id = ?1",
+            [from],
+        )?;
+        conn.execute("DELETE FROM project WHERE id = ?1", [from])?;
+        merged += 1;
+    }
+    Ok(merged)
 }
 
 pub(crate) fn upsert_session(
