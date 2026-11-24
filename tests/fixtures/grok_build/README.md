@@ -39,8 +39,9 @@ Source: xai-org/grok-build `main` at commit `2bdd1d6a6369de0e8c68132ea4539e9abd9
 - Turns are per-turn deltas, not running totals. Only the last turn can grow later
   (a late interjection folds into it and moves its `endedAt`).
 - A fork copies the parent's `usage.json` verbatim (turn rows keep their `endedAt`)
-  and restamps `sessionId`. The adapter's dedup key is `endedAt:turnNumber:model`, so
-  copied turns collide with the parent's and are stored once.
+  and restamps `sessionId`; its `summary.json` gets `parent_session_id` and
+  `forked_at`. The adapter skips fork turns that ended at or before `forked_at`, so the
+  parent keeps its turns whichever file is read first.
 - A subagent's usage is folded into the parent session's ledger, so subagent sessions
   (`summary.json` `session_kind` starting with `subagent`) are skipped.
 - `summary.json` (snake_case): `info {id, cwd}`, `generated_title`, `created_at`,

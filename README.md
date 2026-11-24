@@ -59,9 +59,10 @@ options are in [docs/install.md](docs/install.md). Settings are in
 
 Source files are only ever read. Roots can be changed per harness on the Harnesses page.
 The Gemini CLI and Grok Build parsers were built from upstream source rather than real
-logs, so treat their numbers with more caution. The same goes for Cursor, whose chat database format is not
-documented: it reads the agent and chat panel's per-message `tokenCount`, which Cursor
-does not fill in for every model, and it does not read the `cursor-agent` CLI. The GitHub
+logs, so treat their numbers with more caution. The same goes for Cursor, whose chat
+database format is not documented: it reads the agent and chat panel's per-message
+`tokenCount`, which Cursor does not fill in for every model, and it does not read the
+`cursor-agent` CLI. The GitHub
 Copilot CLI parser was also built from the published event schema, not real logs. Copilot
 does not write per-call usage to disk, only per-model running totals at checkpoints and at
 shutdown, so each usage row covers the calls since the previous total, and only the CLI is

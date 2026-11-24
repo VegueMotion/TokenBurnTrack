@@ -2,7 +2,6 @@
 
 mod common;
 
-use std::collections::BTreeSet;
 use std::path::Path;
 
 use common::*;
@@ -52,23 +51,40 @@ fn subagent_sessions_are_skipped() {
 }
 
 #[test]
-fn fork_copies_reuse_parent_dedup_keys() {
+fn fork_emits_only_turns_after_the_fork() {
     let root = fixture(ROOT);
     let adapter = GrokBuildAdapter::new();
-    let main = read_to_end(&adapter, &usage_file(&root, MAIN), &Cursor::empty());
     let fork = read_to_end(&adapter, &usage_file(&root, FORK), &Cursor::empty());
+    let main = read_to_end(&adapter, &usage_file(&root, MAIN), &Cursor::empty());
 
-    let main_keys: BTreeSet<_> = main.events.iter().map(|e| e.dedup_key.as_str()).collect();
-    let fork_only: Vec<_> = fork
-        .events
-        .iter()
-        .filter(|e| !main_keys.contains(e.dedup_key.as_str()))
-        .collect();
     assert_eq!(main.events.len(), 4);
-    assert_eq!(fork.events.len(), 4);
-    assert_eq!(fork_only.len(), 1);
-    assert_eq!(fork_only[0].input_tokens, 30500);
+    let [only] = fork.events.as_slice() else {
+        panic!("expected one fork event: {:?}", fork.events);
+    };
+    assert_eq!(only.input_tokens, 30500);
+    assert!(main.events.iter().all(|e| e.dedup_key != only.dedup_key));
     assert_eq!(fork.sessions[0].resumed_from_ext_id.as_deref(), Some(MAIN));
+}
+
+#[test]
+fn summary_change_alone_updates_the_session() {
+    let (_dir, root) = copy_to_temp(&fixture(ROOT));
+    let adapter = GrokBuildAdapter::new();
+    let src = usage_file(&root, MAIN);
+    let first = adapter.read(&src, &Cursor::empty()).unwrap();
+
+    let path = src.path.with_file_name("summary.json");
+    let mut summary: Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    summary["generated_title"] = "Sit amet".into();
+    std::fs::write(&path, summary.to_string()).unwrap();
+    let file = std::fs::File::options().write(true).open(&path).unwrap();
+    file.set_modified(std::time::SystemTime::now() + std::time::Duration::from_secs(5))
+        .unwrap();
+
+    let second = adapter.read(&src, &first.next_cursor).unwrap();
+    assert!(second.events.is_empty());
+    assert_eq!(second.sessions[0].title.as_deref(), Some("Sit amet"));
 }
 
 #[test]

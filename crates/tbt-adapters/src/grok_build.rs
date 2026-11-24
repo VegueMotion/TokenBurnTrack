@@ -69,13 +69,13 @@ impl HarnessAdapter for GrokBuildAdapter {
 
         let meta = std::fs::metadata(&src.path).map_err(|e| Error::io(&src.path, e))?;
         let size = meta.len();
-        let mtime = meta
-            .modified()
-            .ok()
-            .and_then(|t| Timestamp::try_from(t).ok());
+        let mtime = modified(&src.path);
+        let session_dir = src.path.parent().unwrap_or(Path::new(""));
+        let summary_mtime = modified(&session_dir.join(SUMMARY_FILE));
         if state.size == size
             && state.mtime.is_some()
             && state.mtime == mtime
+            && state.summary_mtime == summary_mtime
             && warnings.is_empty()
         {
             return Ok(ReadBatch::unchanged(cursor.clone()));
@@ -89,6 +89,7 @@ impl HarnessAdapter for GrokBuildAdapter {
         let mut next = State {
             size,
             mtime,
+            summary_mtime,
             ..state.clone()
         };
 
@@ -103,7 +104,6 @@ impl HarnessAdapter for GrokBuildAdapter {
             }
         };
 
-        let session_dir = src.path.parent().unwrap_or(Path::new(""));
         let summary = read_summary(session_dir, src, &mut batch.warnings);
         if summary
             .as_ref()
@@ -127,6 +127,7 @@ impl HarnessAdapter for GrokBuildAdapter {
             .and_then(|s| s.info.cwd.clone())
             .or_else(|| session_dir.parent().and_then(cwd_of_group));
         let git_branch = summary.as_ref().and_then(|s| s.head_branch.clone());
+        let forked_at = summary.as_ref().and_then(|s| s.forked_at);
 
         let mut session = SessionUpsert::new(HarnessId::GROK_BUILD, ext_id.clone());
         session.project_path = project_path.clone();
@@ -175,6 +176,9 @@ impl HarnessAdapter for GrokBuildAdapter {
                 ));
                 continue;
             };
+            if forked_at.is_some_and(|f| ts <= f) {
+                continue;
+            }
             session.started_at.get_or_insert(ts);
             session.ended_at = Some(session.ended_at.map_or(ts, |t| t.max(ts)));
 
@@ -190,12 +194,10 @@ impl HarnessAdapter for GrokBuildAdapter {
                     .flatten();
                 let before = prev.and_then(|p| p.get(&model));
                 let delta = before.map_or(tokens, |b| tokens.delta_since(&b.tokens));
-                let cost = match before {
-                    None => ticks,
-                    Some(b) => match (ticks, b.cost_ticks) {
-                        (Some(now), Some(was)) if now > was => Some(now - was),
-                        _ => None,
-                    },
+                let cost = match (ticks, before.and_then(|b| b.cost_ticks)) {
+                    (Some(now), Some(was)) if now > was => Some(now - was),
+                    (Some(now), None) => Some(now),
+                    _ => None,
                 };
                 emitted.insert(
                     model.clone(),
@@ -246,6 +248,8 @@ impl HarnessAdapter for GrokBuildAdapter {
 struct State {
     size: u64,
     mtime: Option<Timestamp>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    summary_mtime: Option<Timestamp>,
     done: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     last: Option<LastTurn>,
@@ -345,6 +349,7 @@ struct Summary {
     created_at: Option<Timestamp>,
     updated_at: Option<Timestamp>,
     parent_session_id: Option<String>,
+    forked_at: Option<Timestamp>,
     session_kind: Option<String>,
     head_branch: Option<String>,
 }
@@ -411,6 +416,11 @@ fn provider_for(model: &str) -> &'static str {
     } else {
         "xai"
     }
+}
+
+fn modified(path: &Path) -> Option<Timestamp> {
+    let mtime = std::fs::metadata(path).ok()?.modified().ok()?;
+    Timestamp::try_from(mtime).ok()
 }
 
 fn file_name(path: &Path) -> String {
