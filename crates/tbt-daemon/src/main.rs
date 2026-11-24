@@ -147,7 +147,8 @@ fn run(cli: Cli) -> anyhow::Result<()> {
     tracing::info!(data_dir = %data_dir.display(), once = cli.once, "tbt-daemon starting");
 
     let interval = config.sync_interval_minutes;
-    let collector = Collector::builtin(data_dir, config);
+    let mut loaded = config.clone();
+    let mut collector = Collector::builtin(data_dir.clone(), config);
     if cli.once {
         let trigger = cli.trigger.map_or(RunTrigger::Hourly, RunTrigger::from);
         return run_once(&collector, trigger);
@@ -156,6 +157,15 @@ fn run(cli: Cli) -> anyhow::Result<()> {
     let first = cli.trigger.map_or(RunTrigger::Startup, RunTrigger::from);
     let (_stop_tx, stop_rx) = crossbeam_channel::bounded::<()>(1);
     scheduler::run_loop(interval, first, &stop_rx, |trigger| {
+        match load_config(cli.config.as_deref()) {
+            Ok(fresh) if fresh != loaded => {
+                tracing::info!("config changed; reloading");
+                loaded = fresh.clone();
+                collector = Collector::builtin(data_dir.clone(), fresh);
+            }
+            Ok(_) => {}
+            Err(e) => tracing::warn!("config reload failed, keeping the previous one: {e:#}"),
+        }
         if let Err(e) = run_once(&collector, trigger) {
             tracing::error!("ingest run failed: {e:#}");
             eprintln!("tbt-daemon: {e:#}");
