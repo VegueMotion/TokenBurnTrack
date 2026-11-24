@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
+use std::time::{Duration, Instant};
 
 use tbt_collector::{CollectorLock, LockAttempt};
 
@@ -37,10 +38,14 @@ impl Sandbox {
     }
 
     fn daemon(&self, args: &[&str]) -> Output {
+        self.command(args).output().unwrap()
+    }
+
+    fn command(&self, args: &[&str]) -> Command {
         let home = self.path("home");
         std::fs::create_dir_all(&home).unwrap();
-        Command::new(env!("CARGO_BIN_EXE_tbt-daemon"))
-            .args(args)
+        let mut cmd = Command::new(env!("CARGO_BIN_EXE_tbt-daemon"));
+        cmd.args(args)
             .arg("--config")
             .arg(self.path("config/config.toml"))
             .env_clear()
@@ -50,9 +55,8 @@ impl Sandbox {
             .env("XDG_DATA_HOME", home.join(".local/share"))
             .env("XDG_STATE_HOME", home.join(".local/state"))
             .env("CLAUDE_CONFIG_DIR", self.path("claude"))
-            .env("TBT_DATA_DIR", self.path("data"))
-            .output()
-            .unwrap()
+            .env("TBT_DATA_DIR", self.path("data"));
+        cmd
     }
 }
 
@@ -104,6 +108,30 @@ fn once_with_busy_lock_exits_zero_and_skips() {
     assert!(out.status.success(), "{out:?}");
     assert!(stdout(&out).contains("busy"), "{}", stdout(&out));
     assert!(!sb.path("data/tbt.sqlite").exists());
+    drop(lock);
+}
+
+#[test]
+fn second_looping_daemon_exits_zero() {
+    let sb = Sandbox::new();
+    let LockAttempt::Acquired(lock) = CollectorLock::try_acquire_daemon(&sb.path("data")).unwrap()
+    else {
+        panic!("daemon lock should be free");
+    };
+    let mut child = sb.command(&[]).stdout(Stdio::piped()).spawn().unwrap();
+    let deadline = Instant::now() + Duration::from_secs(20);
+    while child.try_wait().unwrap().is_none() {
+        if Instant::now() > deadline {
+            child.kill().unwrap();
+            panic!("second daemon kept running instead of exiting");
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    let out = child.wait_with_output().unwrap();
+    assert!(out.status.success(), "{out:?}");
+    assert!(stdout(&out).contains("already running"), "{}", stdout(&out));
+    assert!(!sb.path("data/tbt.sqlite").exists());
+    assert!(!sb.path("data/logs").exists());
     drop(lock);
 }
 

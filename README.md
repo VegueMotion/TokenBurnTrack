@@ -68,6 +68,8 @@ Everything stays on your machine. The data directory
   usage JSON unless `raw_json_retention_days` drops it), hourly rollups, prices and a
   log of ingest runs;
 - `collector.lock`: the lock shared by the app and the daemon;
+- `daemon.lock`: held by a long-running `tbt-daemon`, so only one runs per data
+  directory;
 - `logs/`: daily-rotated daemon logs (30 days kept).
 
 Message content depends on the `privacy` setting:

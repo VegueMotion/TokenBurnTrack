@@ -796,7 +796,7 @@ impl SettingsPage {
                                 ),
                         )
                         .child(ui::muted_text(
-                            "Starts tbt-daemon at login through the desktop's background permission, so syncs continue while the app is closed.",
+                            "Starts tbt-daemon now and at every login through the desktop's background permission, so syncs continue while the app is closed.",
                             cx,
                         )),
                 )

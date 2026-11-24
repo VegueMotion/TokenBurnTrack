@@ -3,7 +3,9 @@ use std::process::ExitCode;
 
 use anyhow::{Context, bail};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use tbt_collector::{Collector, CollectorConfig, RunOutcome, RunTrigger, scheduler};
+use tbt_collector::{
+    Collector, CollectorConfig, CollectorLock, LockAttempt, RunOutcome, RunTrigger, scheduler,
+};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
@@ -148,6 +150,20 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         .context("no data directory: pass --data-dir or set TBT_DATA_DIR")?;
     std::fs::create_dir_all(&data_dir)
         .with_context(|| format!("cannot create data directory {}", data_dir.display()))?;
+    let _instance = if cli.once {
+        None
+    } else {
+        match CollectorLock::try_acquire_daemon(&data_dir).context("cannot open the daemon lock")? {
+            LockAttempt::Acquired(lock) => Some(lock),
+            LockAttempt::Busy => {
+                println!(
+                    "another tbt-daemon is already running for {}; exiting",
+                    data_dir.display()
+                );
+                return Ok(());
+            }
+        }
+    };
     let _log_guard = init_logging(&data_dir)?;
     tracing::info!(data_dir = %data_dir.display(), once = cli.once, "tbt-daemon starting");
 
