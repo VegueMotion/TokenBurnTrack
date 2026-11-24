@@ -487,13 +487,18 @@ pub(crate) fn project_stats(conn: &Connection, filter: &QueryFilter) -> Result<V
     }
 
     let mut p = Params::default();
-    let start = p.push_ts(filter.range.start);
-    let end = p.push_ts(filter.range.end);
+    let start = p.push_ts(Hour::containing(filter.range.start).start());
+    let end_hour = Hour::containing(filter.range.end);
+    let end = p.push_ts(if end_hour.start() == filter.range.end {
+        filter.range.end
+    } else {
+        end_hour.end()
+    });
     let sql = format!(
-        "SELECT s.project_id, s.git_branch, COUNT(DISTINCT s.id), SUM(e.cost_micros), MAX(e.ts)
+        "SELECT e.project_id, s.git_branch, COUNT(DISTINCT s.id), SUM(e.cost_micros), MAX(e.ts)
          FROM usage_event e JOIN session s ON s.id = e.session_id
          WHERE e.ts >= {start} AND e.ts < {end}{}
-         GROUP BY s.project_id, s.git_branch",
+         GROUP BY e.project_id, s.git_branch",
         p.harness_in("e.harness_id", &filter.harnesses)
     );
     let mut stmt = conn.prepare(&sql)?;

@@ -307,3 +307,51 @@ fn queries_work_on_read_only_connection() {
     assert_eq!(ro.sessions(&two_days()).unwrap().len(), 2);
     assert!(ro.session_detail(s.s1).unwrap().is_some());
 }
+
+#[test]
+fn project_branches_follow_event_projects() {
+    let mut db = Db::new();
+    let mut tx = db
+        .store
+        .begin_source_tx(&CC, Path::new("/x.jsonl"))
+        .unwrap();
+    let repo = tx.upsert_project(Some("/home/u/repo")).unwrap();
+    let mut up = SessionUpsert::new(CC, "sx");
+    up.git_branch = Some("feat".into());
+    tx.upsert_session(&up, repo).unwrap();
+    let in_repo = event("a", "sx", "2026-01-01T10:05:00Z");
+    let mut in_sub = event("b", "sx", "2026-01-01T10:20:00Z");
+    in_sub.project_path = Some("/home/u/repo/sub".into());
+    let edge = event("c", "sx", "2026-01-01T23:59:00Z");
+    tx.insert_events(&[
+        priced(in_repo, 100, None),
+        priced(in_sub, 40, None),
+        priced(edge, 7, None),
+    ])
+    .unwrap();
+    tx.commit().unwrap();
+
+    let f = filter(
+        "2026-01-01T10:15:00Z",
+        "2026-01-01T23:30:00Z",
+        BucketSize::Hour,
+        "UTC",
+    );
+    let projects = db.store.project_stats(&f).unwrap();
+    assert_eq!(projects.len(), 2);
+    for p in &projects {
+        let branch_cost: Micros = p.branches.iter().map(|b| b.cost).sum();
+        assert_eq!(branch_cost, p.cost, "{:?}", p.path);
+        assert_eq!(p.sessions, 1, "{:?}", p.path);
+        assert!(p.last_active.is_some());
+    }
+    let cost = |path: &str| {
+        projects
+            .iter()
+            .find(|p| p.path.as_deref() == Some(path))
+            .unwrap()
+            .cost
+    };
+    assert_eq!(cost("/home/u/repo"), Micros(107));
+    assert_eq!(cost("/home/u/repo/sub"), Micros(40));
+}
