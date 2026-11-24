@@ -46,3 +46,6 @@ desktop.ini
 .flatpak-builder/
 /build-dir/
 /repo/
+
+# Release artifacts
+/dist/
