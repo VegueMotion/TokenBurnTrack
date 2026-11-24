@@ -220,6 +220,10 @@ impl Store {
         query::sessions(&self.conn, filter)
     }
 
+    pub fn session_row(&self, id: SessionId) -> Result<Option<SessionRow>> {
+        query::session_row_by_id(&self.conn, id)
+    }
+
     pub fn session_detail(&self, id: SessionId) -> Result<Option<SessionDetail>> {
         query::session_detail(&self.conn, id)
     }
@@ -549,7 +553,8 @@ pub struct SessionDetail {
     pub tool_counts: Vec<(String, u64)>,
     /// Sum of `reported_cost` over events that have one.
     pub reported_cost: Option<Micros>,
-    /// Oldest first, ending with this session.
+    /// Earlier sessions this one was resumed from, this session, then sessions resumed from it,
+    /// oldest first.
     pub resume_chain: Vec<SessionRow>,
     pub chain_cost: Micros,
     pub subagents: Vec<SessionRow>,

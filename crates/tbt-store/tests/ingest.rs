@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 
 use common::*;
 use tbt_core::{
-    HarnessId, MessageKind, MessageRecord, MessageRole, ProjectId, SessionUpsert, TokenCounts,
+    HarnessId, MessageKind, MessageRecord, MessageRole, ProjectId, SessionId, SessionUpsert,
+    TokenCounts,
 };
 
 #[test]
@@ -304,6 +305,18 @@ fn resumed_session_links_via_dedup_key() {
         [orig, new]
     );
     assert_eq!(d.chain_cost.0, 240);
+    let from_original = db.store.session_detail(orig).unwrap().unwrap();
+    assert_eq!(
+        from_original
+            .resume_chain
+            .iter()
+            .map(|s| s.id)
+            .collect::<Vec<_>>(),
+        [orig, new]
+    );
+    assert_eq!(from_original.chain_cost.0, 240);
+    assert_eq!(db.store.session_row(new).unwrap().unwrap().id, new);
+    assert_eq!(db.store.session_row(SessionId(9999)).unwrap(), None);
     let rows = hourly(&db.raw());
     assert_eq!(rows.last().unwrap().hour, "2026-11-01T09:00:00.000000000Z");
     assert_eq!(rows.last().unwrap().cost, 40);

@@ -253,6 +253,10 @@ fn one_session(conn: &Connection, id: SessionId) -> Result<Option<(SessionRow, O
     Ok(conn.query_row(&sql, [id.0], session_row).optional()?)
 }
 
+pub(crate) fn session_row_by_id(conn: &Connection, id: SessionId) -> Result<Option<SessionRow>> {
+    Ok(one_session(conn, id)?.map(|(row, _)| row))
+}
+
 pub(crate) fn session_detail(conn: &Connection, id: SessionId) -> Result<Option<SessionDetail>> {
     let Some((session, harness_version)) = one_session(conn, id)? else {
         return Ok(None);
@@ -340,6 +344,20 @@ pub(crate) fn session_detail(conn: &Connection, id: SessionId) -> Result<Option<
         resume_chain.push(row);
     }
     resume_chain.reverse();
+    let mut frontier = vec![session.id];
+    let mut later = Vec::new();
+    while let Some(from) = frontier.pop() {
+        let mut p = Params::default();
+        let where_sql = format!("s.resumed_from_session_id = {}", p.push(from.0));
+        for row in session_rows(conn, &where_sql, &p)? {
+            if seen.insert(row.id) {
+                frontier.push(row.id);
+                later.push(row);
+            }
+        }
+    }
+    later.sort_by(|a, b| a.started_at.cmp(&b.started_at).then(a.id.cmp(&b.id)));
+    resume_chain.extend(later);
     let chain_cost = resume_chain.iter().map(|s| s.cost).sum();
 
     let mut p = Params::default();
