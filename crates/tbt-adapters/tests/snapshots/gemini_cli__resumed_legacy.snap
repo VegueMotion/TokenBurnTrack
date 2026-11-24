@@ -1,0 +1,75 @@
+---
+source: crates/tbt-adapters/tests/gemini_cli.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /u/user/projects/bold-birch-00
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-10-02T09:30:11Z"
+    ended_at: "2026-10-02T09:34:52.512Z"
+    has_baseline_hint: false
+  - ext_id: 7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /u/user/projects/bold-birch-00
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-10-02T09:30:11Z"
+    ended_at: "2026-11-21T08:02:19.421Z"
+    has_baseline_hint: false
+event_count: 7
+totals:
+  (all):
+    calls: 7
+    input: 31170
+    output: 2357
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 34304
+    reasoning: 549
+    total: 67831
+  google/gemini-2.5-flash:
+    calls: 2
+    input: 1502
+    output: 308
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 17920
+    reasoning: 0
+    total: 19730
+  google/gemini-2.5-pro:
+    calls: 5
+    input: 29668
+    output: 2049
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 16384
+    reasoning: 549
+    total: 48101
+events:
+  - "2026-10-02T09:30:19.87Z 1c7a5d2f-2e3b-4a4c-8d9e-8f7a6b5c4d32 gemini-2.5-pro in=8412 out=307 cw5m=0 cw1h=0 cr=0 rs=96"
+  - "2026-10-02T09:30:27.331Z 2d8b6e3a-3f4c-4b5d-9e0f-9a8b7c6d5e43 gemini-2.5-pro in=928 out=528 cw5m=0 cw1h=0 cr=8192 rs=140"
+  - "2026-10-02T09:34:52.401Z 4f0d8a5c-5b6e-4d7f-9a2b-1c0d9e8f7a65 gemini-2.5-flash in=751 out=154 cw5m=0 cw1h=0 cr=8960 rs=0"
+  - "2026-10-02T09:30:19.87Z 1c7a5d2f-2e3b-4a4c-8d9e-8f7a6b5c4d32 gemini-2.5-pro in=8412 out=307 cw5m=0 cw1h=0 cr=0 rs=96"
+  - "2026-10-02T09:30:27.331Z 2d8b6e3a-3f4c-4b5d-9e0f-9a8b7c6d5e43 gemini-2.5-pro in=928 out=528 cw5m=0 cw1h=0 cr=8192 rs=140"
+  - "2026-10-02T09:34:52.401Z 4f0d8a5c-5b6e-4d7f-9a2b-1c0d9e8f7a65 gemini-2.5-flash in=751 out=154 cw5m=0 cw1h=0 cr=8960 rs=0"
+  - "2026-11-21T08:02:19.42Z f0c8b9a7-2f3e-4d4c-9b6a-7f8e9d0c1b2a gemini-2.5-pro in=10988 out=379 cw5m=0 cw1h=0 cr=0 rs=77"
+message_count: 18
+messages_by_kind:
+  assistant/text: 7
+  assistant/thinking: 2
+  assistant/tool_use: 2
+  tool/tool_result: 2
+  user/text: 5
+messages_linked_to_events: 11
+messages_with_preview: 18
+tools:
+  tool_result/read_file: 2
+  tool_use/read_file: 2
+warnings: []

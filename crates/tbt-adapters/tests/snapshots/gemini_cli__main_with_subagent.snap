@@ -1,0 +1,80 @@
+---
+source: crates/tbt-adapters/tests/gemini_cli.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: f4c2b3a1-6f7e-4d8c-9b0a-1f2e3d4c5b6a
+    parent_ext_id: 5a1e2d3c-6b7a-4f8e-9d0c-1b2a3f4e5d6c
+    resumed_from_ext_id: ~
+    project_path: /u/user/projects/amber-acorn-00
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-11-20T10:23:12Z"
+    ended_at: "2026-11-20T10:23:58.301Z"
+    has_baseline_hint: false
+  - ext_id: 5a1e2d3c-6b7a-4f8e-9d0c-1b2a3f4e5d6c
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /u/user/projects/amber-acorn-00
+    title: lorem ipsum dolor sit amet
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-11-20T10:15:03.001Z"
+    ended_at: "2026-11-20T10:24:01.201Z"
+    has_baseline_hint: false
+event_count: 8
+totals:
+  (all):
+    calls: 8
+    input: 21276
+    output: 2205
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 57856
+    reasoning: 881
+    total: 81337
+  google/gemini-2.5-flash:
+    calls: 4
+    input: 8798
+    output: 1191
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 26880
+    reasoning: 358
+    total: 36869
+  google/gemini-2.5-pro:
+    calls: 4
+    input: 12478
+    output: 1014
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 30976
+    reasoning: 523
+    total: 44468
+events:
+  - "2026-11-20T10:23:18.77Z c7f5e6d4-9c0b-4a1f-8e3d-4c5b6a7f8e9d gemini-2.5-flash in=6021 out=360 cw5m=0 cw1h=0 cr=0 rs=240"
+  - "2026-11-20T10:23:58.3Z d8a6f7e5-0d1c-4b2a-9f4e-5d6c7b8a9f0e gemini-2.5-flash in=1545 out=608 cw5m=0 cw1h=0 cr=5888 rs=96"
+  - "2026-11-20T10:15:09.448Z 7c3a4f5e-8d9c-4b0a-9f2e-3d4c5b6a7f8e gemini-2.5-pro in=10240 out=508 cw5m=0 cw1h=0 cr=0 rs=412"
+  - "2026-11-20T10:15:16.902Z 8d4b5a6f-9e0d-4c1b-8a3f-4e5d6c7b8a9f gemini-2.5-pro in=628 out=291 cw5m=0 cw1h=0 cr=9984 rs=58"
+  - "2026-11-20T10:21:50.33Z af6d7c8b-1a2f-4e3d-8c5b-6a7f8e9d0c1b gemini-2.5-flash in=538 out=61 cw5m=0 cw1h=0 cr=10496 rs=0"
+  - "2026-11-20T10:22:38.506Z c18f9e0d-3c4b-4a5f-8e7d-8c9b0a1f2e3d gemini-2.5-flash in=694 out=162 cw5m=0 cw1h=0 cr=10496 rs=22"
+  - "2026-11-20T10:23:09.64Z e3b1a2f0-5e6d-4c7b-8a9f-0e1d2c3b4a5f gemini-2.5-pro in=626 out=122 cw5m=0 cw1h=0 cr=10496 rs=35"
+  - "2026-11-20T10:24:01.2Z a5d3c4b2-7a8f-4e9d-8c1b-2a3f4e5d6c7b gemini-2.5-pro in=984 out=93 cw5m=0 cw1h=0 cr=10496 rs=18"
+message_count: 17
+messages_by_kind:
+  assistant/text: 5
+  assistant/thinking: 1
+  assistant/tool_use: 3
+  tool/tool_result: 3
+  user/text: 5
+messages_linked_to_events: 9
+messages_with_preview: 17
+tools:
+  tool_result/codebase_investigator: 1
+  tool_result/glob: 1
+  tool_result/run_shell_command: 1
+  tool_use/codebase_investigator: 1
+  tool_use/glob: 1
+  tool_use/run_shell_command: 1
+warnings: []
