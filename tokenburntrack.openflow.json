@@ -9,7 +9,7 @@
     {
       "id": "page-1",
       "name": "Page 1",
-      "diagramKind": "sequence",
+      "diagramKind": "erd",
       "layers": [
         {
           "id": "default",
@@ -19,471 +19,6 @@
         }
       ],
       "nodes": [
-        {
-          "id": "dsl-5gcwyq",
-          "kind": "frame",
-          "parentId": null,
-          "layerId": "default",
-          "zIndex": 0,
-          "transform": {
-            "translation": {
-              "x": 7058.921860465117,
-              "y": 356.4999999999999
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 1704,
-            "height": 744
-          },
-          "content": {
-            "label": "TokenBurnTrack — Data Model"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "family": "erd",
-              "version": 1,
-              "source": "%% ofk 1\nerd\ntitle: TokenBurnTrack — Data Model\nharness [orange] { id text pk   display_name text   enabled int   roots_json text }\nsource_file [gray] { id int pk   harness_id text fk   path text   cursor_json text   last_read text   missing int }\nproject [teal] { id int pk   path text unique   name text }\nsession [blue] { id int pk   harness_id text fk   ext_id text   project_id int fk   resumed_from_session_id int fk   parent_session_id int fk   started_at text   ended_at text   active_seconds int   unpriced_events int   cost_micros int   cumulative_json text }\nsession_model [blue] { session_id int pk   model text pk }\nusage_event [violet] { id int pk   harness_id text   dedup_key text unique   session_id int fk   project_id int fk   ts text   model text   input_tokens int   output_tokens int   cache_write_5m_tokens int   cache_write_1h_tokens int   cache_read_tokens int   cost_micros int   reported_cost_micros int   price_id int fk   source_file_id int fk }\nmessage [pink] { id int pk   session_id int fk   key text unique   ts text   role text   tool_name text   preview text   usage_event_id int fk }\nhourly_usage [green] { hour text pk   harness_id text pk   model text pk   project_id int pk   unpriced_events int   input_tokens int   output_tokens int   cost_micros int }\nmodel_price [yellow] { id int pk   provider text   model_pattern text   effective_from text   effective_to text   input_per_mtok text   output_per_mtok text   cache_read_per_mtok text   source text }\ningest_run [gray] { id int pk   trigger text   started_at text   finished_at text   events_new int   warnings_json text }\nharness ||--o{ source_file : has\nharness ||--o{ session : owns\nproject ||--o{ session : \"groups (0 = none)\"\nproject ||--o{ usage_event : \"bucket (0 = none)\"\nproject ||--o{ hourly_usage : \"buckets (0 = none)\"\nsession |o--o{ session : resumed_from\nsession |o--o{ session : \"parent (subagent)\"\nsession ||--o{ session_model : uses\nsession ||--o{ usage_event : contains\nsession ||--o{ message : contains\nsource_file |o--o{ usage_event : origin\nmodel_price |o--o{ usage_event : prices\nusage_event |o--o{ message : produced",
-              "hash": "1fkjif1",
-              "title": "TokenBurnTrack — Data Model",
-              "autoIcons": true
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "harness",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 28,
-              "y": 622
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "harness",
-            "color": "amber",
-            "erFields": [
-              {
-                "name": "id",
-                "dataType": "text",
-                "isPrimaryKey": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "harness",
-              "line": 4
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "source-file",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 539,
-              "y": 412
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "source_file",
-            "color": "slate",
-            "erFields": [
-              {
-                "name": "id",
-                "dataType": "int",
-                "isPrimaryKey": true,
-                "isForeignKey": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "source-file",
-              "line": 5
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "project",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 28,
-              "y": 350
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "project",
-            "color": "cyan",
-            "erFields": [
-              {
-                "name": "id",
-                "dataType": "int",
-                "isPrimaryKey": true,
-                "isUnique": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "project",
-              "line": 6
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "session",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 539,
-              "y": 622
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "session",
-            "color": "blue",
-            "erFields": [
-              {
-                "name": "id",
-                "dataType": "int",
-                "isPrimaryKey": true,
-                "isForeignKey": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "session",
-              "line": 7
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "session-model",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 986,
-              "y": 554
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "session_model",
-            "color": "blue",
-            "erFields": [
-              {
-                "name": "session_id",
-                "dataType": "int",
-                "isPrimaryKey": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "session-model",
-              "line": 8
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "usage-event",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 986,
-              "y": 404
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "usage_event",
-            "color": "violet",
-            "erFields": [
-              {
-                "name": "id",
-                "dataType": "int",
-                "isPrimaryKey": true,
-                "isForeignKey": true,
-                "isUnique": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "usage-event",
-              "line": 9
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "message",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 1436,
-              "y": 629
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "message",
-            "color": "pink",
-            "erFields": [
-              {
-                "name": "id",
-                "dataType": "int",
-                "isPrimaryKey": true,
-                "isForeignKey": true,
-                "isUnique": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "message",
-              "line": 10
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "hourly-usage",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 539,
-              "y": 282
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "hourly_usage",
-            "color": "emerald",
-            "erFields": [
-              {
-                "name": "hour",
-                "dataType": "text",
-                "isPrimaryKey": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "hourly-usage",
-              "line": 11
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "model-price",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 539,
-              "y": 152
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "model_price",
-            "color": "yellow",
-            "erFields": [
-              {
-                "name": "id",
-                "dataType": "int",
-                "isPrimaryKey": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "model-price",
-              "line": 12
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "ingest-run",
-          "kind": "er_entity",
-          "parentId": "dsl-5gcwyq",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 28,
-              "y": 220
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 82
-          },
-          "content": {
-            "label": "ingest_run",
-            "color": "slate",
-            "erFields": [
-              {
-                "name": "id",
-                "dataType": "int",
-                "isPrimaryKey": true
-              }
-            ]
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "ingest-run",
-              "line": 13
-            }
-          },
-          "extensions": {}
-        },
         {
           "id": "dsl-da2955",
           "kind": "frame",
@@ -2597,568 +2132,558 @@
             }
           },
           "extensions": {}
+        },
+        {
+          "id": "dsl-5gcwyq",
+          "kind": "frame",
+          "parentId": null,
+          "layerId": "default",
+          "zIndex": 0,
+          "transform": {
+            "translation": {
+              "x": 7058.921860465117,
+              "y": 356.4999999999999
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 1788,
+            "height": 816
+          },
+          "content": {
+            "label": "TokenBurnTrack — Data Model"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "family": "erd",
+              "version": 1,
+              "source": "%% ofk 1\nerd\ntitle: TokenBurnTrack — Data Model\nharness [orange] { id text pk   display_name text   enabled int   roots_json text }\nsource_file [gray] { id int pk   harness_id text fk   path text   cursor_json text   last_read text   missing int }\nproject [teal] { id int pk   path text unique   name text }\nsession [blue] { id int pk   harness_id text fk   ext_id text   project_id int fk   resumed_from_session_id int fk   parent_session_id int fk   started_at text   ended_at text   active_seconds int   unpriced_events int   cost_micros int   cumulative_json text }\nsession_model [blue] { session_id int pk   model text pk }\nusage_event [violet] { id int pk   harness_id text   dedup_key text unique   session_id int fk   project_id int fk   ts text   model text   input_tokens int   output_tokens int   cache_write_5m_tokens int   cache_write_1h_tokens int   cache_read_tokens int   cost_micros int   reported_cost_micros int   price_id int fk   source_file_id int fk }\nmessage [pink] { id int pk   session_id int fk   key text unique   ts text   role text   tool_name text   preview text   usage_event_id int fk }\nhourly_usage [green] { hour text pk   harness_id text pk   model text pk   project_id int pk   unpriced_events int   input_tokens int   output_tokens int   cost_micros int }\nhourly_model_usage [green] { hour text pk   harness_id text pk   provider text pk   model text pk   price_id int pk   over_tier int pk   events int   cost_micros int }\nhourly_session_usage [green] { hour text pk   session_id int pk   project_id int pk   events int   cost_micros int   last_ts text }\nmodel_price [yellow] { id int pk   provider text   model_pattern text   effective_from text   effective_to text   input_per_mtok text   output_per_mtok text   cache_read_per_mtok text   source text }\ningest_run [gray] { id int pk   trigger text   started_at text   finished_at text   events_new int   warnings_json text }\nharness ||--o{ source_file : has\nharness ||--o{ session : owns\nproject ||--o{ session : \"groups (0 = none)\"\nproject ||--o{ usage_event : \"bucket (0 = none)\"\nproject ||--o{ hourly_usage : \"buckets (0 = none)\"\nproject ||--o{ hourly_session_usage : buckets\nsession |o--o{ session : resumed_from\nsession |o--o{ session : \"parent (subagent)\"\nsession ||--o{ session_model : uses\nsession ||--o{ usage_event : contains\nsession ||--o{ message : contains\nsession ||--o{ hourly_session_usage : \"per hour\"\nsource_file |o--o{ usage_event : origin\nmodel_price |o--o{ usage_event : prices\nmodel_price |o--o{ hourly_model_usage : \"prices (0 = unpriced)\"\nusage_event |o--o{ message : produced",
+              "hash": "13k6xiv",
+              "title": "TokenBurnTrack — Data Model",
+              "autoIcons": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "harness",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 28,
+              "y": 692
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "harness",
+            "color": "amber",
+            "erFields": [
+              {
+                "name": "id",
+                "dataType": "text",
+                "isPrimaryKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "harness",
+              "line": 4
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "source-file",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 545,
+              "y": 706
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "source_file",
+            "color": "slate",
+            "erFields": [
+              {
+                "name": "id",
+                "dataType": "int",
+                "isPrimaryKey": true,
+                "isForeignKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "source-file",
+              "line": 5
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "project",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 28,
+              "y": 426
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "project",
+            "color": "cyan",
+            "erFields": [
+              {
+                "name": "id",
+                "dataType": "int",
+                "isPrimaryKey": true,
+                "isUnique": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "project",
+              "line": 6
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "session",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 545,
+              "y": 362
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "session",
+            "color": "blue",
+            "erFields": [
+              {
+                "name": "id",
+                "dataType": "int",
+                "isPrimaryKey": true,
+                "isForeignKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "session",
+              "line": 7
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "session-model",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 1070,
+              "y": 249
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "session_model",
+            "color": "blue",
+            "erFields": [
+              {
+                "name": "session_id",
+                "dataType": "int",
+                "isPrimaryKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "session-model",
+              "line": 8
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "usage-event",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 1070,
+              "y": 459
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "usage_event",
+            "color": "violet",
+            "erFields": [
+              {
+                "name": "id",
+                "dataType": "int",
+                "isPrimaryKey": true,
+                "isForeignKey": true,
+                "isUnique": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "usage-event",
+              "line": 9
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "message",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 1520,
+              "y": 446
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "message",
+            "color": "pink",
+            "erFields": [
+              {
+                "name": "id",
+                "dataType": "int",
+                "isPrimaryKey": true,
+                "isForeignKey": true,
+                "isUnique": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "message",
+              "line": 10
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "hourly-usage",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 545,
+              "y": 152
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "hourly_usage",
+            "color": "emerald",
+            "erFields": [
+              {
+                "name": "hour",
+                "dataType": "text",
+                "isPrimaryKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "hourly-usage",
+              "line": 11
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "hourly-model-usage",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 1070,
+              "y": 589
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "hourly_model_usage",
+            "color": "emerald",
+            "erFields": [
+              {
+                "name": "hour",
+                "dataType": "text",
+                "isPrimaryKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "hourly-model-usage",
+              "line": 12
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "hourly-session-usage",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 1070,
+              "y": 119
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "hourly_session_usage",
+            "color": "emerald",
+            "erFields": [
+              {
+                "name": "hour",
+                "dataType": "text",
+                "isPrimaryKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "hourly-session-usage",
+              "line": 13
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "model-price",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 545,
+              "y": 576
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "model_price",
+            "color": "yellow",
+            "erFields": [
+              {
+                "name": "id",
+                "dataType": "int",
+                "isPrimaryKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "model-price",
+              "line": 14
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "ingest-run",
+          "kind": "er_entity",
+          "parentId": "dsl-5gcwyq",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 28,
+              "y": 562
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 82
+          },
+          "content": {
+            "label": "ingest_run",
+            "color": "slate",
+            "erFields": [
+              {
+                "name": "id",
+                "dataType": "int",
+                "isPrimaryKey": true
+              }
+            ]
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "ingest-run",
+              "line": 15
+            }
+          },
+          "extensions": {}
         }
       ],
       "connectors": [
-        {
-          "id": "rel:harness->source-file:1",
-          "source": {
-            "nodeId": "harness",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "source-file",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-1",
-              "text": "has",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "||--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 14,
-              "structuredRelation": "||--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:harness->session:2",
-          "source": {
-            "nodeId": "harness",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "session",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-2",
-              "text": "owns",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "||--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 15,
-              "structuredRelation": "||--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:project->session:3",
-          "source": {
-            "nodeId": "project",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "session",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-3",
-              "text": "groups (0 = none)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "||--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 16,
-              "structuredRelation": "||--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:project->usage-event:4",
-          "source": {
-            "nodeId": "project",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "usage-event",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-4",
-              "text": "bucket (0 = none)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "||--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 17,
-              "structuredRelation": "||--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:project->hourly-usage:5",
-          "source": {
-            "nodeId": "project",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "hourly-usage",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-5",
-              "text": "buckets (0 = none)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "||--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 18,
-              "structuredRelation": "||--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:session->session:6",
-          "source": {
-            "nodeId": "session",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "session",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-6",
-              "text": "resumed_from",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "|o--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 19,
-              "structuredRelation": "|o--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:session->session:7",
-          "source": {
-            "nodeId": "session",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "session",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-7",
-              "text": "parent (subagent)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "|o--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 20,
-              "structuredRelation": "|o--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:session->session-model:8",
-          "source": {
-            "nodeId": "session",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "session-model",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-8",
-              "text": "uses",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "||--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 21,
-              "structuredRelation": "||--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:session->usage-event:9",
-          "source": {
-            "nodeId": "session",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "usage-event",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-9",
-              "text": "contains",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "||--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 22,
-              "structuredRelation": "||--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:session->message:10",
-          "source": {
-            "nodeId": "session",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "message",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-10",
-              "text": "contains",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "||--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 23,
-              "structuredRelation": "||--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:source-file->usage-event:11",
-          "source": {
-            "nodeId": "source-file",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "usage-event",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-11",
-              "text": "origin",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "|o--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 24,
-              "structuredRelation": "|o--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:model-price->usage-event:12",
-          "source": {
-            "nodeId": "model-price",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "usage-event",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-12",
-              "text": "prices",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "|o--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 25,
-              "structuredRelation": "|o--o{"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "rel:usage-event->message:13",
-          "source": {
-            "nodeId": "usage-event",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "message",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "rel-label-13",
-              "text": "produced",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "erRelation": "|o--o{"
-          },
-          "metadata": {
-            "dsl": {
-              "line": 26,
-              "structuredRelation": "|o--o{"
-            }
-          },
-          "extensions": {}
-        },
         {
           "id": "edge:cc->registry:1",
           "source": {
@@ -4809,6 +4334,694 @@
             "dsl": {
               "line": 36,
               "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:harness->source-file:1",
+          "source": {
+            "nodeId": "harness",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "source-file",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-1",
+              "text": "has",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 16,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:harness->session:2",
+          "source": {
+            "nodeId": "harness",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-2",
+              "text": "owns",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 17,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:project->session:3",
+          "source": {
+            "nodeId": "project",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-3",
+              "text": "groups (0 = none)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 18,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:project->usage-event:4",
+          "source": {
+            "nodeId": "project",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "usage-event",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-4",
+              "text": "bucket (0 = none)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 19,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:project->hourly-usage:5",
+          "source": {
+            "nodeId": "project",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "hourly-usage",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-5",
+              "text": "buckets (0 = none)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 20,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:project->hourly-session-usage:6",
+          "source": {
+            "nodeId": "project",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "hourly-session-usage",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-6",
+              "text": "buckets",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 21,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:session->session:7",
+          "source": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-7",
+              "text": "resumed_from",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "|o--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 22,
+              "structuredRelation": "|o--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:session->session:8",
+          "source": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-8",
+              "text": "parent (subagent)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "|o--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 23,
+              "structuredRelation": "|o--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:session->session-model:9",
+          "source": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "session-model",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-9",
+              "text": "uses",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 24,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:session->usage-event:10",
+          "source": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "usage-event",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-10",
+              "text": "contains",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 25,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:session->message:11",
+          "source": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "message",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-11",
+              "text": "contains",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 26,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:session->hourly-session-usage:12",
+          "source": {
+            "nodeId": "session",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "hourly-session-usage",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-12",
+              "text": "per hour",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "||--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 27,
+              "structuredRelation": "||--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:source-file->usage-event:13",
+          "source": {
+            "nodeId": "source-file",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "usage-event",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-13",
+              "text": "origin",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "|o--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 28,
+              "structuredRelation": "|o--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:model-price->usage-event:14",
+          "source": {
+            "nodeId": "model-price",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "usage-event",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-14",
+              "text": "prices",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "|o--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 29,
+              "structuredRelation": "|o--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:model-price->hourly-model-usage:15",
+          "source": {
+            "nodeId": "model-price",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "hourly-model-usage",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-15",
+              "text": "prices (0 = unpriced)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "|o--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 30,
+              "structuredRelation": "|o--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rel:usage-event->message:16",
+          "source": {
+            "nodeId": "usage-event",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "message",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "rel-label-16",
+              "text": "produced",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "erRelation": "|o--o{"
+          },
+          "metadata": {
+            "dsl": {
+              "line": 31,
+              "structuredRelation": "|o--o{"
             }
           },
           "extensions": {}

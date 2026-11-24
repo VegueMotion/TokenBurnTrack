@@ -404,22 +404,49 @@ pub(crate) fn model_stats(conn: &Connection, filter: &QueryFilter) -> Result<Vec
         .into_iter()
         .filter_map(|p| p.id.map(|id| (id.0, p)))
         .collect();
+    let (start, end) = (filter.range.start, filter.range.end);
+    let first_full = match Hour::containing(start) {
+        h if h.start() == start => start,
+        h => h.end(),
+    };
+    let last_full = Hour::containing(end).start();
+    let (a, b) = if first_full < last_full {
+        (first_full, last_full)
+    } else {
+        (end, end)
+    };
     let mut p = Params::default();
-    let start = p.push_ts(filter.range.start);
-    let end = p.push_ts(filter.range.end);
+    let (start, end, a, b) = (p.push_ts(start), p.push_ts(end), p.push_ts(a), p.push_ts(b));
+    let rollup_harness = p.harness_in("h.harness_id", &filter.harnesses);
+    let event_harness = p.harness_in("+e.harness_id", &filter.harnesses);
+    let edge = |from: &str, to: &str| {
+        format!(
+            "SELECT e.provider, e.model, e.price_id,
+                    CASE WHEN mp.long_context_threshold IS NOT NULL
+                          AND e.input_tokens + e.cache_write_5m_tokens + e.cache_write_1h_tokens
+                              + e.cache_read_tokens > mp.long_context_threshold
+                         THEN 1 ELSE 0 END,
+                    1, e.input_tokens, e.output_tokens,
+                    e.cache_write_5m_tokens + e.cache_write_1h_tokens, e.cache_read_tokens,
+                    e.cost_micros
+             FROM usage_event e LEFT JOIN model_price mp ON mp.id = e.price_id
+             WHERE e.ts >= {from} AND e.ts < {to}{event_harness}"
+        )
+    };
     let sql = format!(
-        "SELECT e.provider, e.model, e.price_id,
-                CASE WHEN mp.long_context_threshold IS NOT NULL
-                      AND e.input_tokens + e.cache_write_5m_tokens + e.cache_write_1h_tokens
-                          + e.cache_read_tokens > mp.long_context_threshold
-                     THEN 1 ELSE 0 END AS over_tier,
-                COUNT(*), SUM(e.input_tokens), SUM(e.output_tokens),
-                SUM(e.cache_write_5m_tokens + e.cache_write_1h_tokens), SUM(e.cache_read_tokens),
-                SUM(e.cost_micros)
-         FROM usage_event e LEFT JOIN model_price mp ON mp.id = e.price_id
-         WHERE e.ts >= {start} AND e.ts < {end}{}
-         GROUP BY e.provider, e.model, e.price_id, over_tier",
-        p.harness_in("e.harness_id", &filter.harnesses)
+        "SELECT provider, model, price_id, over_tier, SUM(n), SUM(i), SUM(o), SUM(cw), SUM(cr),
+                SUM(c)
+         FROM (SELECT h.provider AS provider, h.model AS model,
+                      NULLIF(h.price_id, 0) AS price_id, h.over_tier AS over_tier,
+                      h.events AS n, h.input_tokens AS i, h.output_tokens AS o,
+                      h.cache_write_tokens AS cw, h.cache_read_tokens AS cr, h.cost_micros AS c
+               FROM hourly_model_usage h
+               WHERE h.hour >= {a} AND h.hour < {b}{rollup_harness}
+               UNION ALL {}
+               UNION ALL {})
+         GROUP BY provider, model, price_id, over_tier",
+        edge(&start, &a),
+        edge(&b, &end)
     );
     let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map(p.iter(), |r| {
@@ -513,11 +540,12 @@ pub(crate) fn project_stats(conn: &Connection, filter: &QueryFilter) -> Result<V
         end_hour.end()
     });
     let sql = format!(
-        "SELECT e.project_id, s.git_branch, COUNT(DISTINCT s.id), SUM(e.cost_micros), MAX(e.ts)
-         FROM usage_event e JOIN session s ON s.id = e.session_id
-         WHERE e.ts >= {start} AND e.ts < {end}{}
-         GROUP BY e.project_id, s.git_branch",
-        p.harness_in("e.harness_id", &filter.harnesses)
+        "SELECT r.project_id, s.git_branch, COUNT(DISTINCT s.id), SUM(r.cost_micros),
+                MAX(r.last_ts)
+         FROM hourly_session_usage r JOIN session s ON s.id = r.session_id
+         WHERE r.hour >= {start} AND r.hour < {end}{}
+         GROUP BY r.project_id, s.git_branch",
+        p.harness_in("s.harness_id", &filter.harnesses)
     );
     let mut stmt = conn.prepare(&sql)?;
     let branches = stmt
@@ -646,3 +674,7 @@ pub(crate) fn unpriced_models(conn: &Connection) -> Result<Vec<UnpricedModel>> {
     })?;
     Ok(rows.collect::<rusqlite::Result<_>>()?)
 }
+
+#[cfg(test)]
+#[path = "query_equivalence.rs"]
+mod equivalence;

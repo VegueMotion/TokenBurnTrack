@@ -263,6 +263,12 @@ CREATE TABLE usage_event (
 CREATE INDEX ix_event_ts ON usage_event(ts);
 CREATE INDEX ix_event_session ON usage_event(session_id, ts);
 CREATE INDEX ix_event_unpriced ON usage_event(provider, model) WHERE price_id IS NULL;
+CREATE INDEX ix_event_price ON usage_event(price_id);
+CREATE INDEX ix_session_started ON session(started_at);
+CREATE INDEX ix_session_project ON session(project_id);
+CREATE INDEX ix_session_parent ON session(parent_session_id);
+CREATE INDEX ix_session_resumed ON session(resumed_from_session_id);
+CREATE INDEX ix_message_session_ts ON message(session_id, ts);
 
 CREATE TABLE session_model (      -- models used per session, for the sessions table
   session_id INTEGER NOT NULL REFERENCES session(id), model TEXT NOT NULL,
@@ -288,6 +294,23 @@ CREATE TABLE hourly_usage (       -- rollup for fast charts
   PRIMARY KEY(hour, harness_id, model, project_id)
 );
 
+CREATE TABLE hourly_model_usage (  -- rollup for Models (cache savings need price + tier)
+  hour TEXT NOT NULL, harness_id TEXT NOT NULL, provider TEXT NOT NULL, model TEXT NOT NULL,
+  price_id INTEGER NOT NULL,        -- 0 = unpriced
+  over_tier INTEGER NOT NULL,       -- prompt above the price's long-context threshold
+  events INTEGER NOT NULL, input_tokens INTEGER NOT NULL, output_tokens INTEGER NOT NULL,
+  cache_write_tokens INTEGER NOT NULL, cache_read_tokens INTEGER NOT NULL,
+  cost_micros INTEGER NOT NULL,
+  PRIMARY KEY(hour, harness_id, provider, model, price_id, over_tier)
+) WITHOUT ROWID;
+
+CREATE TABLE hourly_session_usage ( -- rollup for Projects (branches, sessions, last active)
+  hour TEXT NOT NULL, session_id INTEGER NOT NULL REFERENCES session(id),
+  project_id INTEGER NOT NULL REFERENCES project(id),
+  events INTEGER NOT NULL, cost_micros INTEGER NOT NULL, last_ts TEXT NOT NULL,
+  PRIMARY KEY(hour, session_id, project_id)
+) WITHOUT ROWID;
+
 CREATE TABLE model_price (
   id INTEGER PRIMARY KEY, provider TEXT NOT NULL, model_pattern TEXT NOT NULL,
   effective_from TEXT NOT NULL, effective_to TEXT,
@@ -308,7 +331,8 @@ Notes:
 - Money is stored as integer **micro-USD**, so sums never drift.
 - Timestamps are stored as fixed-width UTC text (`YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`), so text order equals time order.
 - `usage_event.project_id` records which project bucket the event was rolled up into (the event's own project, else its session's), so `hourly_usage` can be rebuilt exactly after a recompute.
-- `hourly_usage` is updated in the same transaction as the events. The dashboard reads rollups and never scans the event table for ranges.
+- `hourly_usage`, `hourly_model_usage` and `hourly_session_usage` are updated in the same transaction as the events and rebuilt for the hours a recompute touches. Range queries read them for whole hours; `model_stats` reads `usage_event` only for the partial hours at the edges of a range that is not hour-aligned. Changing a price's long-context threshold re-derives that price's `hourly_model_usage` rows.
+- Migrations: v1 is the schema above without the two newer rollups and `ix_session_resumed`; v2 adds them and backfills the rollups from `usage_event`. A writable `Store` runs `PRAGMA optimize` when it is dropped (after every collector run).
 - `hourly_usage.project_id` is `NOT NULL`. Events without a project go to a seeded `project` row with `id = 0` ("no project"). SQLite treats NULLs in a primary key as distinct, so a nullable column would make `ON CONFLICT` upserts insert duplicate rows instead of adding to the bucket.
 - **Privacy setting:** `message` storage is off / metadata-only / truncated preview (default: metadata only, which means role, tool name and timestamps but no text). Adapters always emit previews; the collector applies the privacy level before storing.
 - `message.key` makes message inserts idempotent the same way `dedup_key` does for events, so a re-read file does not duplicate messages. Uniqueness is per session: history that Claude Code copies into a resumed session is stored again under the new session (its events are not, so costs are unaffected; tool counts in that session's detail include the copied history).

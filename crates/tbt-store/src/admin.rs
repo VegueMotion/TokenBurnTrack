@@ -8,6 +8,7 @@ use tbt_core::{
 
 use crate::api::{HarnessConfig, IngestRunSummary, Result, RunStats, RunTrigger, StoreError};
 use crate::db::{DbTs, corrupt, path_text, to_i64, to_u64, ts_opt};
+use crate::recompute;
 
 fn trigger_str(t: RunTrigger) -> &'static str {
     match t {
@@ -357,7 +358,15 @@ pub(crate) fn update_price(conn: &Connection, price: &ModelPrice) -> Result<()> 
     };
     let mut values = price_values(price)?;
     values.push(rusqlite::types::Value::Integer(id.0));
-    let n = conn.execute(
+    let tx = conn.unchecked_transaction()?;
+    let old_threshold: Option<Option<i64>> = tx
+        .query_row(
+            "SELECT long_context_threshold FROM model_price WHERE id = ?1",
+            [id.0],
+            |r| r.get(0),
+        )
+        .optional()?;
+    let n = tx.execute(
         "UPDATE model_price SET provider = ?1, model_pattern = ?2, effective_from = ?3,
            effective_to = ?4, input_per_mtok = ?5, output_per_mtok = ?6,
            cache_write_5m_per_mtok = ?7, cache_write_1h_per_mtok = ?8, cache_read_per_mtok = ?9,
@@ -368,6 +377,14 @@ pub(crate) fn update_price(conn: &Connection, price: &ModelPrice) -> Result<()> 
     if n == 0 {
         return Err(StoreError::NotFound(format!("price {id}")));
     }
+    let new_threshold = price
+        .long_context
+        .as_ref()
+        .map(|t| to_i64(t.threshold_tokens));
+    if old_threshold.flatten() != new_threshold {
+        recompute::rebuild_model_rollup_for_price(&tx, id.0)?;
+    }
+    tx.commit()?;
     Ok(())
 }
 

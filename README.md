@@ -267,6 +267,19 @@ scripts/cargo test -p tbt-adapters
   branches and all free text are replaced consistently, while structure, token counts,
   timestamps and model ids are kept. Grep its output for your home path and user name
   before committing.
+- Performance harnesses (release builds; `<D>` is a scratch directory):
+
+  ```sh
+  # build a synthetic 1M-event DB through the real write path and time the read queries
+  scripts/cargo run --release -p tbt-store --example perf -- --events 1000000 --dir <D>
+  #   --regen (rebuild), --runs N (warm runs per query), --seed N, --gen-only, --no-open
+  # time collector runs on a copy of it: first run, nothing changed, append, raw JSON retention
+  scripts/cargo run --release -p tbt-collector --example perf_ingest -- --dir <D>
+  #   --files N (synthetic Claude Code files, default 300), --append N (default 20)
+  # time the sessions page's background load, sort and search
+  scripts/cargo run --release -p tbt-app --example perf_sessions -- <D>/tbt.sqlite
+  ```
+
 - Packaging templates live in [`packaging/`](packaging) and are embedded into
   `tbt-daemon` at build time, so `tbt-daemon install` always writes what is in the repo.
 

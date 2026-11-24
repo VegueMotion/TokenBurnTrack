@@ -223,6 +223,14 @@ impl Store {
     }
 }
 
+impl Drop for Store {
+    fn drop(&mut self) {
+        if !self.conn.is_readonly(rusqlite::MAIN_DB).unwrap_or(true) {
+            let _ = self.conn.execute_batch("PRAGMA optimize;");
+        }
+    }
+}
+
 pub struct SourceTx<'a> {
     tx: rusqlite::Transaction<'a>,
     harness: HarnessId,
