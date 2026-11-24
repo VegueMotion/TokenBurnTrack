@@ -31,13 +31,18 @@ pub(crate) fn events_for_recompute(
     }
     if let Some(r) = filter.range {
         sql += &format!(
-            " AND e.ts >= {} AND e.ts < {}",
+            " AND +e.ts >= {} AND +e.ts < {}",
             p.push_ts(r.start),
             p.push_ts(r.end)
         );
     }
     if let Some(provider) = &filter.provider {
-        sql += &format!(" AND e.provider = {}", p.push(provider.clone()));
+        let col = if filter.model.is_some() {
+            "e.provider"
+        } else {
+            "+e.provider"
+        };
+        sql += &format!(" AND {col} = {}", p.push(provider.clone()));
     }
     if let Some(model) = &filter.model {
         sql += &format!(" AND e.model = {}", p.push(model.clone()));
@@ -125,6 +130,40 @@ pub(crate) fn rebuild_session_totals(conn: &Connection, sessions: &[SessionId]) 
     Ok(())
 }
 
+fn model_rollup_insert(hour: &str, filter: &str) -> String {
+    format!(
+        "INSERT INTO hourly_model_usage(hour, harness_id, provider, model, price_id, over_tier,
+           events, input_tokens, output_tokens, cache_write_tokens, cache_read_tokens,
+           cost_micros)
+         SELECT {hour} AS h, e.harness_id, e.provider, e.model, COALESCE(e.price_id, 0),
+                CASE WHEN mp.long_context_threshold IS NOT NULL
+                      AND e.input_tokens + e.cache_write_5m_tokens + e.cache_write_1h_tokens
+                          + e.cache_read_tokens > mp.long_context_threshold
+                     THEN 1 ELSE 0 END AS over_tier,
+                COUNT(*), SUM(e.input_tokens), SUM(e.output_tokens),
+                SUM(e.cache_write_5m_tokens + e.cache_write_1h_tokens), SUM(e.cache_read_tokens),
+                SUM(e.cost_micros)
+         FROM usage_event e LEFT JOIN model_price mp ON mp.id = e.price_id
+         WHERE {filter}
+         GROUP BY h, e.harness_id, e.provider, e.model, e.price_id, over_tier"
+    )
+}
+
+pub(crate) fn rebuild_model_rollup_for_price(conn: &Connection, price: i64) -> Result<()> {
+    conn.execute(
+        "DELETE FROM hourly_model_usage WHERE price_id = ?1",
+        [price],
+    )?;
+    conn.execute(
+        &model_rollup_insert(
+            "substr(e.ts, 1, 13) || ':00:00.000000000Z'",
+            "e.price_id = ?1",
+        ),
+        [price],
+    )?;
+    Ok(())
+}
+
 pub(crate) fn rebuild_hourly(conn: &Connection, hours: &[Hour]) -> Result<()> {
     let mut delete = conn.prepare_cached("DELETE FROM hourly_usage WHERE hour = ?1")?;
     let mut insert = conn.prepare_cached(
@@ -136,10 +175,27 @@ pub(crate) fn rebuild_hourly(conn: &Connection, hours: &[Hour]) -> Result<()> {
          FROM usage_event WHERE ts >= ?1 AND ts < ?2
          GROUP BY harness_id, model, project_id",
     )?;
+    let mut delete_model = conn.prepare_cached("DELETE FROM hourly_model_usage WHERE hour = ?1")?;
+    let mut insert_model =
+        conn.prepare_cached(&model_rollup_insert("?1", "e.ts >= ?1 AND e.ts < ?2"))?;
+    let mut delete_session =
+        conn.prepare_cached("DELETE FROM hourly_session_usage WHERE hour = ?1")?;
+    let mut insert_session = conn.prepare_cached(
+        "INSERT INTO hourly_session_usage(hour, session_id, project_id, events, cost_micros,
+           last_ts)
+         SELECT ?1, session_id, project_id, COUNT(*), SUM(cost_micros), MAX(ts)
+         FROM usage_event WHERE ts >= ?1 AND ts < ?2
+         GROUP BY session_id, project_id",
+    )?;
     for h in hours {
         let start = fmt_ts(h.start());
+        let end = fmt_ts(h.end());
         delete.execute([&start])?;
-        insert.execute(params![start, fmt_ts(h.end())])?;
+        insert.execute(params![start, end])?;
+        delete_model.execute([&start])?;
+        insert_model.execute(params![start, end])?;
+        delete_session.execute([&start])?;
+        insert_session.execute(params![start, end])?;
     }
     Ok(())
 }

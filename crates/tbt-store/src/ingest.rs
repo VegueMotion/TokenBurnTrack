@@ -223,6 +223,36 @@ struct SessionAgg {
     branch: Option<String>,
 }
 
+struct SessionHour {
+    events: i64,
+    cost: i64,
+    last: Timestamp,
+}
+
+fn over_tier(
+    conn: &Connection,
+    cache: &mut HashMap<i64, Option<i64>>,
+    price: i64,
+    t: &TokenCounts,
+) -> Result<bool> {
+    let threshold = match cache.get(&price) {
+        Some(v) => *v,
+        None => {
+            let v: Option<i64> = conn
+                .prepare_cached("SELECT long_context_threshold FROM model_price WHERE id = ?1")?
+                .query_row([price], |r| r.get(0))
+                .optional()?
+                .flatten();
+            cache.insert(price, v);
+            v
+        }
+    };
+    let prompt = [t.input, t.cache_write_5m, t.cache_write_1h, t.cache_read]
+        .into_iter()
+        .fold(0i64, |acc, v| acc.saturating_add(to_i64(v)));
+    Ok(threshold.is_some_and(|th| prompt > th))
+}
+
 #[derive(Clone, Copy)]
 struct CachedSession {
     id: i64,
@@ -273,6 +303,9 @@ pub(crate) fn insert_events(
     let mut projects: HashMap<&str, ProjectId> = HashMap::new();
     let mut by_session: BTreeMap<i64, SessionAgg> = BTreeMap::new();
     let mut by_hour: BTreeMap<(String, &str, &str, i64), Sums> = BTreeMap::new();
+    let mut by_model: BTreeMap<(String, &str, &str, &str, i64, bool), Sums> = BTreeMap::new();
+    let mut by_session_hour: BTreeMap<(String, i64, i64), SessionHour> = BTreeMap::new();
+    let mut thresholds: HashMap<i64, Option<i64>> = HashMap::new();
     let mut models: BTreeSet<(i64, &str)> = BTreeSet::new();
     let mut inserted = 0;
 
@@ -363,15 +396,42 @@ pub(crate) fn insert_events(
         if agg.branch.is_none() {
             agg.branch.clone_from(&e.git_branch);
         }
+        let hour = fmt_ts(Hour::containing(e.ts).start());
         by_hour
             .entry((
-                fmt_ts(Hour::containing(e.ts).start()),
+                hour.clone(),
                 e.harness.as_str(),
                 e.model.as_str(),
                 bucket_project,
             ))
             .or_default()
             .add(pe);
+        let price = pe.price_id.map_or(0, |p| p.0);
+        let over_tier = match pe.price_id {
+            Some(p) => over_tier(conn, &mut thresholds, p.0, &t)?,
+            None => false,
+        };
+        by_model
+            .entry((
+                hour.clone(),
+                e.harness.as_str(),
+                e.provider.as_str(),
+                e.model.as_str(),
+                price,
+                over_tier,
+            ))
+            .or_default()
+            .add(pe);
+        let sh = by_session_hour
+            .entry((hour, session.id, bucket_project))
+            .or_insert(SessionHour {
+                events: 0,
+                cost: 0,
+                last: e.ts,
+            });
+        sh.events += 1;
+        sh.cost += pe.cost.0;
+        sh.last = sh.last.max(e.ts);
         models.insert((session.id, e.model.as_str()));
     }
     drop(insert);
@@ -402,6 +462,56 @@ pub(crate) fn insert_events(
             s.cache_read,
             s.cost,
             s.unpriced
+        ])?;
+    }
+
+    let mut bump_model = conn.prepare_cached(
+        "INSERT INTO hourly_model_usage(hour, harness_id, provider, model, price_id, over_tier,
+           events, input_tokens, output_tokens, cache_write_tokens, cache_read_tokens,
+           cost_micros)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+         ON CONFLICT(hour, harness_id, provider, model, price_id, over_tier) DO UPDATE SET
+           events = events + excluded.events,
+           input_tokens = input_tokens + excluded.input_tokens,
+           output_tokens = output_tokens + excluded.output_tokens,
+           cache_write_tokens = cache_write_tokens + excluded.cache_write_tokens,
+           cache_read_tokens = cache_read_tokens + excluded.cache_read_tokens,
+           cost_micros = cost_micros + excluded.cost_micros",
+    )?;
+    for ((hour, harness, provider, model, price, over), s) in &by_model {
+        bump_model.execute(params![
+            hour,
+            harness,
+            provider,
+            model,
+            price,
+            over,
+            s.events,
+            s.input,
+            s.output,
+            s.cache_write,
+            s.cache_read,
+            s.cost
+        ])?;
+    }
+
+    let mut bump_session_hour = conn.prepare_cached(
+        "INSERT INTO hourly_session_usage(hour, session_id, project_id, events, cost_micros,
+           last_ts)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+         ON CONFLICT(hour, session_id, project_id) DO UPDATE SET
+           events = events + excluded.events,
+           cost_micros = cost_micros + excluded.cost_micros,
+           last_ts = max(last_ts, excluded.last_ts)",
+    )?;
+    for ((hour, session, project), s) in &by_session_hour {
+        bump_session_hour.execute(params![
+            hour,
+            session,
+            project,
+            s.events,
+            s.cost,
+            DbTs(s.last)
         ])?;
     }
 

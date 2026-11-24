@@ -251,6 +251,14 @@ impl Store {
     }
 }
 
+impl Drop for Store {
+    fn drop(&mut self) {
+        if !self.conn.is_readonly(rusqlite::MAIN_DB).unwrap_or(true) {
+            let _ = self.conn.execute_batch("PRAGMA optimize;");
+        }
+    }
+}
+
 /// Write transaction for one source. Every method runs inside it; nothing is visible
 /// to other connections until [`SourceTx::commit`].
 pub struct SourceTx<'a> {

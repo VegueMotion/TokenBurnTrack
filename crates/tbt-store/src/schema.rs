@@ -107,8 +107,50 @@ CREATE TABLE ingest_run (
 );
 "#;
 
-fn migrations() -> Migrations<'static> {
-    Migrations::new(vec![M::up(V1).foreign_key_check()])
+const V2: &str = r#"
+CREATE INDEX ix_session_resumed ON session(resumed_from_session_id);
+
+CREATE TABLE hourly_model_usage (
+  hour TEXT NOT NULL, harness_id TEXT NOT NULL, provider TEXT NOT NULL, model TEXT NOT NULL,
+  price_id INTEGER NOT NULL, over_tier INTEGER NOT NULL,
+  events INTEGER NOT NULL, input_tokens INTEGER NOT NULL, output_tokens INTEGER NOT NULL,
+  cache_write_tokens INTEGER NOT NULL, cache_read_tokens INTEGER NOT NULL,
+  cost_micros INTEGER NOT NULL,
+  PRIMARY KEY(hour, harness_id, provider, model, price_id, over_tier)
+) WITHOUT ROWID;
+
+INSERT INTO hourly_model_usage
+SELECT substr(e.ts, 1, 13) || ':00:00.000000000Z', e.harness_id, e.provider, e.model,
+       COALESCE(e.price_id, 0),
+       CASE WHEN mp.long_context_threshold IS NOT NULL
+             AND e.input_tokens + e.cache_write_5m_tokens + e.cache_write_1h_tokens
+                 + e.cache_read_tokens > mp.long_context_threshold
+            THEN 1 ELSE 0 END,
+       COUNT(*), SUM(e.input_tokens), SUM(e.output_tokens),
+       SUM(e.cache_write_5m_tokens + e.cache_write_1h_tokens), SUM(e.cache_read_tokens),
+       SUM(e.cost_micros)
+FROM usage_event e LEFT JOIN model_price mp ON mp.id = e.price_id
+GROUP BY 1, 2, 3, 4, 5, 6;
+
+CREATE TABLE hourly_session_usage (
+  hour TEXT NOT NULL, session_id INTEGER NOT NULL REFERENCES session(id),
+  project_id INTEGER NOT NULL REFERENCES project(id),
+  events INTEGER NOT NULL, cost_micros INTEGER NOT NULL, last_ts TEXT NOT NULL,
+  PRIMARY KEY(hour, session_id, project_id)
+) WITHOUT ROWID;
+
+INSERT INTO hourly_session_usage
+SELECT substr(ts, 1, 13) || ':00:00.000000000Z', session_id, project_id,
+       COUNT(*), SUM(cost_micros), MAX(ts)
+FROM usage_event
+GROUP BY 1, 2, 3;
+"#;
+
+pub(crate) fn migrations() -> Migrations<'static> {
+    Migrations::new(vec![
+        M::up(V1).foreign_key_check(),
+        M::up(V2).foreign_key_check(),
+    ])
 }
 
 fn configure(conn: &Connection) -> Result<()> {

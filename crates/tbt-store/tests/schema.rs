@@ -23,11 +23,13 @@ fn migrates_empty_db_to_latest() {
     let version: i64 = raw
         .query_row("PRAGMA user_version", [], |r| r.get(0))
         .unwrap();
-    assert_eq!(version, 1);
+    assert_eq!(version, 2);
     assert_eq!(
         tables(&raw),
         [
             "harness",
+            "hourly_model_usage",
+            "hourly_session_usage",
             "hourly_usage",
             "ingest_run",
             "message",
