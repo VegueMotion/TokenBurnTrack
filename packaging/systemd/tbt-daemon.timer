@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the TokenBurnTrack collector every hour
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=2min
+FixedRandomDelay=true
+Unit=tbt-daemon.service
+
+[Install]
+WantedBy=timers.target

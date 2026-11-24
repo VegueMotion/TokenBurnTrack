@@ -1,0 +1,272 @@
+# TokenBurnTrack
+
+TokenBurnTrack is a local desktop app (Rust + GPUI) that tracks
+the token usage and cost of AI coding agents. Every hour it copies new usage records from
+the agents' own log files into a SQLite database on your machine, prices each API call
+from a versioned price table, and shows dashboards for cost, tokens, sessions, models and
+projects. Because the agents delete or rotate their logs, the hourly snapshot keeps your
+history after the source files are gone. A small headless collector, `tbt-daemon`, keeps
+the snapshots going while the app is closed.
+
+Design notes are in [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+## Features
+
+- Hourly, incremental, idempotent collection: each run reads only what is new since the
+  last one, a re-run never counts anything twice, and a laptop that slept catches up on
+  the next run.
+- Resumed and forked sessions are linked instead of double counted; subagent runs are
+  linked to the session that started them.
+- Cost per API call, from bundled prices (`assets/prices.toml`), an optional LiteLLM
+  price import and your own overrides. Prices are versioned by date, so a price change
+  does not rewrite old costs. Models without a price are flagged as *unpriced*, not
+  counted as $0. When a harness logs its own cost, both values are kept.
+- Desktop app: dashboard (KPIs, hourly/daily cost bars, tokens by type, top models and
+  projects, weekday × hour heatmap), sessions table and session detail, models,
+  projects, harnesses and settings pages, CSV/JSON export.
+- Headless collector `tbt-daemon` for a systemd user timer, a launchd agent or a Windows
+  scheduled task. The app and the daemon share a lock, so only one of them ingests at a
+  time.
+
+## Supported harnesses
+
+| Harness | Reads | Override |
+|---|---|---|
+| Claude Code | `~/.claude/projects/**/*.jsonl` (sessions and subagent runs) | `CLAUDE_CONFIG_DIR` |
+| Codex CLI | `~/.codex/sessions/YYYY/MM/DD/*.jsonl` | `CODEX_HOME` |
+| Gemini CLI | `~/.gemini/tmp/<project>/chats/*.jsonl` and legacy `session-*.json` (macOS also `~/.cache/.gemini/tmp`) | `GEMINI_CLI_HOME` |
+| OpenCode | `~/.local/share/opencode/opencode.db` (opened read-only) | `XDG_DATA_HOME` |
+| Generic JSONL | any JSONL log you describe in `config.toml` | `[[generic_jsonl]]` |
+
+Roots can also be changed per harness on the Harnesses page. Source files are only ever
+read. The Gemini CLI parser was built from upstream source rather than real logs, so
+treat its numbers with more caution.
+
+## Build
+
+The toolchain is pinned in `rust-toolchain.toml` (installed by rustup on first use).
+`scripts/cargo` is a thin wrapper that puts `~/.cargo/bin` first in `PATH`.
+
+System packages on Fedora (Wayland):
+
+```sh
+sudo dnf install gcc gcc-c++ clang cmake pkgconf \
+    libxkbcommon-devel wayland-devel libxcb-devel libX11-devel \
+    fontconfig-devel freetype-devel \
+    vulkan-loader mesa-vulkan-drivers
+```
+
+The last two are runtime dependencies (GPUI renders with Vulkan). Only the Wayland
+backend is enabled; an X11 build would also need `libxkbcommon-x11-devel` and the `x11`
+feature of `gpui-pre-platform`. Other distributions need the equivalent packages.
+
+```sh
+scripts/cargo build --release
+# target/release/tbt-app     desktop app
+# target/release/tbt-daemon  headless collector
+```
+
+## Install
+
+Copy the binaries somewhere stable first, because the schedule points at an absolute
+path:
+
+```sh
+install -Dm755 target/release/tbt-daemon ~/.local/bin/tbt-daemon
+install -Dm755 target/release/tbt-app ~/.local/bin/tbt-app
+```
+
+The app collects on its own while it is open (at startup, every hour and on *Sync now*).
+Install the daemon schedule if you also want collection while the app is closed.
+
+### Linux (systemd user timer)
+
+```sh
+~/.local/bin/tbt-daemon install --dry-run --app ~/.local/bin/tbt-app   # show what it would do
+~/.local/bin/tbt-daemon install --app ~/.local/bin/tbt-app
+```
+
+`install` writes `tbt-daemon.service` and `tbt-daemon.timer` to
+`$XDG_CONFIG_HOME/systemd/user/` with the binary path and data directory filled in,
+creates the data directory, then runs `systemctl --user daemon-reload` and
+`systemctl --user enable --now tbt-daemon.timer`. With `--app` it also installs
+`tbt-app.desktop` to `$XDG_DATA_HOME/applications/` and the icon to
+`$XDG_DATA_HOME/icons/hicolor/scalable/apps/`, so launchers show the app with its name
+and icon.
+
+| Option | Effect |
+|---|---|
+| `--dry-run` | print every file (with contents) and command; change nothing |
+| `--bin <path>` | daemon binary to schedule (default: the running `tbt-daemon`) |
+| `--app <path>` | also install the desktop entry and icon for this `tbt-app` |
+| `--no-enable` | write the files and reload systemd, but do not enable the timer |
+| `--data-dir <dir>`, `--config <file>` | passed through to the scheduled daemon |
+
+The timer fires every hour (`OnCalendar=hourly`) with a fixed per-machine delay of up
+to 2 minutes, and `Persistent=true` runs a missed hour after suspend. The service is a
+`Type=oneshot` run of `tbt-daemon --once` at `Nice=10` with idle I/O priority. It is
+sandboxed: the file system is read-only except the data directory
+(`ProtectSystem=strict` + `ReadWritePaths=`), and it has no network, a private `/tmp`
+and `NoNewPrivileges`. If you later change `data_dir` in the config, run `install`
+again, or the service cannot write to the new directory.
+
+User services do not see variables exported by your shell. If you set
+`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `GEMINI_CLI_HOME` or `TBT_DATA_DIR`, add them with
+`systemctl --user edit tbt-daemon.service` (`[Service]` + `Environment=NAME=value`).
+
+Check and remove:
+
+```sh
+systemctl --user list-timers tbt-daemon.timer
+journalctl --user -u tbt-daemon.service
+systemctl --user start tbt-daemon.service   # run once now
+tbt-daemon uninstall                        # disable, stop, remove the files
+```
+
+Manual install: the files in [`packaging/systemd/`](packaging/systemd) work as they
+are when the binary is `~/.local/bin/tbt-daemon` and the data directory is
+`~/.local/share/tokenburntrack`:
+
+```sh
+mkdir -p ~/.config/systemd/user ~/.local/share/tokenburntrack
+cp packaging/systemd/tbt-daemon.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now tbt-daemon.timer
+```
+
+For the launcher entry, copy `packaging/linux/tbt-app.desktop` to
+`~/.local/share/applications/` and `packaging/icons/tbt-app.svg` to
+`~/.local/share/icons/hicolor/scalable/apps/` (`Exec=tbt-app` expects `tbt-app` in
+`PATH`).
+
+### macOS (launchd)
+
+```sh
+tbt-daemon install    # or --dry-run first
+```
+
+This writes `~/Library/LaunchAgents/com.tokenburntrack.daemon.plist` and loads it with
+`launchctl bootstrap gui/$UID`. The agent runs `tbt-daemon --once` at load and then
+every hour (`StartInterval` 3600), at low priority. Its stdout and stderr go to
+`launchd-stdout.log` and `launchd-stderr.log` in the logs directory. For a manual
+install, replace `@BIN@` and `@LOG_DIR@` in
+[`packaging/launchd/com.tokenburntrack.daemon.plist`](packaging/launchd) with absolute
+paths. `tbt-daemon uninstall` runs `launchctl bootout` and removes the plist.
+
+### Windows (Task Scheduler)
+
+```powershell
+tbt-daemon.exe install    # or --dry-run first
+```
+
+This writes the task definition to `%APPDATA%\tokenburntrack\tbt-daemon-task.xml` and
+registers it with `schtasks /Create /TN TokenBurnTrack\tbt-daemon /XML <file> /F`. The
+task runs `tbt-daemon.exe --once` every hour, only while you are logged on, without
+elevation, and catches up on a missed run. `tbt-daemon uninstall` deletes it.
+
+Manual registration with PowerShell from
+[`packaging/windows/tbt-daemon-task.xml`](packaging/windows/tbt-daemon-task.xml) (its
+`<Command>` expects `%LOCALAPPDATA%\Programs\TokenBurnTrack\tbt-daemon.exe`; edit it if
+the binary is elsewhere):
+
+```powershell
+Register-ScheduledTask -TaskName 'tbt-daemon' -TaskPath '\TokenBurnTrack\' `
+    -Xml (Get-Content -Raw .\packaging\windows\tbt-daemon-task.xml)
+Unregister-ScheduledTask -TaskName 'tbt-daemon' -TaskPath '\TokenBurnTrack\' -Confirm:$false
+```
+
+### Running the daemon by hand
+
+```sh
+tbt-daemon --once                    # one ingest run, then exit
+tbt-daemon                           # stay running, ingest at startup and every sync_interval_minutes
+tbt-daemon --once --trigger manual   # record the run as manual
+```
+
+A run that finds the collector lock taken (the app is ingesting) prints a message and
+exits 0.
+
+## Configuration
+
+Settings live in `~/.config/tokenburntrack/config.toml` (the platform config dir on
+macOS and Windows). Every field is optional.
+
+```toml
+privacy = "metadata_only"        # off | metadata_only | truncated_preview
+sync_interval_minutes = 60       # app scheduler and long-running daemon
+# data_dir = "/path/to/data"     # default: $XDG_DATA_HOME/tokenburntrack
+# raw_json_retention_days = 30   # drop the stored raw usage JSON of events older than N days
+
+[[generic_jsonl]]
+id = "llm_proxy"
+display_name = "LLM proxy"
+roots = ["~/.local/share/llm-proxy/logs"]
+glob = "**/*.jsonl"
+filter = "$.usage"
+timestamp = "$.created_ms"
+timestamp_format = "unix_millis" # rfc3339 (default) | unix_seconds | unix_millis
+session_id = "$.session"
+provider = "$.provider"
+model = "$.model"
+input_tokens = "$.usage.prompt_tokens"
+input_includes_cache_read = true
+cache_read_tokens = "$.usage.prompt_tokens_details.cached_tokens"
+output_tokens = "$.usage.completion_tokens"
+reported_cost = "$.cost_usd"
+project_path = "$.metadata.cwd"
+dedup_key = "{$.id}"
+```
+
+In `[[generic_jsonl]]` tables, values starting with `$` are paths into each JSON line;
+`provider`, `model`, `session_id`, `project_path` and `git_branch` may also be constants.
+`dedup_key` must be built from IDs that are stable per API call. More examples are in
+[`tests/fixtures/generic_jsonl/config.toml`](tests/fixtures/generic_jsonl/config.toml).
+
+The data directory is chosen in this order: `--data-dir`, `TBT_DATA_DIR`, `data_dir` in
+the config, then the platform default (`~/.local/share/tokenburntrack` on Linux).
+
+## Data and privacy
+
+Everything stays on your machine. The data directory holds:
+
+- `tbt.sqlite`: sessions, one row per API call (time, harness, provider, model, token
+  counts by type, computed and reported cost, project path, git branch, and the raw
+  usage JSON unless `raw_json_retention_days` drops it), hourly rollups, prices and a
+  log of ingest runs;
+- `collector.lock`: the lock shared by the app and the daemon;
+- `logs/`: daily-rotated daemon logs (30 days kept).
+
+Message content depends on `privacy`:
+
+| Level | Stored per message |
+|---|---|
+| `off` | nothing |
+| `metadata_only` (default) | role, kind, tool name, timestamps; no text |
+| `truncated_preview` | the above plus the first 280 characters of the text |
+
+Nothing is sent anywhere. The only network access is the optional LiteLLM price import,
+which downloads the public price list when you click it in Settings. The systemd unit
+runs the daemon without network access.
+
+## Development
+
+```sh
+scripts/check.sh                  # fmt --check, clippy -D warnings, tests for the workspace
+scripts/check.sh tbt-daemon       # the same for one or more crates
+scripts/cargo test -p tbt-adapters
+```
+
+- Adapter fixtures are real, anonymized harness logs in
+  `tests/fixtures/<harness>/<version>/`, with golden outputs; see
+  [`tests/fixtures/README.md`](tests/fixtures/README.md). A format change in a harness
+  means adding a fixture for the new version and fixing the parser.
+- `scripts/anonymize.py` turns real logs (JSONL, JSON, SQLite) into fixtures: IDs, paths,
+  branches and all free text are replaced consistently, while structure, token counts,
+  timestamps and model ids are kept. Grep its output for your home path and user name
+  before committing.
+- Packaging templates live in [`packaging/`](packaging) and are embedded into
+  `tbt-daemon` at build time, so `tbt-daemon install` always writes what is in the repo.
+
+## License
+
+MIT OR Apache-2.0.

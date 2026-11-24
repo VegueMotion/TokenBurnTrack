@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=TokenBurnTrack
+GenericName=AI Usage Tracker
+Comment=Token usage and cost of AI coding agents
+Exec=tbt-app
+Icon=tbt-app
+Terminal=false
+Categories=Utility;Development;
+Keywords=tokens;cost;usage;claude;codex;gemini;opencode;
+StartupWMClass=tbt-app
