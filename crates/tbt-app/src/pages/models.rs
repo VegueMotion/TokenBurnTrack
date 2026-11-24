@@ -9,7 +9,6 @@ use gpui_component::{ActiveTheme, h_flex, v_flex};
 use tbt_core::Micros;
 use tbt_store::{BucketGroup, ModelStats, QueryFilter};
 
-use super::dashboard::{cost_with_unpriced, unpriced_badge};
 use super::{Loadable, spawn_load};
 use crate::app_state::{AppState, AppStateEvent};
 use crate::charts::format::{fmt_count, fmt_micros, fmt_tokens, fmt_usd, micros_to_usd};
@@ -121,7 +120,6 @@ pub struct ModelsData {
     pub tokens: LineChart,
     pub rows: Vec<ModelRow>,
     pub cost_total: Micros,
-    pub unpriced: u64,
     pub savings: Micros,
     pub no_data: bool,
 }
@@ -173,7 +171,6 @@ impl ModelsData {
                 mode: LineMode::StackedArea,
             },
             cost_total: models.iter().map(|m| m.cost).sum(),
-            unpriced: models.iter().map(|m| m.unpriced_events).sum(),
             savings: models.iter().map(|m| m.cache_savings).sum(),
             rows: models
                 .into_iter()
@@ -266,11 +263,7 @@ impl ModelsPage {
             .iter()
             .map(|r| {
                 let m = &r.stats;
-                let cost = if m.unpriced_events > 0 && m.cost == Micros::ZERO {
-                    "–".to_owned()
-                } else {
-                    fmt_micros(m.cost)
-                };
+                let cost = fmt_micros(m.cost);
                 vec![
                     h_flex()
                         .gap_2()
@@ -287,12 +280,7 @@ impl ModelsPage {
                     fmt_tokens(m.tokens.output).into_any_element(),
                     fmt_tokens(m.tokens.cache_write).into_any_element(),
                     fmt_tokens(m.tokens.cache_read).into_any_element(),
-                    h_flex()
-                        .gap_1p5()
-                        .items_center()
-                        .children(unpriced_badge(m.unpriced_events, cx))
-                        .child(cost)
-                        .into_any_element(),
+                    cost.into_any_element(),
                     fmt_rate(r.rates.total).into_any_element(),
                     fmt_rate(r.rates.prompt).into_any_element(),
                     fmt_rate(r.rates.output).into_any_element(),
@@ -314,7 +302,7 @@ impl ModelsPage {
         let summary = format!(
             "{} models · {} · cache reads saved {}",
             d.rows.len(),
-            cost_with_unpriced(d.cost_total, d.unpriced),
+            fmt_micros(d.cost_total),
             fmt_micros(d.savings)
         );
         v_flex()

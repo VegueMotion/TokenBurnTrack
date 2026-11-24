@@ -241,7 +241,6 @@ fn models_page_totals_match_kpi() {
     let m = ModelsData::load(&data, &f).unwrap();
     assert!(!m.no_data);
     assert_eq!(m.cost_total, kpi.cost);
-    assert_eq!(m.unpriced, kpi.unpriced_events);
     let charted: f64 = m.cost.series.iter().flat_map(|s| s.values.iter()).sum();
     assert!((charted - micros_to_usd(kpi.cost)).abs() < 1e-6);
     let tokens: f64 = m.tokens.series.iter().flat_map(|s| s.values.iter()).sum();

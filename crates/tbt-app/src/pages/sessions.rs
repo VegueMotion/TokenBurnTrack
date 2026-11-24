@@ -12,7 +12,6 @@ use jiff::tz::TimeZone;
 use tbt_core::Micros;
 use tbt_store::{QueryFilter, SessionRow};
 
-use super::dashboard::cost_with_unpriced;
 use super::{Loadable, spawn_load};
 use crate::app_state::{AppState, AppStateEvent};
 use crate::charts::format::{fmt_duration, fmt_micros, fmt_tokens};
@@ -58,7 +57,7 @@ fn project_label(row: &SessionRow) -> &str {
 }
 
 pub fn cost_label(row: &SessionRow) -> String {
-    cost_with_unpriced(row.cost, row.unpriced_events)
+    fmt_micros(row.cost)
 }
 
 fn haystack(row: &SessionRow) -> String {
@@ -90,7 +89,6 @@ pub fn default_desc(key: SortKey) -> bool {
 pub struct TableView {
     pub indices: Vec<usize>,
     pub cost: Micros,
-    pub unpriced: u64,
 }
 
 pub struct SessionTable {
@@ -149,12 +147,7 @@ impl SessionTable {
             if desc { o.reverse() } else { o }
         });
         let cost = indices.iter().map(|i| self.rows[*i].cost).sum();
-        let unpriced = indices.iter().map(|i| self.rows[*i].unpriced_events).sum();
-        TableView {
-            indices,
-            cost,
-            unpriced,
-        }
+        TableView { indices, cost }
     }
 }
 
@@ -265,26 +258,8 @@ impl SessionsPage {
         cx.notify();
     }
 
-    fn cost_cell(row: &SessionRow, cx: &Context<Self>) -> AnyElement {
-        let t = cx.theme();
-        let value = if row.unpriced_events > 0 && row.cost == Micros::ZERO {
-            "–".to_owned()
-        } else {
-            fmt_micros(row.cost)
-        };
-        h_flex()
-            .gap_1p5()
-            .items_center()
-            .child(value)
-            .when(row.unpriced_events > 0, |d| {
-                d.child(
-                    div()
-                        .text_xs()
-                        .text_color(t.warning)
-                        .child(format!("⚠ +{}", row.unpriced_events)),
-                )
-            })
-            .into_any_element()
+    fn cost_cell(row: &SessionRow) -> AnyElement {
+        cost_label(row).into_any_element()
     }
 
     fn render_row(&self, ix: usize, cx: &Context<Self>) -> AnyElement {
@@ -320,7 +295,7 @@ impl SessionsPage {
             row.models.join(", ").into_any_element(),
             fmt_duration(wall_secs(row)).into_any_element(),
             fmt_tokens(row.tokens.total()).into_any_element(),
-            Self::cost_cell(row, cx),
+            Self::cost_cell(row),
         ];
         h_flex()
             .id(ix)
@@ -375,13 +350,13 @@ impl SessionsPage {
 impl Render for SessionsPage {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let t = cx.theme();
-        let (muted, warning) = (t.muted_foreground, t.warning);
+        let muted = t.muted_foreground;
         let summary: SharedString = match &self.table {
             Loadable::Ready(table) => format!(
                 "{} of {} sessions · {}",
                 self.view.indices.len(),
                 table.rows.len(),
-                cost_with_unpriced(self.view.cost, self.view.unpriced)
+                fmt_micros(self.view.cost)
             )
             .into(),
             _ => "".into(),
@@ -423,11 +398,7 @@ impl Render for SessionsPage {
                     .child(
                         div()
                             .text_sm()
-                            .text_color(if self.view.unpriced > 0 {
-                                warning
-                            } else {
-                                muted
-                            })
+                            .text_color(muted)
                             .child(summary),
                     ),
             )
@@ -532,26 +503,23 @@ mod tests {
     }
 
     #[test]
-    fn view_sums_cost_and_unpriced_of_visible_rows() {
-        let mut t = table();
-        t.rows[1].unpriced_events = 4;
+    fn view_sums_cost_of_visible_rows() {
+        let t = table();
         let v = t.view("api", SortKey::Start, true);
         assert_eq!(v.cost, Micros(1400));
-        assert_eq!(v.unpriced, 0);
         let v = t.view("", SortKey::Start, true);
         assert_eq!(v.cost, Micros(1500));
-        assert_eq!(v.unpriced, 4);
     }
 
     #[test]
-    fn unpriced_sessions_have_no_dollar_amount() {
+    fn unpriced_calls_count_as_zero_cost() {
         let mut r = table().rows.remove(0);
         assert_eq!(cost_label(&r), "<$0.01");
         r.unpriced_events = 2;
-        assert_eq!(cost_label(&r), "<$0.01 + 2 unpriced");
+        assert_eq!(cost_label(&r), "<$0.01");
         r.cost = Micros::ZERO;
         r.unpriced_events = 1;
-        assert_eq!(cost_label(&r), "1 unpriced");
+        assert_eq!(cost_label(&r), "$0.00");
     }
 
     #[test]
