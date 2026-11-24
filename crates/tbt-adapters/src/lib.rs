@@ -27,7 +27,7 @@ pub mod cursor;
 #[cfg(feature = "cursor")]
 pub use cursor::CursorAdapter;
 
-#[cfg(any(feature = "cursor", feature = "copilot_cli"))]
+#[cfg(any(feature = "cursor", feature = "copilot_cli", feature = "grok_build"))]
 mod models;
 
 #[cfg(feature = "copilot_cli")]

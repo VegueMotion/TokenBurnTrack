@@ -10,6 +10,7 @@ use tbt_core::{
 };
 
 use crate::discover;
+use crate::models::known_provider;
 
 const USAGE_FILE: &str = "usage.json";
 const SUMMARY_FILE: &str = "summary.json";
@@ -402,20 +403,7 @@ fn percent_decode(s: &str) -> Option<String> {
 }
 
 fn provider_for(model: &str) -> &'static str {
-    let m = model.to_ascii_lowercase();
-    if m.starts_with("claude") {
-        "anthropic"
-    } else if m.starts_with("gpt-")
-        || m.starts_with("o1")
-        || m.starts_with("o3")
-        || m.starts_with("o4")
-    {
-        "openai"
-    } else if m.starts_with("gemini") {
-        "google"
-    } else {
-        "xai"
-    }
+    known_provider(model).unwrap_or("xai")
 }
 
 fn modified(path: &Path) -> Option<Timestamp> {
