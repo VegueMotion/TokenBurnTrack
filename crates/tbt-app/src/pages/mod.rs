@@ -22,9 +22,9 @@ pub enum Page {
 impl Page {
     pub const ALL: [Page; 6] = [
         Page::Dashboard,
-        Page::Sessions,
         Page::Models,
         Page::Projects,
+        Page::Sessions,
         Page::Harnesses,
         Page::Settings,
     ];
@@ -99,5 +99,11 @@ mod tests {
         assert_eq!(Page::parse("sessions"), Some(Page::Sessions));
         assert_eq!(Page::parse(" Dashboard "), Some(Page::Dashboard));
         assert_eq!(Page::parse("nope"), None);
+    }
+
+    #[test]
+    fn sessions_tab_follows_projects() {
+        let pos = |p| Page::ALL.iter().position(|&x| x == p).unwrap();
+        assert_eq!(pos(Page::Sessions), pos(Page::Projects) + 1);
     }
 }
