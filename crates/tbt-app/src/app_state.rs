@@ -7,6 +7,9 @@ use tbt_core::{HarnessId, SessionId, TimeRange};
 use tbt_store::{BucketSize, IngestRunSummary, QueryFilter};
 
 use crate::charts::time::time_zone;
+use crate::collector_bridge::SyncResult;
+
+const STATUS_ERROR_CHARS: usize = 60;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DateRange {
@@ -100,6 +103,9 @@ pub struct AppState {
     pub harnesses: Vec<HarnessOption>,
     pub time_zone: String,
     pub syncing: bool,
+    pub daemon_busy: bool,
+    pub sync_available: bool,
+    pub sync_error: Option<String>,
     pub last_sync: Option<LastSync>,
 }
 
@@ -119,6 +125,9 @@ impl AppState {
             harnesses: Vec::new(),
             time_zone,
             syncing: false,
+            daemon_busy: false,
+            sync_available: false,
+            sync_error: None,
             last_sync: None,
         }
     }
@@ -159,20 +168,80 @@ impl AppState {
         }
     }
 
+    pub fn apply_sync_result(&mut self, result: &SyncResult) -> bool {
+        self.syncing = false;
+        match result {
+            SyncResult::Finished(run) => {
+                self.daemon_busy = false;
+                self.sync_error = None;
+                self.last_sync = Some(LastSync {
+                    finished_at: run.finished_at,
+                    events_new: run.events_new,
+                    error: run.error.clone(),
+                });
+                true
+            }
+            SyncResult::Busy => {
+                self.daemon_busy = true;
+                false
+            }
+            SyncResult::Failed(e) => {
+                self.sync_error = Some(e.clone());
+                false
+            }
+            SyncResult::Skipped => false,
+        }
+    }
+
+    fn current_error(&self) -> Option<&str> {
+        self.sync_error
+            .as_deref()
+            .or_else(|| self.last_sync.as_ref()?.error.as_deref())
+    }
+
+    pub fn sync_failed(&self) -> bool {
+        !self.syncing && !self.daemon_busy && self.current_error().is_some()
+    }
+
     pub fn sync_status(&self, now: Timestamp) -> String {
         if self.syncing {
             return "Syncing…".to_owned();
         }
+        if self.daemon_busy {
+            return "Daemon is syncing…".to_owned();
+        }
+        if let Some(e) = self.current_error() {
+            return format!("Sync failed: {}", short_error(e));
+        }
         match &self.last_sync {
             None => "Never synced".to_owned(),
-            Some(s) => {
-                let ago = relative_time(now, s.finished_at);
-                match &s.error {
-                    Some(e) => format!("Sync failed {ago}: {e}"),
-                    None => format!("Synced {ago} · +{}", s.events_new),
-                }
-            }
+            Some(s) => format!(
+                "Synced {} · +{}",
+                relative_time(now, s.finished_at),
+                events_label(s.events_new)
+            ),
         }
+    }
+
+    pub fn sync_tooltip(&self, now: Timestamp) -> Option<String> {
+        let last = self.last_sync.as_ref().map(|s| {
+            format!(
+                "Last sync {} · +{}",
+                relative_time(now, s.finished_at),
+                events_label(s.events_new)
+            )
+        });
+        if self.daemon_busy && !self.syncing {
+            return Some(
+                "Another collector (tbt-daemon) holds the lock; its results appear when it finishes"
+                    .to_owned(),
+            );
+        }
+        let error = self.current_error()?;
+        Some(match last {
+            Some(last) if self.sync_error.is_some() => format!("{error}\n\n{last}"),
+            _ => error.to_owned(),
+        })
     }
 
     pub fn change_range(&mut self, range: DateRange, cx: &mut Context<Self>) {
@@ -199,6 +268,28 @@ impl AppState {
         cx.emit(AppStateEvent::FiltersChanged);
         cx.notify();
     }
+}
+
+fn events_label(n: u64) -> String {
+    if n == 1 {
+        "1 event".to_owned()
+    } else {
+        format!("{n} events")
+    }
+}
+
+pub fn short_error(error: &str) -> String {
+    let line = error
+        .lines()
+        .map(str::trim)
+        .find(|l| !l.is_empty())
+        .unwrap_or("unknown error");
+    if line.chars().count() <= STATUS_ERROR_CHARS {
+        return line.to_owned();
+    }
+    let mut out: String = line.chars().take(STATUS_ERROR_CHARS - 1).collect();
+    out.push('…');
+    out
 }
 
 pub fn relative_time(now: Timestamp, then: Timestamp) -> String {
@@ -301,6 +392,7 @@ mod tests {
         let now = ts("2026-11-23T15:20:00Z");
         let mut s = state();
         assert_eq!(s.sync_status(now), "Never synced");
+        assert_eq!(s.sync_tooltip(now), None);
         let run = IngestRunSummary {
             id: RunId(1),
             trigger: RunTrigger::Hourly,
@@ -314,11 +406,84 @@ mod tests {
             error: None,
         };
         s.last_sync = LastSync::from_run(&run);
-        assert_eq!(s.sync_status(now), "Synced 19 min ago · +42");
+        assert_eq!(s.sync_status(now), "Synced 19 min ago · +42 events");
+        assert_eq!(s.sync_tooltip(now), None);
+        s.last_sync.as_mut().unwrap().events_new = 1;
+        assert_eq!(s.sync_status(now), "Synced 19 min ago · +1 event");
         s.syncing = true;
         assert_eq!(s.sync_status(now), "Syncing…");
         assert_eq!(relative_time(now, now), "just now");
         assert_eq!(relative_time(now, ts("2026-11-23T12:00:00Z")), "3 h ago");
         assert_eq!(relative_time(now, ts("2026-11-20T12:00:00Z")), "3 d ago");
+    }
+
+    fn finished(events_new: u64, error: Option<&str>) -> SyncResult {
+        SyncResult::Finished(tbt_collector::IngestFinished {
+            run_id: RunId(7),
+            trigger: RunTrigger::Manual,
+            finished_at: ts("2026-11-23T15:17:00Z"),
+            sources_scanned: 4,
+            sources_read: 2,
+            sources_failed: 0,
+            events_new,
+            messages_new: 0,
+            warnings: 0,
+            error: error.map(str::to_owned),
+        })
+    }
+
+    #[test]
+    fn sync_results_update_state() {
+        let now = ts("2026-11-23T15:20:00Z");
+        let mut s = state();
+        s.syncing = true;
+        assert!(!s.apply_sync_result(&SyncResult::Busy));
+        assert!(!s.syncing && s.daemon_busy);
+        assert_eq!(s.sync_status(now), "Daemon is syncing…");
+        assert!(s.sync_tooltip(now).unwrap().contains("tbt-daemon"));
+
+        s.syncing = true;
+        assert!(s.apply_sync_result(&finished(42, None)));
+        assert!(!s.syncing && !s.daemon_busy);
+        assert_eq!(s.sync_status(now), "Synced 3 min ago · +42 events");
+
+        assert!(!s.apply_sync_result(&SyncResult::Failed(
+            "cannot open database\ncaused by: disk full".into()
+        )));
+        assert_eq!(s.sync_status(now), "Sync failed: cannot open database");
+        assert!(s.sync_failed());
+        let tip = s.sync_tooltip(now).unwrap();
+        assert!(tip.starts_with("cannot open database\ncaused by: disk full"));
+        assert!(tip.ends_with("Last sync 3 min ago · +42 events"));
+
+        assert!(s.apply_sync_result(&finished(0, Some("[codex] a.jsonl: permission denied"))));
+        assert_eq!(s.sync_error, None);
+        assert_eq!(
+            s.sync_status(now),
+            "Sync failed: [codex] a.jsonl: permission denied"
+        );
+        assert_eq!(
+            s.sync_tooltip(now).as_deref(),
+            Some("[codex] a.jsonl: permission denied")
+        );
+
+        s.syncing = true;
+        assert!(!s.apply_sync_result(&SyncResult::Skipped));
+        assert!(!s.syncing);
+    }
+
+    #[test]
+    fn long_errors_are_truncated() {
+        let long = "x".repeat(200);
+        let short = short_error(&long);
+        assert_eq!(short.chars().count(), STATUS_ERROR_CHARS);
+        assert!(short.ends_with('…'));
+        assert_eq!(short_error("\n  \nsecond line\nthird"), "second line");
+        assert_eq!(short_error(""), "unknown error");
+        let mut s = state();
+        s.sync_error = Some(long.clone());
+        let status = s.sync_status(ts("2026-11-23T15:20:00Z"));
+        assert!(status.len() < 80, "{status}");
+        assert_eq!(s.sync_tooltip(ts("2026-11-23T15:20:00Z")), Some(long));
     }
 }

@@ -14,6 +14,7 @@ use std::sync::Arc;
 use gpui::App;
 use gpui_component::{Theme, ThemeMode};
 
+use crate::collector_bridge::SyncSource;
 use crate::data::{DataSource, MockData, StoreData};
 use crate::pages::Page;
 
@@ -41,21 +42,28 @@ fn data_dir_arg(args: impl IntoIterator<Item = String>) -> Option<PathBuf> {
     None
 }
 
-fn data_source() -> Arc<dyn DataSource> {
+fn backend() -> (Arc<dyn DataSource>, SyncSource) {
     if std::env::var("TBT_MOCK").is_ok_and(|v| v == "1") {
-        return Arc::new(MockData::new(0x7b7, data::now()));
+        return (
+            Arc::new(MockData::new(0x7b7, data::now())),
+            SyncSource::Mock,
+        );
     }
-    let dir = data_dir_arg(std::env::args().skip(1)).or_else(tbt_store::paths::default_data_dir);
-    Arc::new(StoreData::from_data_dir(dir))
+    let (dir, sync) = collector_bridge::resolve_sync(
+        data_dir_arg(std::env::args().skip(1)),
+        tbt_collector::CollectorConfig::load_default(),
+    );
+    (Arc::new(StoreData::from_data_dir(dir)), sync)
 }
 
 pub fn run() {
-    let data = data_source();
+    let (data, sync) = backend();
     gpui_platform::application().run(move |cx: &mut App| {
         gpui_component::init(cx);
         Theme::change(ThemeMode::Dark, None, cx);
         cx.on_window_closed(|cx, _| cx.quit()).detach();
-        if let Err(err) = workspace::open_main_window(data.clone(), start_page(), cx) {
+        if let Err(err) = workspace::open_main_window(data.clone(), sync.clone(), start_page(), cx)
+        {
             eprintln!("failed to open window: {err:#}");
             cx.quit();
         }
