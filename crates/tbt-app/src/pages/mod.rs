@@ -48,7 +48,7 @@ impl Page {
     pub fn uses_filters(self) -> bool {
         matches!(
             self,
-            Page::Dashboard | Page::Sessions | Page::Models | Page::Projects
+            Page::Dashboard | Page::Sessions | Page::Models | Page::Projects | Page::Settings
         )
     }
 }
