@@ -59,10 +59,10 @@ fn assert_buckets_match_kpi(d: &DashboardData) {
     );
     let tokens: f64 = d.tokens.series.iter().flat_map(|s| s.values.iter()).sum();
     assert_eq!(tokens as u64, d.kpi.tokens.total());
-    let heat_cost: f64 = d.heat.metrics[0].values.iter().flatten().sum();
+    let heat_cost: f64 = d.heat.cost.iter().flatten().sum();
     assert_close(heat_cost, usd);
-    let heat_calls: f64 = d.heat.metrics[1].values.iter().flatten().sum();
-    assert_eq!(heat_calls as u64, d.kpi.events);
+    let heat_calls: u64 = d.heat.calls.iter().flatten().sum();
+    assert_eq!(heat_calls, d.kpi.events);
 }
 
 #[test]

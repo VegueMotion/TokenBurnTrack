@@ -1,3 +1,5 @@
+use std::cell::Cell;
+use std::rc::Rc;
 use std::sync::Arc;
 
 use gpui::{
@@ -14,14 +16,13 @@ use crate::charts::format::{fmt_count, fmt_micros, fmt_pct, fmt_tokens, fmt_usd,
 use crate::charts::time::{bucket_label, bucket_starts, bucket_title, pivot, time_zone};
 use crate::charts::{
     BarChart, ChartTheme, HeatMetric, HeatmapChart, Hover, LineChart, LineMode, Series, ValueKind,
-    bar_chart, heatmap_chart, legend, line_chart, sparkline,
+    bar_chart, legend, line_chart, sparkline,
 };
 use crate::data::{self, DataSource, NO_DATA_MESSAGE};
 use crate::palette::{TokenKind, categorical, harness_color, harness_label};
 use crate::ui;
 
 const TOP_N: usize = 6;
-const WEEKDAYS: [&str; 7] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 pub struct DashboardData {
     pub kpi: KpiSummary,
@@ -87,15 +88,7 @@ impl DashboardData {
             })
             .collect();
 
-        let mut cost_grid = vec![vec![0.0; 24]; 7];
-        let mut event_grid = vec![vec![0.0; 24]; 7];
-        for c in data.heatmap(filter)? {
-            let (r, h) = (c.weekday as usize, c.hour as usize);
-            if r < 7 && h < 24 {
-                cost_grid[r][h] += micros_to_usd(c.cost);
-                event_grid[r][h] += c.events as f64;
-            }
-        }
+        let heat = HeatmapChart::from_cells(&data.heatmap(filter)?, filter.time_zone.clone());
 
         let mut top_models = data.model_stats(filter)?;
         top_models.truncate(TOP_N);
@@ -117,22 +110,7 @@ impl DashboardData {
                 kind: ValueKind::Tokens,
                 mode: LineMode::StackedArea,
             },
-            heat: HeatmapChart {
-                row_labels: WEEKDAYS.iter().map(|d| SharedString::from(*d)).collect(),
-                col_labels: (0..24).map(|h| format!("{h:02}:00").into()).collect(),
-                metrics: vec![
-                    HeatMetric {
-                        name: "Cost".into(),
-                        kind: ValueKind::Usd,
-                        values: cost_grid,
-                    },
-                    HeatMetric {
-                        name: "Calls".into(),
-                        kind: ValueKind::Count,
-                        values: event_grid,
-                    },
-                ],
-            },
+            heat,
             cost_per_bucket,
             top_models,
             top_projects,
@@ -182,6 +160,7 @@ pub struct DashboardPage {
     data: Arc<dyn DataSource>,
     state: Loadable<DashboardData>,
     hovers: Hovers,
+    heat_metric: Rc<Cell<HeatMetric>>,
     _load: Task<()>,
     _subscription: Subscription,
 }
@@ -201,6 +180,7 @@ impl DashboardPage {
             data,
             state: Loadable::Loading,
             hovers: Hovers::default(),
+            heat_metric: Rc::default(),
             _load: Task::ready(()),
             _subscription: subscription,
         };
@@ -466,12 +446,12 @@ impl DashboardPage {
                         ui::card("Activity by weekday and hour", cx)
                             .flex_1()
                             .min_w(px(300.))
-                            .child(ui::muted_text("Cost per hour of day, local time", cx))
-                            .child(
-                                heatmap_chart(d.heat.clone(), self.hovers.heat.clone(), theme)
-                                    .w_full()
-                                    .h(px(220.)),
-                            ),
+                            .child(d.heat.view(
+                                self.heat_metric.clone(),
+                                self.hovers.heat.clone(),
+                                theme,
+                                cx,
+                            )),
                     ),
             )
             .child(h_flex().gap_4().items_start().child(models).child(projects))
