@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use gpui::{Context, EventEmitter};
 use jiff::tz::TimeZone;
 use jiff::{SignedDuration, Timestamp, ToSpan};
-use tbt_core::{HarnessId, TimeRange};
+use tbt_core::{HarnessId, SessionId, TimeRange};
 use tbt_store::{BucketSize, IngestRunSummary, QueryFilter};
 
 use crate::charts::time::time_zone;
@@ -89,6 +89,8 @@ impl LastSync {
 pub enum AppStateEvent {
     FiltersChanged,
     DataChanged,
+    OpenSession(SessionId),
+    CloseSession,
 }
 
 #[derive(Debug, Clone)]
@@ -178,6 +180,14 @@ impl AppState {
             cx.emit(AppStateEvent::FiltersChanged);
             cx.notify();
         }
+    }
+
+    pub fn open_session(&mut self, id: SessionId, cx: &mut Context<Self>) {
+        cx.emit(AppStateEvent::OpenSession(id));
+    }
+
+    pub fn close_session(&mut self, cx: &mut Context<Self>) {
+        cx.emit(AppStateEvent::CloseSession);
     }
 
     pub fn change_harness(&mut self, id: Option<&HarnessId>, cx: &mut Context<Self>) {

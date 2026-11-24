@@ -8,7 +8,7 @@ use gpui::{
 use gpui_component::button::{Button, ButtonVariants};
 use gpui_component::{ActiveTheme, Disableable, Selectable, Sizable, StyledExt, h_flex, v_flex};
 use jiff::Timestamp;
-use tbt_core::HarnessId;
+use tbt_core::{HarnessId, SessionId};
 
 use crate::app_state::{AppState, AppStateEvent, DateRange, HarnessOption, LastSync};
 use crate::data::DataSource;
@@ -16,6 +16,7 @@ use crate::pages::dashboard::DashboardPage;
 use crate::pages::harnesses::HarnessesPage;
 use crate::pages::models::ModelsPage;
 use crate::pages::projects::ProjectsPage;
+use crate::pages::session_detail::SessionDetailPage;
 use crate::pages::sessions::SessionsPage;
 use crate::pages::settings::SettingsPage;
 use crate::pages::{Page, spawn_load};
@@ -26,6 +27,7 @@ pub struct Workspace {
     data: Arc<dyn DataSource>,
     page: Page,
     views: Vec<(Page, AnyView)>,
+    detail: Option<(SessionId, AnyView)>,
     _tasks: Vec<Task<()>>,
 }
 
@@ -33,11 +35,24 @@ impl Workspace {
     pub fn new(
         data: Arc<dyn DataSource>,
         start: Page,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
         let app_state = cx.new(|_| AppState::default());
         cx.observe(&app_state, |_, _, cx| cx.notify()).detach();
+        cx.subscribe_in(
+            &app_state,
+            window,
+            |this, _, ev: &AppStateEvent, window, cx| match *ev {
+                AppStateEvent::OpenSession(id) => this.open_session(id, window, cx),
+                AppStateEvent::CloseSession => {
+                    this.detail = None;
+                    cx.notify();
+                }
+                _ => {}
+            },
+        )
+        .detach();
         let load = {
             let data = data.clone();
             let app_state = app_state.clone();
@@ -67,6 +82,7 @@ impl Workspace {
             data,
             page: start,
             views: Vec::new(),
+            detail: None,
             _tasks: vec![load],
         }
     }
@@ -86,6 +102,15 @@ impl Workspace {
         };
         self.views.push((page, view.clone()));
         view
+    }
+
+    fn open_session(&mut self, id: SessionId, window: &mut Window, cx: &mut Context<Self>) {
+        let (s, d) = (self.app_state.clone(), self.data.clone());
+        let view: AnyView = cx
+            .new(|cx| SessionDetailPage::new(id, s, d, window, cx))
+            .into();
+        self.detail = Some((id, view));
+        cx.notify();
     }
 
     fn sync_now(&mut self, cx: &mut Context<Self>) {
@@ -161,6 +186,7 @@ impl Workspace {
                     .hover(move |s| s.bg(accent).text_color(fg))
                     .on_click(cx.listener(move |this, _, _, cx| {
                         this.page = page;
+                        this.detail = None;
                         cx.notify();
                     }))
                     .child(page.label())
@@ -312,7 +338,10 @@ impl Workspace {
 
 impl Render for Workspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let page = self.view(self.page, window, cx);
+        let page = match &self.detail {
+            Some((_, view)) => view.clone(),
+            None => self.view(self.page, window, cx),
+        };
         let t = cx.theme();
         let (bg, fg) = (t.background, t.foreground);
         h_flex()

@@ -1,6 +1,8 @@
 pub mod app_state;
 pub mod charts;
+pub mod collector_bridge;
 pub mod data;
+pub mod export;
 pub mod pages;
 pub mod palette;
 pub mod ui;

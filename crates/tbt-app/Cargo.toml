@@ -9,6 +9,12 @@ publish = false
 [dependencies]
 tbt-core.workspace = true
 tbt-store.workspace = true
+tbt-pricing.workspace = true
+tbt-collector.workspace = true
+crossbeam-channel.workspace = true
+notify.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 anyhow.workspace = true
 jiff.workspace = true
 gpui.workspace = true
@@ -17,5 +23,4 @@ gpui-component.workspace = true
 
 [dev-dependencies]
 tbt-adapters.workspace = true
-tbt-pricing.workspace = true
 tempfile.workspace = true

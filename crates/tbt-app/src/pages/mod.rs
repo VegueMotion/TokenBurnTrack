@@ -2,6 +2,7 @@ pub mod dashboard;
 pub mod harnesses;
 pub mod models;
 pub mod projects;
+pub mod session_detail;
 pub mod sessions;
 pub mod settings;
 
