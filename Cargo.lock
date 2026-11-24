@@ -6663,9 +6663,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "crossbeam-channel",
+ "directories",
  "fs4",
  "jiff",
  "proptest",
+ "rusqlite",
  "serde",
  "serde_json",
  "tbt-adapters",
@@ -6674,6 +6676,7 @@ dependencies = [
  "tbt-store",
  "tempfile",
  "thiserror 2.0.21",
+ "toml 1.2.2+spec-1.1.0",
  "tracing",
 ]
 
@@ -6697,14 +6700,16 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "crossbeam-channel",
  "directories",
  "jiff",
- "smol",
+ "rusqlite",
  "tbt-adapters",
  "tbt-collector",
  "tbt-core",
  "tbt-pricing",
  "tbt-store",
+ "tempfile",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
