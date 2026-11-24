@@ -408,16 +408,16 @@ impl SettingsPage {
         let cols = [
             Col::fixed("Provider", 76.0),
             Col::flex("Model pattern"),
-            Col::fixed("Source", 72.0),
+            Col::fixed("Source", 66.0),
             Col::fixed("From", 82.0),
             Col::fixed("To", 82.0),
-            Col::num("Input", 52.0),
-            Col::num("Output", 52.0),
-            Col::num("CW 5m", 52.0),
-            Col::num("CW 1h", 52.0),
-            Col::num("Read", 52.0),
-            Col::fixed("Long ctx", 96.0),
-            Col::fixed("", 116.0),
+            Col::num("Input", 48.0),
+            Col::num("Output", 48.0),
+            Col::num("CW 5m", 48.0),
+            Col::num("CW 1h", 48.0),
+            Col::num("Read", 48.0),
+            Col::fixed("Long ctx", 84.0),
+            Col::fixed("", 112.0),
         ];
         let muted = cx.theme().muted_foreground;
         let table_rows = rows

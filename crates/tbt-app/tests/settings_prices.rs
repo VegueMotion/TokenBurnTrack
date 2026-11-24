@@ -1,7 +1,7 @@
 mod common;
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use jiff::Timestamp;
 use jiff::tz::TimeZone;
@@ -34,7 +34,7 @@ fn fixture(unpriced: &[&str]) -> Fixture {
     Fixture { _dir: dir, db }
 }
 
-fn events(db: &PathBuf, model: &str) -> Vec<RecomputeRow> {
+fn events(db: &Path, model: &str) -> Vec<RecomputeRow> {
     let store = Store::open_read_only(db).unwrap();
     let filter = RecomputeFilter {
         model: Some(model.into()),
@@ -45,7 +45,7 @@ fn events(db: &PathBuf, model: &str) -> Vec<RecomputeRow> {
     rows
 }
 
-fn total_cost(db: &PathBuf) -> Micros {
+fn total_cost(db: &Path) -> Micros {
     let store = Store::open_read_only(db).unwrap();
     let f = QueryFilter::new(
         TimeRange::new(ts("2020-01-01T00:00:00Z"), ts("2030-01-01T00:00:00Z")),
@@ -71,11 +71,11 @@ fn form(model: &str, input: &str, output: &str, from: Timestamp) -> PriceForm {
     }
 }
 
-fn apply(db: &PathBuf, plan: &PricePlan, unpriced: Option<(&str, &str)>) -> ops::Outcome {
+fn apply(db: &Path, plan: &PricePlan, unpriced: Option<(&str, &str)>) -> ops::Outcome {
     ops::with_writable_store(db, |s| ops::apply_plan(s, plan, unpriced)).unwrap()
 }
 
-fn user_row(db: &PathBuf, from: Timestamp) -> ModelPrice {
+fn user_row(db: &Path, from: Timestamp) -> ModelPrice {
     Store::open_read_only(db)
         .unwrap()
         .model_prices()
