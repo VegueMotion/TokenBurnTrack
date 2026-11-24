@@ -1,17 +1,19 @@
 use std::sync::Arc;
-use std::time::Duration;
 
 use gpui::{
     AnyView, App, Context, Entity, Hsla, IntoElement, ParentElement, Render, SharedString, Styled,
-    Task, Window, div, prelude::*, px,
+    Window, div, prelude::*, px,
 };
 use gpui_component::button::{Button, ButtonVariants};
+use gpui_component::tooltip::Tooltip;
 use gpui_component::{ActiveTheme, Disableable, Selectable, Sizable, StyledExt, h_flex, v_flex};
 use jiff::Timestamp;
 use tbt_core::{HarnessId, SessionId};
 
-use crate::app_state::{AppState, AppStateEvent, DateRange, HarnessOption, LastSync};
+use crate::app_state::{AppState, AppStateEvent, DateRange};
+use crate::collector_bridge::{CollectorBridge, SyncSource};
 use crate::data::DataSource;
+use crate::pages::Page;
 use crate::pages::dashboard::DashboardPage;
 use crate::pages::harnesses::HarnessesPage;
 use crate::pages::models::ModelsPage;
@@ -19,7 +21,6 @@ use crate::pages::projects::ProjectsPage;
 use crate::pages::session_detail::SessionDetailPage;
 use crate::pages::sessions::SessionsPage;
 use crate::pages::settings::SettingsPage;
-use crate::pages::{Page, spawn_load};
 use crate::palette::{harness_color, harness_label};
 
 pub struct Workspace {
@@ -28,12 +29,13 @@ pub struct Workspace {
     page: Page,
     views: Vec<(Page, AnyView)>,
     detail: Option<(SessionId, AnyView)>,
-    _tasks: Vec<Task<()>>,
+    sync: Entity<CollectorBridge>,
 }
 
 impl Workspace {
     pub fn new(
         data: Arc<dyn DataSource>,
+        sync: SyncSource,
         start: Page,
         window: &mut Window,
         cx: &mut Context<Self>,
@@ -53,29 +55,9 @@ impl Workspace {
             },
         )
         .detach();
-        let load = {
-            let data = data.clone();
-            let app_state = app_state.clone();
-            spawn_load(
-                cx,
-                move || Ok((data.harness_status()?, data.ingest_runs(1)?)),
-                move |_this: &mut Workspace, state, cx| {
-                    if let crate::pages::Loadable::Ready((status, runs)) = state {
-                        app_state.update(cx, |s, cx| {
-                            s.harnesses = status
-                                .into_iter()
-                                .filter(|h| h.config.enabled)
-                                .map(|h| HarnessOption {
-                                    id: h.config.id,
-                                    name: h.config.display_name,
-                                })
-                                .collect();
-                            s.last_sync = runs.first().and_then(LastSync::from_run);
-                            cx.notify();
-                        });
-                    }
-                },
-            )
+        let sync = {
+            let (app_state, data) = (app_state.clone(), data.clone());
+            cx.new(|cx| CollectorBridge::new(sync, app_state, data, cx))
         };
         Workspace {
             app_state,
@@ -83,7 +65,7 @@ impl Workspace {
             page: start,
             views: Vec::new(),
             detail: None,
-            _tasks: vec![load],
+            sync,
         }
     }
 
@@ -114,30 +96,7 @@ impl Workspace {
     }
 
     fn sync_now(&mut self, cx: &mut Context<Self>) {
-        let state = self.app_state.clone();
-        if state.read(cx).syncing {
-            return;
-        }
-        state.update(cx, |s, cx| {
-            s.syncing = true;
-            cx.notify();
-        });
-        let task = cx.spawn(async move |_, cx| {
-            cx.background_executor()
-                .timer(Duration::from_millis(1200))
-                .await;
-            state.update(cx, |s, cx| {
-                s.syncing = false;
-                s.last_sync = Some(LastSync {
-                    finished_at: Timestamp::now(),
-                    events_new: 0,
-                    error: None,
-                });
-                cx.emit(AppStateEvent::DataChanged);
-                cx.notify();
-            });
-        });
-        self._tasks.push(task);
+        self.sync.update(cx, |b, cx| b.sync_now(cx));
     }
 
     fn render_sidebar(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -240,7 +199,9 @@ impl Workspace {
     fn render_top_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let state = self.app_state.read(cx).clone();
         let t = cx.theme();
-        let (border, muted, fg) = (t.border, t.muted_foreground, t.foreground);
+        let (border, muted, fg, danger) = (t.border, t.muted_foreground, t.foreground, t.danger);
+        let now = Timestamp::now();
+        let failed = state.sync_failed();
         let ranges = h_flex()
             .gap_1()
             .children(DateRange::PRESETS.into_iter().map(|r| {
@@ -316,20 +277,29 @@ impl Workspace {
             .child(div().flex_1().min_w(px(8.)))
             .child(
                 div()
+                    .id("sync-status")
                     .min_w_0()
+                    .max_w(px(320.))
                     .overflow_hidden()
                     .whitespace_nowrap()
                     .text_ellipsis()
                     .text_xs()
-                    .text_color(muted)
-                    .child(state.sync_status(Timestamp::now())),
+                    .text_color(if failed { danger } else { muted })
+                    .child(state.sync_status(now))
+                    .when_some(state.sync_tooltip(now), |d, tip| {
+                        d.tooltip(move |window, cx| Tooltip::new(tip.clone()).build(window, cx))
+                    }),
             )
             .child(
                 Button::new("sync-now")
                     .flex_none()
                     .small()
                     .primary()
-                    .loading(state.syncing)
+                    .loading(state.syncing || state.daemon_busy)
+                    .disabled(!state.sync_available)
+                    .when(!state.sync_available, |b| {
+                        b.tooltip("Sync is off: no collector is available")
+                    })
                     .label("Sync now")
                     .on_click(cx.listener(|this, _, _, cx| this.sync_now(cx))),
             )
@@ -362,6 +332,7 @@ impl Render for Workspace {
 
 pub fn open_main_window(
     data: Arc<dyn DataSource>,
+    sync: SyncSource,
     start: Page,
     cx: &mut App,
 ) -> anyhow::Result<()> {
@@ -378,7 +349,7 @@ pub fn open_main_window(
             ..Default::default()
         },
         |window, cx| {
-            let view = cx.new(|cx| Workspace::new(data, start, window, cx));
+            let view = cx.new(|cx| Workspace::new(data, sync, start, window, cx));
             cx.new(|cx| gpui_component::Root::new(view, window, cx))
         },
     )?;
