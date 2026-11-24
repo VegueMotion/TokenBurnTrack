@@ -92,7 +92,7 @@ impl HarnessAdapter for CopilotCliAdapter {
 fn is_event_log(path: &Path) -> bool {
     path.file_name()
         .and_then(|n| n.to_str())
-        .is_some_and(|n| n.starts_with("events"))
+        .is_some_and(|n| n == "events.jsonl")
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -125,15 +125,9 @@ struct Usage {
 }
 
 impl Usage {
-    fn tokens(&self) -> TokenCounts {
-        let cached = self.cache_read_tokens + self.cache_write_tokens;
-        let input = if self.input_tokens >= cached {
-            self.input_tokens - cached
-        } else {
-            self.input_tokens
-        };
+    fn totals(&self) -> TokenCounts {
         TokenCounts {
-            input,
+            input: self.input_tokens,
             output: self.output_tokens,
             cache_write_5m: self.cache_write_tokens,
             cache_write_1h: 0,
@@ -141,6 +135,14 @@ impl Usage {
             reasoning: self.reasoning_tokens,
         }
     }
+}
+
+fn without_cache(mut t: TokenCounts) -> TokenCounts {
+    let cached = t.cache_read + t.cache_write();
+    if t.input >= cached {
+        t.input -= cached;
+    }
+    t
 }
 
 struct Builder<'a> {
@@ -381,17 +383,14 @@ impl<'a> Builder<'a> {
                 continue;
             };
             let tokens = match Usage::deserialize(usage) {
-                Ok(u) => u.tokens(),
+                Ok(u) => u.totals(),
                 Err(e) => {
                     self.warn(line, format!("invalid `modelMetrics.{model}.usage`: {e}"));
                     continue;
                 }
             };
             let prev = self.state.totals.insert(model.clone(), tokens);
-            if prev == Some(tokens) {
-                continue;
-            }
-            let delta = tokens.delta_since(&prev.unwrap_or_default());
+            let delta = without_cache(tokens.delta_since(&prev.unwrap_or_default()));
             if delta.is_zero() {
                 continue;
             }
@@ -526,7 +525,7 @@ mod tests {
             reasoning_tokens: 20,
         };
         assert_eq!(
-            inclusive.tokens(),
+            without_cache(inclusive.totals()),
             TokenCounts {
                 input: 300,
                 output: 50,
@@ -541,7 +540,7 @@ mod tests {
             cache_read_tokens: 600,
             ..Usage::default()
         };
-        assert_eq!(exclusive.tokens().input, 12);
+        assert_eq!(without_cache(exclusive.totals()).input, 12);
     }
 
     #[test]

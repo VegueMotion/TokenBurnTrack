@@ -225,8 +225,8 @@ Format notes:
   the previous total (the full total if any count went down). The dedup key is
   `<session>:<model>:<running total>`.
 - The schema doesn't say whether `inputTokens` includes cache reads/writes. The adapter
-  subtracts them when `inputTokens` is at least their sum, and otherwise takes it as
-  uncached input. `requests.cost` is a premium-request multiplier, not money, so no
+  subtracts them from each difference when its `inputTokens` is at least their sum, and
+  otherwise takes it as uncached input. `requests.cost` is a premium-request multiplier, not money, so no
   reported cost is set. Claude model ids use dots (`claude-sonnet-4.5`) and are mapped to
   the API names (`claude-sonnet-4-5`).
 - Messages: `user.message.data.content`, `assistant.message.data{content, toolRequests[{toolCallId,

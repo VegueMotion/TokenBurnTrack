@@ -35,6 +35,7 @@ fn discovers_only_event_logs() {
     let session = dir.path().join("abc");
     std::fs::create_dir_all(session.join("checkpoints")).unwrap();
     std::fs::write(session.join("events.jsonl"), "").unwrap();
+    std::fs::write(session.join("events.1.jsonl"), "").unwrap();
     std::fs::write(session.join("checkpoints/index.jsonl"), "").unwrap();
     let found = CopilotCliAdapter::new()
         .discover(&[dir.path().to_path_buf()])
@@ -87,7 +88,7 @@ fn model_switch_counts_each_model_from_its_snapshots() {
     assert_eq!(tokens(&batch, 0), (500, 305, 6000, 24000, 0));
     assert_eq!(tokens(&batch, 1), (6000, 640, 0, 12000, 384));
     assert_eq!(tokens(&batch, 2), (1000, 120, 0, 18000, 64));
-    assert_eq!(batch.events[2].dedup_key, format!("{SWITCH}:gpt-5:37760"));
+    assert_eq!(batch.events[2].dedup_key, format!("{SWITCH}:gpt-5:67760"));
 
     let tool_use = batch
         .messages
@@ -142,7 +143,7 @@ fn appended_lines_continue_from_the_cursor() {
 
     write_lines(&path, &lines);
     let second = read_to_end(&adapter, &src, &first.next_cursor);
-    assert_eq!(dedup_keys(&second), [format!("{SWITCH}:gpt-5:37760")]);
+    assert_eq!(dedup_keys(&second), [format!("{SWITCH}:gpt-5:67760")]);
     assert_eq!(tokens(&second, 0), (1000, 120, 0, 18000, 64));
     assert_eq!(second.messages.len(), 1);
 
@@ -152,26 +153,39 @@ fn appended_lines_continue_from_the_cursor() {
     assert_eq!(keys, dedup_keys(&full));
 }
 
-#[test]
-fn lower_totals_after_a_restart_count_in_full() {
+fn shutdown(ts: &str, input: u64, output: u64, cache_read: u64) -> String {
+    format!(
+        r#"{{"type":"session.shutdown","id":"{ts}","timestamp":"{ts}","data":{{"modelMetrics":{{"gpt-5":{{"usage":{{"inputTokens":{input},"outputTokens":{output},"cacheReadTokens":{cache_read},"cacheWriteTokens":0}}}}}}}}}}"#
+    )
+}
+
+fn read_shutdowns(lines: &[String]) -> ReadBatch {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("s1").join("events.jsonl");
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-    let shutdown = |ts: &str, input: u64, output: u64| {
-        format!(
-            r#"{{"type":"session.shutdown","id":"{ts}","timestamp":"{ts}","data":{{"modelMetrics":{{"gpt-5":{{"usage":{{"inputTokens":{input},"outputTokens":{output},"cacheReadTokens":0,"cacheWriteTokens":0}}}}}}}}}}"#
-        )
-    };
-    write_lines(
-        &path,
-        &[
-            shutdown("2026-11-20T10:00:00Z", 1000, 100),
-            shutdown("2026-11-20T11:00:00Z", 400, 50),
-        ],
-    );
+    write_lines(&path, lines);
     let batch = read_file(&CopilotCliAdapter::new(), &path);
     assert!(batch.warnings.is_empty(), "{:?}", batch.warnings);
     assert_eq!(batch.sessions[0].ext_id, "s1");
+    batch
+}
+
+#[test]
+fn lower_totals_after_a_restart_count_in_full() {
+    let batch = read_shutdowns(&[
+        shutdown("2026-11-20T10:00:00Z", 1000, 100, 0),
+        shutdown("2026-11-20T11:00:00Z", 400, 50, 0),
+    ]);
     assert_eq!(tokens(&batch, 0), (1000, 100, 0, 0, 0));
     assert_eq!(tokens(&batch, 1), (400, 50, 0, 0, 0));
+}
+
+#[test]
+fn cache_is_taken_out_of_each_difference_not_of_the_totals() {
+    let batch = read_shutdowns(&[
+        shutdown("2026-11-20T10:00:00Z", 13000, 100, 14000),
+        shutdown("2026-11-20T11:00:00Z", 20000, 150, 15000),
+    ]);
+    assert_eq!(tokens(&batch, 0), (13000, 100, 0, 14000, 0));
+    assert_eq!(tokens(&batch, 1), (6000, 50, 0, 1000, 0));
 }

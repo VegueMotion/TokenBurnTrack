@@ -71,12 +71,12 @@ totals:
     reasoning: 448
     total: 37760
 events:
-  - "2026-11-20T09:00:21Z 3b0f6c2e-8a41-4d7e-9c55-1f2a3b4c5d6e:claude-sonnet-4.5:30805 claude-sonnet-4-5 in=500 out=305 cw5m=6000 cw1h=0 cr=24000 rs=0"
-  - "2026-11-20T09:05:40Z 3b0f6c2e-8a41-4d7e-9c55-1f2a3b4c5d6e:gpt-5:18640 gpt-5 in=6000 out=640 cw5m=0 cw1h=0 cr=12000 rs=384"
-  - "2026-11-20T09:06:30Z 3b0f6c2e-8a41-4d7e-9c55-1f2a3b4c5d6e:gpt-5:37760 gpt-5 in=1000 out=120 cw5m=0 cw1h=0 cr=18000 rs=64"
-  - "2026-11-21T14:01:00Z 7d9e1a2b-3c4d-4e5f-8a6b-9c0d1e2f3a4b:claude-haiku-4.5:9080 claude-haiku-4-5 in=500 out=80 cw5m=8500 cw1h=0 cr=0 rs=0"
-  - "2026-11-22T08:03:00Z 7d9e1a2b-3c4d-4e5f-8a6b-9c0d1e2f3a4b:claude-haiku-4.5:15200 claude-haiku-4-5 in=1000 out=120 cw5m=0 cw1h=0 cr=5000 rs=0"
-  - "2026-11-22T08:03:00Z 7d9e1a2b-3c4d-4e5f-8a6b-9c0d1e2f3a4b:claude-opus-4.5:40900 claude-opus-4-5 in=1000 out=900 cw5m=9000 cw1h=0 cr=30000 rs=0"
+  - "2026-11-20T09:00:21Z 3b0f6c2e-8a41-4d7e-9c55-1f2a3b4c5d6e:claude-sonnet-4.5:60805 claude-sonnet-4-5 in=500 out=305 cw5m=6000 cw1h=0 cr=24000 rs=0"
+  - "2026-11-20T09:05:40Z 3b0f6c2e-8a41-4d7e-9c55-1f2a3b4c5d6e:gpt-5:30640 gpt-5 in=6000 out=640 cw5m=0 cw1h=0 cr=12000 rs=384"
+  - "2026-11-20T09:06:30Z 3b0f6c2e-8a41-4d7e-9c55-1f2a3b4c5d6e:gpt-5:67760 gpt-5 in=1000 out=120 cw5m=0 cw1h=0 cr=18000 rs=64"
+  - "2026-11-21T14:01:00Z 7d9e1a2b-3c4d-4e5f-8a6b-9c0d1e2f3a4b:claude-haiku-4.5:17580 claude-haiku-4-5 in=500 out=80 cw5m=8500 cw1h=0 cr=0 rs=0"
+  - "2026-11-22T08:03:00Z 7d9e1a2b-3c4d-4e5f-8a6b-9c0d1e2f3a4b:claude-haiku-4.5:28700 claude-haiku-4-5 in=1000 out=120 cw5m=0 cw1h=0 cr=5000 rs=0"
+  - "2026-11-22T08:03:00Z 7d9e1a2b-3c4d-4e5f-8a6b-9c0d1e2f3a4b:claude-opus-4.5:79900 claude-opus-4-5 in=1000 out=900 cw5m=9000 cw1h=0 cr=30000 rs=0"
 message_count: 16
 messages_by_kind:
   assistant/text: 6
