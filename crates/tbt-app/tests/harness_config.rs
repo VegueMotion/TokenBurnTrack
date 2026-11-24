@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use tbt_app::data::{DataSource, StoreData};
 use tbt_app::pages::harnesses::{HarnessEdit, HarnessesData, apply_edit, check_roots, parse_roots};
-use tbt_app::pages::projects::{ProjectSort, ProjectsData, branch_note, sort_projects};
+use tbt_app::pages::projects::{self, ProjectSort, ProjectsData, sort_projects};
 use tbt_core::{HarnessId, TimeRange};
 use tbt_store::{BucketSize, QueryFilter, Store};
 use tempfile::TempDir;
@@ -128,7 +128,11 @@ fn projects_from_store_include_branches() {
         .map(|b| b.cost.0)
         .sum();
     assert_eq!(branch_total, kpi.cost.0);
-    assert!(d.projects.iter().any(|p| branch_note(p).is_some()));
+    assert!(
+        d.projects
+            .iter()
+            .all(|p| projects::branch_total(p) == p.cost)
+    );
     let order = sort_projects(&d.projects, ProjectSort::Cost, true);
     assert!(
         order

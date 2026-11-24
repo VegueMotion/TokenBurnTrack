@@ -41,6 +41,7 @@ impl Workspace {
         cx: &mut Context<Self>,
     ) -> Self {
         let app_state = cx.new(|_| AppState::default());
+        crate::pages::session_detail::debug_open_from_env(&app_state, cx);
         cx.observe(&app_state, |_, _, cx| cx.notify()).detach();
         cx.subscribe_in(
             &app_state,

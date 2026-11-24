@@ -166,23 +166,6 @@ pub fn branch_total(p: &ProjectStats) -> Micros {
     p.branches.iter().map(|b| b.cost).sum()
 }
 
-pub fn branch_note(p: &ProjectStats) -> Option<String> {
-    if p.branches.is_empty() {
-        return Some(
-            "No branch breakdown: these calls ran here from sessions started in another directory"
-                .to_owned(),
-        );
-    }
-    let total = branch_total(p);
-    (total != p.cost).then(|| {
-        format!(
-            "Branches add up to {} (by session start directory) vs {} by call directory",
-            fmt_micros(total),
-            fmt_micros(p.cost)
-        )
-    })
-}
-
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ProjectTotals {
     pub projects: usize,
@@ -458,63 +441,51 @@ impl ProjectsPage {
             .children(COLUMNS.iter().zip(cells).map(|((_, c), cell)| c.cell(cell)));
         let base = branch_total(p);
         let branches = open.then(|| {
-            v_flex()
-                .pb_2()
-                .children(p.branches.iter().map(|b| {
-                    let frac = share(b.cost, base);
-                    h_flex()
-                        .w_full()
-                        .gap_3()
-                        .px_3()
-                        .py_1()
-                        .items_center()
-                        .text_xs()
-                        .child(EXPANDER.cell(""))
-                        .child(
-                            Col::flex("").cell(
-                                h_flex()
-                                    .gap_2()
-                                    .pl_3()
-                                    .items_center()
-                                    .child(
-                                        div()
-                                            .w(px(180.))
-                                            .flex_none()
-                                            .overflow_hidden()
-                                            .whitespace_nowrap()
-                                            .text_ellipsis()
-                                            .font_family("monospace")
-                                            .text_color(if b.branch.is_some() { fg } else { muted })
-                                            .child(branch_label(b).to_owned()),
-                                    )
-                                    .child(div().flex_1().max_w(px(220.)).child(ui::bar_cell(
-                                        frac,
-                                        categorical(0),
-                                        track,
-                                    )))
-                                    .child(div().text_color(muted).child(fmt_pct(frac))),
-                            ),
-                        )
-                        .child(
-                            COLUMNS[1]
-                                .1
-                                .cell(div().text_color(muted).child(fmt_count(b.sessions))),
-                        )
-                        .child(COLUMNS[2].1.cell(""))
-                        .child(COLUMNS[3].1.cell(""))
-                        .child(COLUMNS[4].1.cell(fmt_micros(b.cost)))
-                        .child(COLUMNS[5].1.cell(""))
-                }))
-                .children(branch_note(p).map(|note| {
-                    h_flex()
-                        .px_3()
-                        .py_1()
-                        .gap_3()
-                        .text_xs()
-                        .text_color(muted)
-                        .child(EXPANDER.cell(""))
-                        .child(div().pl_3().child(note))
-                }))
+            v_flex().pb_2().children(p.branches.iter().map(|b| {
+                let frac = share(b.cost, base);
+                h_flex()
+                    .w_full()
+                    .gap_3()
+                    .px_3()
+                    .py_1()
+                    .items_center()
+                    .text_xs()
+                    .child(EXPANDER.cell(""))
+                    .child(
+                        Col::flex("").cell(
+                            h_flex()
+                                .gap_2()
+                                .pl_3()
+                                .items_center()
+                                .child(
+                                    div()
+                                        .w(px(180.))
+                                        .flex_none()
+                                        .overflow_hidden()
+                                        .whitespace_nowrap()
+                                        .text_ellipsis()
+                                        .font_family("monospace")
+                                        .text_color(if b.branch.is_some() { fg } else { muted })
+                                        .child(branch_label(b).to_owned()),
+                                )
+                                .child(div().flex_1().max_w(px(220.)).child(ui::bar_cell(
+                                    frac,
+                                    categorical(0),
+                                    track,
+                                )))
+                                .child(div().text_color(muted).child(fmt_pct(frac))),
+                        ),
+                    )
+                    .child(
+                        COLUMNS[1]
+                            .1
+                            .cell(div().text_color(muted).child(fmt_count(b.sessions))),
+                    )
+                    .child(COLUMNS[2].1.cell(""))
+                    .child(COLUMNS[3].1.cell(""))
+                    .child(COLUMNS[4].1.cell(fmt_micros(b.cost)))
+                    .child(COLUMNS[5].1.cell(""))
+            }))
         });
         v_flex()
             .border_b_1()
@@ -696,18 +667,11 @@ mod tests {
     }
 
     #[test]
-    fn branch_notes_flag_attribution_gaps() {
+    fn branch_total_sums_branches() {
         let mut p = sample().remove(0);
         assert_eq!(branch_total(&p), p.cost);
-        assert_eq!(branch_note(&p), None);
         p.branches.push(branch(None, 1, 2_000_000));
         assert_eq!(branch_total(&p), Micros(7_000_000));
-        assert_eq!(
-            branch_note(&p).unwrap(),
-            "Branches add up to $7.00 (by session start directory) vs $5.00 by call directory"
-        );
-        p.branches.clear();
-        assert!(branch_note(&p).unwrap().starts_with("No branch breakdown"));
     }
 
     #[test]

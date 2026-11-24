@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::ops::Range;
 use std::sync::Arc;
 
@@ -10,8 +9,8 @@ use gpui_component::button::{Button, ButtonVariants};
 use gpui_component::{ActiveTheme, StyledExt, h_flex, v_flex};
 use jiff::Timestamp;
 use jiff::tz::TimeZone;
-use tbt_core::{Micros, SessionId, TimeRange, TokenCounts};
-use tbt_store::{BucketSize, EventRow, MessageRow, QueryFilter, SessionDetail, SessionRow};
+use tbt_core::{Micros, SessionId, TokenCounts};
+use tbt_store::{EventRow, MessageRow, SessionDetail, SessionRow};
 
 use super::dashboard::{cost_with_unpriced, unpriced_badge};
 use super::sessions::wall_secs;
@@ -120,24 +119,6 @@ pub fn fmt_delta(delta: Micros, base: Micros) -> String {
     }
 }
 
-pub fn forward_chain(from: SessionId, candidates: &[SessionRow]) -> Vec<SessionRow> {
-    let mut out = Vec::new();
-    let mut seen = HashSet::from([from]);
-    let mut cur = from;
-    loop {
-        let next = candidates
-            .iter()
-            .filter(|r| r.resumed_from == Some(cur) && !seen.contains(&r.id))
-            .min_by_key(|r| (r.started_at, r.id));
-        let Some(next) = next else {
-            return out;
-        };
-        seen.insert(next.id);
-        cur = next.id;
-        out.push(next.clone());
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Chain {
     pub links: Vec<SessionRow>,
@@ -147,9 +128,8 @@ pub struct Chain {
 }
 
 impl Chain {
-    pub fn new(backward: &[SessionRow], forward: Vec<SessionRow>) -> Chain {
-        let current = backward.len().saturating_sub(1);
-        let links: Vec<SessionRow> = backward.iter().cloned().chain(forward).collect();
+    pub fn new(links: Vec<SessionRow>, session: SessionId) -> Chain {
+        let current = links.iter().position(|r| r.id == session).unwrap_or(0);
         Chain {
             total: chain_total(&links),
             unpriced: links.iter().map(|r| r.unpriced_events).sum(),
@@ -348,28 +328,14 @@ impl DetailData {
             return Ok(None);
         };
         let parent = match detail.session.parent {
-            Some(p) => data.session_detail(p)?.map(|d| d.session),
+            Some(p) => data.session_row(p)?,
             None => None,
         };
-        let mut later = QueryFilter::new(
-            TimeRange::new(detail.session.started_at, Timestamp::MAX),
-            BucketSize::Day,
-        );
-        later.harnesses = vec![detail.session.harness.clone()];
-        let later = data.sessions(&later)?;
-        Ok(Some(DetailData::build(detail, parent, &later, tz)))
+        Ok(Some(DetailData::build(detail, parent, tz)))
     }
 
-    pub fn build(
-        detail: SessionDetail,
-        parent: Option<SessionRow>,
-        later: &[SessionRow],
-        tz: TimeZone,
-    ) -> DetailData {
-        let chain = Chain::new(
-            &detail.resume_chain,
-            forward_chain(detail.session.id, later),
-        );
+    pub fn build(detail: SessionDetail, parent: Option<SessionRow>, tz: TimeZone) -> DetailData {
+        let chain = Chain::new(detail.resume_chain.clone(), detail.session.id);
         let with_date = spans_days(&detail.events, &tz);
         DetailData {
             parent,
@@ -1044,34 +1010,19 @@ mod tests {
         let b = row(2, 2_000_000, Some(1), "2026-11-20T12:00:00Z");
         let c = row(3, 500_000, Some(2), "2026-11-21T09:00:00Z");
         let fork = row(4, 9_000_000, Some(2), "2026-11-22T09:00:00Z");
-        let other = row(5, 7_000_000, None, "2026-11-21T00:00:00Z");
-        let later = [fork.clone(), c.clone(), other, b.clone()];
-        let forward = forward_chain(b.id, &later);
-        assert_eq!(
-            forward.iter().map(|r| r.id).collect::<Vec<_>>(),
-            [SessionId(3)]
-        );
-        let chain = Chain::new(&[a.clone(), b.clone()], forward);
+        let chain = Chain::new(vec![a.clone(), b.clone(), c.clone(), fork], b.id);
         assert_eq!(chain.current, 1);
-        assert_eq!(chain.total, Micros(3_500_000));
+        assert_eq!(chain.total, Micros(12_500_000));
         assert_eq!(chain.previous().map(|r| r.id), Some(a.id));
         assert_eq!(chain.next().map(|r| r.id), Some(c.id));
         assert!(chain.is_chain());
 
-        let alone = Chain::new(std::slice::from_ref(&a), forward_chain(a.id, &[]));
+        let alone = Chain::new(vec![a.clone()], a.id);
         assert!(!alone.is_chain());
         assert_eq!(alone.total, a.cost);
         assert_eq!(alone.previous(), None);
         assert_eq!(alone.next(), None);
         assert_eq!(chain_total(&[]), Micros::ZERO);
-    }
-
-    #[test]
-    fn forward_chain_ignores_cycles() {
-        let a = row(1, 1, Some(2), "2026-11-20T10:00:00Z");
-        let b = row(2, 1, Some(1), "2026-11-20T11:00:00Z");
-        let f = forward_chain(a.id, &[a.clone(), b.clone()]);
-        assert_eq!(f.iter().map(|r| r.id).collect::<Vec<_>>(), [b.id]);
     }
 
     #[test]

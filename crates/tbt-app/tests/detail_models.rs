@@ -159,7 +159,7 @@ fn resumed_pair_forms_one_chain_from_both_ends() {
     assert_eq!(o.chain.current, 0);
     assert_eq!(o.chain.next().map(|r| r.id), Some(cont.id));
     assert_eq!(o.chain.total, c.chain.total);
-    assert_eq!(o.detail.chain_cost, original.cost);
+    assert_eq!(o.detail.chain_cost, c.chain.total);
     assert_timeline_matches_session(&o);
     assert_timeline_matches_session(&c);
 }

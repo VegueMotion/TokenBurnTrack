@@ -67,6 +67,10 @@ impl StoreData {
 }
 
 impl DataSource for StoreData {
+    fn session_row(&self, id: SessionId) -> Result<Option<SessionRow>> {
+        self.with(|s| s.session_row(id))
+    }
+
     fn db_path(&self) -> Option<PathBuf> {
         self.db.clone()
     }

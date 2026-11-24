@@ -27,6 +27,10 @@ pub trait DataSource: Send + Sync + 'static {
         Ok(self.harness_status()?.iter().any(|h| h.events > 0))
     }
 
+    fn session_row(&self, id: SessionId) -> Result<Option<SessionRow>> {
+        Ok(self.session_detail(id)?.map(|d| d.session))
+    }
+
     fn db_path(&self) -> Option<std::path::PathBuf> {
         None
     }
