@@ -1,0 +1,35 @@
+---
+source: crates/tbt-adapters/tests/codex.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 01a200aa-befa-7c90-9386-8e9f0ba1cc9f
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/pale-quartz-b9
+    title: ~
+    git_branch: master
+    harness_version: 0.171.0
+    started_at: "2026-11-22T00:32:51.629Z"
+    ended_at: "2026-11-22T00:33:32.197Z"
+    has_baseline_hint: false
+event_count: 0
+totals:
+  (all):
+    calls: 0
+    input: 0
+    output: 0
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 0
+    reasoning: 0
+    total: 0
+events: []
+message_count: 3
+messages_by_kind:
+  system/text: 1
+  user/text: 2
+messages_linked_to_events: 0
+messages_with_preview: 3
+tools: {}
+warnings: []

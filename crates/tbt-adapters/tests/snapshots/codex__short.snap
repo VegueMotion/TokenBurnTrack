@@ -1,0 +1,52 @@
+---
+source: crates/tbt-adapters/tests/codex.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 019e7f21-575c-7721-8bee-e12a2dcde581
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects
+    title: ~
+    git_branch: ~
+    harness_version: 0.135.0
+    started_at: "2026-05-31T17:42:32.135Z"
+    ended_at: "2026-05-31T17:42:35.986Z"
+    has_baseline_hint: false
+event_count: 2
+totals:
+  (all):
+    calls: 2
+    input: 2456
+    output: 61
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 20736
+    reasoning: 24
+    total: 23253
+  openai/gpt-5.5:
+    calls: 2
+    input: 2456
+    output: 61
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 20736
+    reasoning: 24
+    total: 23253
+events:
+  - "2026-05-31T17:42:34.731Z 019e7f21-575c-7721-8bee-e12a2dcde581:11599 gpt-5.5 in=1959 out=40 cw5m=0 cw1h=0 cr=9600 rs=24"
+  - "2026-05-31T17:42:35.984Z 019e7f21-575c-7721-8bee-e12a2dcde581:23253 gpt-5.5 in=497 out=21 cw5m=0 cw1h=0 cr=11136 rs=0"
+message_count: 7
+messages_by_kind:
+  assistant/text: 1
+  assistant/thinking: 1
+  assistant/tool_use: 1
+  system/text: 1
+  tool/tool_result: 1
+  user/text: 2
+messages_linked_to_events: 3
+messages_with_preview: 6
+tools:
+  tool_result/get_goal: 1
+  tool_use/get_goal: 1
+warnings: []

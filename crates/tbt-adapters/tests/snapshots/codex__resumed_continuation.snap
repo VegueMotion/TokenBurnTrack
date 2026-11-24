@@ -1,0 +1,74 @@
+---
+source: crates/tbt-adapters/tests/codex.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 01a0b44c-76aa-76b8-86dd-e11f3ffd813c
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /u/user/user/projects/pale-fjord-8a
+    title: ~
+    git_branch: master
+    harness_version: 0.155.0
+    started_at: "2026-09-18T13:31:24.311Z"
+    ended_at: "2026-09-18T13:53:30.976Z"
+    has_baseline_hint: false
+event_count: 24
+totals:
+  (all):
+    calls: 24
+    input: 26700
+    output: 4741
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 677120
+    reasoning: 138
+    total: 708561
+  openai/gpt-6-astra:
+    calls: 24
+    input: 26700
+    output: 4741
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 677120
+    reasoning: 138
+    total: 708561
+events:
+  - "2026-09-18T13:34:19.685Z resp_6a3f503c92a1d5a3a4c77b3397e1fc3f7390ec5b04612937df gpt-6-astra in=9284 out=97 cw5m=0 cw1h=0 cr=12160 rs=0"
+  - "2026-09-18T13:34:28.023Z resp_6ab2e5355191a06b5e3d4f34c59634739547d958244e87baf5 gpt-6-astra in=2635 out=146 cw5m=0 cw1h=0 cr=21248 rs=33"
+  - "2026-09-18T13:34:35.984Z resp_cf720170574da8a0b2c998f5ab33002fe1e932b02b005fc05f gpt-6-astra in=2167 out=177 cw5m=0 cw1h=0 cr=23680 rs=15"
+  - "2026-09-18T13:34:44.479Z resp_082b917bd63308c54b1e3af6ce53b83fc6e438829895977f4b gpt-6-astra in=423 out=93 cw5m=0 cw1h=0 cr=25728 rs=8"
+  - "2026-09-18T13:35:13.636Z resp_2584b419aa93d5c812a425df5c96c6f771f3d41c9b607463af gpt-6-astra in=903 out=884 cw5m=0 cw1h=0 cr=25984 rs=22"
+  - "2026-09-18T13:35:19.212Z resp_c9f12d5a414515a85b055a000f44d2aa0f99e6edd739c5cf6a gpt-6-astra in=1300 out=102 cw5m=0 cw1h=0 cr=26752 rs=0"
+  - "2026-09-18T13:36:25.674Z resp_67daf6d1bfb041380635703612bfae0fe32c95767de8deeb63 gpt-6-astra in=263 out=121 cw5m=0 cw1h=0 cr=27904 rs=31"
+  - "2026-09-18T13:37:00.318Z resp_e0ca68e5b87c9fe81b3a01f13957f232fda7867676be8cf21d gpt-6-astra in=274 out=50 cw5m=0 cw1h=0 cr=28032 rs=0"
+  - "2026-09-18T13:37:28.8Z resp_3bb1b0237ae4e0114524bd78269551e908186d54de2bfc2d9c gpt-6-astra in=215 out=311 cw5m=0 cw1h=0 cr=28160 rs=0"
+  - "2026-09-18T13:37:31.538Z resp_9fa35fd9a5b3131f4b9c8371285c7f08c1ed85a46a5beec686 gpt-6-astra in=583 out=37 cw5m=0 cw1h=0 cr=28160 rs=0"
+  - "2026-09-18T13:38:19.028Z resp_f31b25410a93cf21bf97f46f262dc5764bba586ab85f394a15 gpt-6-astra in=246 out=161 cw5m=0 cw1h=0 cr=28544 rs=0"
+  - "2026-09-18T13:38:22.409Z resp_3b014c12d6619dafe6a74d912d2c0cc9471e6d0edd746098c7 gpt-6-astra in=334 out=29 cw5m=0 cw1h=0 cr=28672 rs=0"
+  - "2026-09-18T13:38:50.114Z resp_ced68f033e396b6056b4dfcd93a8ef869160e64f66c17b39c8 gpt-6-astra in=255 out=44 cw5m=0 cw1h=0 cr=28800 rs=0"
+  - "2026-09-18T13:39:24.369Z resp_e73d9ddd191b6f62524ae4cdb85460d62544780f10ab216a94 gpt-6-astra in=182 out=178 cw5m=0 cw1h=0 cr=28928 rs=0"
+  - "2026-09-18T13:39:26.706Z resp_ada8c5b9e7b350e5dd26e54c7ab55c263401670dbbdff1c33b gpt-6-astra in=417 out=26 cw5m=0 cw1h=0 cr=28928 rs=0"
+  - "2026-09-18T13:39:59.712Z resp_400a8f220de9cfcbf479f0aa08bda4e8bdec2c777236ed65e1 gpt-6-astra in=235 out=219 cw5m=0 cw1h=0 cr=29184 rs=0"
+  - "2026-09-18T13:43:10.346Z resp_2987c693832de483d2b5524fe323497a6ccee07cbf6b5009e0 gpt-6-astra in=472 out=161 cw5m=0 cw1h=0 cr=29184 rs=0"
+  - "2026-09-18T13:48:49.135Z resp_43add0bfcf96e9f6eebab564c187f2b458fd615016a72506ed gpt-6-astra in=450 out=116 cw5m=0 cw1h=0 cr=29440 rs=0"
+  - "2026-09-18T13:49:17.177Z resp_1703c0219e0114f993be271036ed82555765533198e0481e4f gpt-6-astra in=2973 out=821 cw5m=0 cw1h=0 cr=29696 rs=29"
+  - "2026-09-18T13:49:22.105Z resp_7669f9e2d9a0623eee327cba0b4395caf197e07a958358f2a1 gpt-6-astra in=1035 out=110 cw5m=0 cw1h=0 cr=32512 rs=0"
+  - "2026-09-18T13:53:08.243Z resp_911551bc9f71c15d5ffdc78f4e2abf50ea6206dee4c8d20708 gpt-6-astra in=271 out=417 cw5m=0 cw1h=0 cr=33408 rs=0"
+  - "2026-09-18T13:53:11.98Z resp_25f8ab96208e15fd0240217ccdf7037f392e8cfe308037765c gpt-6-astra in=782 out=40 cw5m=0 cw1h=0 cr=33536 rs=0"
+  - "2026-09-18T13:53:28.254Z resp_420e16827dcae420c274b9dd54561e886f8f54fb82b29567f5 gpt-6-astra in=345 out=373 cw5m=0 cw1h=0 cr=34176 rs=0"
+  - "2026-09-18T13:53:30.963Z resp_41b893ca9b4163ee8859cc70fd8125e7407d706b4c46917041 gpt-6-astra in=656 out=28 cw5m=0 cw1h=0 cr=34304 rs=0"
+message_count: 62
+messages_by_kind:
+  assistant/text: 18
+  assistant/thinking: 6
+  assistant/tool_use: 13
+  system/text: 1
+  tool/tool_result: 13
+  user/text: 11
+messages_linked_to_events: 37
+messages_with_preview: 56
+tools:
+  tool_result/exec: 13
+  tool_use/exec: 13
+warnings: []

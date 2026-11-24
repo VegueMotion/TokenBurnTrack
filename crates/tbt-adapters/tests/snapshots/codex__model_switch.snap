@@ -1,0 +1,35 @@
+---
+source: crates/tbt-adapters/tests/codex.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 01a158fd-0b21-7550-aaf7-d75b42c0c0de
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects
+    title: ~
+    git_branch: ~
+    harness_version: 0.163.0
+    started_at: "2026-10-20T11:06:06.437Z"
+    ended_at: "2026-10-20T11:06:23.211Z"
+    has_baseline_hint: false
+event_count: 0
+totals:
+  (all):
+    calls: 0
+    input: 0
+    output: 0
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 0
+    reasoning: 0
+    total: 0
+events: []
+message_count: 8
+messages_by_kind:
+  system/text: 5
+  user/text: 3
+messages_linked_to_events: 0
+messages_with_preview: 8
+tools: {}
+warnings: []

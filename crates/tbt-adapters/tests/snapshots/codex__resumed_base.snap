@@ -1,0 +1,71 @@
+---
+source: crates/tbt-adapters/tests/codex.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 01a0b44c-76aa-76b8-86dd-e11f3ffd813c
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /u/user/user/projects/pale-fjord-8a
+    title: ~
+    git_branch: ~
+    harness_version: 0.155.0
+    started_at: "2026-09-18T11:35:05.187Z"
+    ended_at: "2026-09-18T13:30:49.762Z"
+    has_baseline_hint: false
+event_count: 21
+totals:
+  (all):
+    calls: 21
+    input: 24286
+    output: 4586
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 506624
+    reasoning: 245
+    total: 535496
+  openai/gpt-6-astra:
+    calls: 21
+    input: 24286
+    output: 4586
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 506624
+    reasoning: 245
+    total: 535496
+events:
+  - "2026-09-18T11:35:12.115Z resp_73ace70d080b6cc6c80b7c0ec0dd331518e9c341cb73b6d5d0 gpt-6-astra in=3158 out=119 cw5m=0 cw1h=0 cr=12160 rs=0"
+  - "2026-09-18T11:35:18.301Z resp_18dbb0eed0a621e6602f5567346b30ffb6acafea2acdfd8835 gpt-6-astra in=485 out=83 cw5m=0 cw1h=0 cr=15104 rs=0"
+  - "2026-09-18T11:35:22.476Z resp_1fd7c6d56723b68e45b0350a57b942f6ee18169870da55d27a gpt-6-astra in=424 out=80 cw5m=0 cw1h=0 cr=15360 rs=0"
+  - "2026-09-18T11:35:26.968Z resp_460a082841acf4ff55e8a6755c254c0a32f590008042df57c2 gpt-6-astra in=2628 out=89 cw5m=0 cw1h=0 cr=15616 rs=0"
+  - "2026-09-18T11:35:32.808Z resp_7a935011827a50f954145e5aef124ce7771cf6153ea327065f gpt-6-astra in=448 out=113 cw5m=0 cw1h=0 cr=18048 rs=0"
+  - "2026-09-18T11:35:51.265Z resp_cc74e4a4e067f1468915e69f4adbb2a1fa3d1c4057eab39d3f gpt-6-astra in=1651 out=545 cw5m=0 cw1h=0 cr=18304 rs=8"
+  - "2026-09-18T11:35:56.563Z resp_ea126ec57b53cf06189cf0e30d7857c7c6ea0f92766d7c32a8 gpt-6-astra in=739 out=109 cw5m=0 cw1h=0 cr=19840 rs=0"
+  - "2026-09-18T13:25:09.643Z resp_cb2772a5e516ee3b109ed2559b11d4ea630607ac86649e6abe gpt-6-astra in=385 out=97 cw5m=0 cw1h=0 cr=20352 rs=0"
+  - "2026-09-18T13:25:15.573Z resp_d984a7295209954c14be5f9b57a63de7fb136648f305569f2c gpt-6-astra in=2628 out=126 cw5m=0 cw1h=0 cr=20608 rs=50"
+  - "2026-09-18T13:25:57.779Z resp_0d8135afe4bb2b345039fdc5617a1511687ca52ccd6d551712 gpt-6-astra in=2234 out=1315 cw5m=0 cw1h=0 cr=23040 rs=109"
+  - "2026-09-18T13:26:07.76Z resp_950fa11c4543d7b668b76bd69c1c3067693abae653cac5bd4f gpt-6-astra in=1557 out=268 cw5m=0 cw1h=0 cr=25088 rs=34"
+  - "2026-09-18T13:26:17.288Z resp_010eebd83615a21f301dcb7610c1169737cb0addb4df77b017 gpt-6-astra in=528 out=118 cw5m=0 cw1h=0 cr=26496 rs=0"
+  - "2026-09-18T13:27:55.996Z resp_ce48b3e5730601bdfc27ad1d6ef79efbb988d5cfa87601045d gpt-6-astra in=960 out=67 cw5m=0 cw1h=0 cr=26880 rs=0"
+  - "2026-09-18T13:28:21.42Z resp_c6ed8e89147848bdb928f08ced467863e5691119aaa525ae1b gpt-6-astra in=3382 out=637 cw5m=0 cw1h=0 cr=27648 rs=44"
+  - "2026-09-18T13:28:26.902Z resp_fd3a5c686664f4064a9574b431edf7ff4351d0da3087c84c10 gpt-6-astra in=876 out=57 cw5m=0 cw1h=0 cr=30848 rs=0"
+  - "2026-09-18T13:29:19.244Z resp_0bf6ccbead373c25cbcaf3d268448c946bb7e34ee0bcde65c3 gpt-6-astra in=303 out=216 cw5m=0 cw1h=0 cr=31488 rs=0"
+  - "2026-09-18T13:29:22.365Z resp_e031c55a9279066d1d1c04066dbdea6f13fdb408fd5e0a5781 gpt-6-astra in=447 out=32 cw5m=0 cw1h=0 cr=31616 rs=0"
+  - "2026-09-18T13:29:51.264Z resp_5938493b22d8f5ed9e35174bfa5568c2bf2ab84956cbc62038 gpt-6-astra in=242 out=177 cw5m=0 cw1h=0 cr=31872 rs=0"
+  - "2026-09-18T13:29:54.338Z resp_aad03648fc92f8c467e1075fbb886b205f171840ed2f735418 gpt-6-astra in=476 out=20 cw5m=0 cw1h=0 cr=31872 rs=0"
+  - "2026-09-18T13:30:45.125Z resp_fd205685df5431e47bffb7b502647f2a81e7e470a3d80e4df3 gpt-6-astra in=259 out=287 cw5m=0 cw1h=0 cr=32128 rs=0"
+  - "2026-09-18T13:30:49.75Z resp_70537aa8d132e3321c075f7b2cca28a270f82af86bed9caef2 gpt-6-astra in=476 out=31 cw5m=0 cw1h=0 cr=32256 rs=0"
+message_count: 59
+messages_by_kind:
+  assistant/text: 13
+  assistant/thinking: 5
+  assistant/tool_use: 15
+  system/text: 4
+  tool/tool_result: 15
+  user/text: 7
+messages_linked_to_events: 33
+messages_with_preview: 54
+tools:
+  tool_result/exec: 15
+  tool_use/exec: 15
+warnings: []
