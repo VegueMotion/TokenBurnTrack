@@ -67,6 +67,10 @@ impl StoreData {
 }
 
 impl DataSource for StoreData {
+    fn db_path(&self) -> Option<PathBuf> {
+        self.db.clone()
+    }
+
     fn kpi_summary(&self, filter: &QueryFilter) -> Result<KpiSummary> {
         self.with(|s| s.kpi_summary(filter))
     }

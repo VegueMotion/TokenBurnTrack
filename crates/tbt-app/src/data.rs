@@ -26,6 +26,10 @@ pub trait DataSource: Send + Sync + 'static {
     fn has_data(&self) -> Result<bool> {
         Ok(self.harness_status()?.iter().any(|h| h.events > 0))
     }
+
+    fn db_path(&self) -> Option<std::path::PathBuf> {
+        None
+    }
 }
 
 pub const NO_DATA_MESSAGE: &str = "No data yet — run Sync or `tbt-daemon --once`";

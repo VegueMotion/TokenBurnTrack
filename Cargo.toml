@@ -23,6 +23,7 @@ rusqlite_migration = "2.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 toml = "1.2"
+ureq = "3.5"
 rust_decimal = { version = "1.43", features = ["serde-str"] }
 rust_decimal_macros = "1.43"
 jiff = { version = "1", features = ["serde"] }
