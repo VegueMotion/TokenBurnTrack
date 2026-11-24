@@ -146,7 +146,13 @@ fn golden_main_session_with_subagent() {
         Some("lorem ipsum dolor sit amet")
     );
 
-    let count = |s: &str| batch.events.iter().filter(|e| e.session_ext_id == s).count();
+    let count = |s: &str| {
+        batch
+            .events
+            .iter()
+            .filter(|e| e.session_ext_id == s)
+            .count()
+    };
     assert_eq!((count(MAIN_ID), count(SUB_ID)), (6, 2));
     assert!(batch.events.iter().any(|e| e.dedup_key == REWOUND));
 
@@ -156,7 +162,11 @@ fn golden_main_session_with_subagent() {
         .find(|e| e.dedup_key == "7c3a4f5e-8d9c-4b0a-9f2e-3d4c5b6a7f8e")
         .unwrap();
     assert_eq!(
-        (tool_call.input_tokens, tool_call.output_tokens, tool_call.reasoning_tokens),
+        (
+            tool_call.input_tokens,
+            tool_call.output_tokens,
+            tool_call.reasoning_tokens
+        ),
         (10240, 508, 412)
     );
     let result = batch
@@ -176,15 +186,24 @@ fn golden_legacy_resumed_into_jsonl() {
     for s in &batch.sessions {
         assert_eq!(s.ext_id, LEGACY_ID);
         assert_eq!(s.resumed_from_ext_id, None);
-        assert_eq!(s.project_path.as_deref(), Some("/u/user/projects/bold-birch-00"));
+        assert_eq!(
+            s.project_path.as_deref(),
+            Some("/u/user/projects/bold-birch-00")
+        );
     }
 
-    let legacy = read_file(&settled(), &fixture(&format!(
-        "{BIRCH}/chats/session-2026-10-02T09-30-7a1b2c3d.json"
-    )));
-    let resumed = read_file(&settled(), &fixture(&format!(
-        "{BIRCH}/chats/session-2026-10-02T09-30-7a1b2c3d.jsonl"
-    )));
+    let legacy = read_file(
+        &settled(),
+        &fixture(&format!(
+            "{BIRCH}/chats/session-2026-10-02T09-30-7a1b2c3d.json"
+        )),
+    );
+    let resumed = read_file(
+        &settled(),
+        &fixture(&format!(
+            "{BIRCH}/chats/session-2026-10-02T09-30-7a1b2c3d.jsonl"
+        )),
+    );
     assert_eq!(legacy.events.len(), 3);
     assert_eq!(resumed.events.len(), 4);
     let (a, b) = (key_set(&legacy), key_set(&resumed));
@@ -207,7 +226,10 @@ fn discover_finds_session_files_only() {
     assert_eq!(kinds.len(), 5, "{kinds:?}");
     assert!(found.is_sorted_by(|a, b| a.path.as_os_str() < b.path.as_os_str()));
     assert_eq!(
-        kinds.iter().filter(|(_, k)| *k == SourceKind::JsonFile).count(),
+        kinds
+            .iter()
+            .filter(|(_, k)| *k == SourceKind::JsonFile)
+            .count(),
         2
     );
     assert!(
@@ -314,7 +336,9 @@ fn re_appended_message_is_emitted_with_its_final_tokens() {
         &path,
         &format!(
             "{}\n",
-            msg(r#","tokens":{"input":100,"output":10,"cached":0,"thoughts":0,"tool":0,"total":110}"#)
+            msg(
+                r#","tokens":{"input":100,"output":10,"cached":0,"thoughts":0,"tool":0,"total":110}"#
+            )
         ),
     );
     clock.at_mtime(&path, Duration::ZERO);
@@ -325,7 +349,9 @@ fn re_appended_message_is_emitted_with_its_final_tokens() {
         &path,
         &format!(
             "{}\n",
-            msg(r#","tokens":{"input":100,"output":25,"cached":40,"thoughts":5,"tool":0,"total":130}"#)
+            msg(
+                r#","tokens":{"input":100,"output":25,"cached":40,"thoughts":5,"tool":0,"total":130}"#
+            )
         ),
     );
     clock.at_mtime(&path, Duration::ZERO);
@@ -341,7 +367,12 @@ fn re_appended_message_is_emitted_with_its_final_tokens() {
     assert_eq!(dedup_keys(&fourth), ["m1"]);
     let e = &fourth.events[0];
     assert_eq!(
-        (e.input_tokens, e.cache_read_tokens, e.output_tokens, e.reasoning_tokens),
+        (
+            e.input_tokens,
+            e.cache_read_tokens,
+            e.output_tokens,
+            e.reasoning_tokens
+        ),
         (60, 40, 30, 5)
     );
     assert_eq!(e.session_ext_id, "s1");
@@ -389,7 +420,10 @@ fn rewind_finalizes_the_rewound_message_immediately() {
     write_lines(&path, &lines[..=rewind]);
     let clock = Clock::new();
     clock.at_mtime(&path, Duration::ZERO);
-    let batch = clock.adapter().read(&jsonl(&path), &Cursor::empty()).unwrap();
+    let batch = clock
+        .adapter()
+        .read(&jsonl(&path), &Cursor::empty())
+        .unwrap();
     assert_eq!(dedup_keys(&batch).last().map(String::as_str), Some(REWOUND));
 }
 
@@ -499,7 +533,10 @@ fn legacy_json_rewrites_are_read_without_duplicates() {
     touch(&path, 2);
     clock.at_mtime(&path, Duration::ZERO);
     let second = a.read(&s, &first.next_cursor).unwrap();
-    assert_eq!(dedup_keys(&second), ["2d8b6e3a-3f4c-4b5d-9e0f-9a8b7c6d5e43"]);
+    assert_eq!(
+        dedup_keys(&second),
+        ["2d8b6e3a-3f4c-4b5d-9e0f-9a8b7c6d5e43"]
+    );
 
     let unchanged = a.read(&s, &second.next_cursor).unwrap();
     assert!(unchanged.is_empty());
@@ -566,7 +603,12 @@ fn malformed_lines_warn_and_continue() {
     assert_eq!(batch.events.len(), 6);
     let at: Vec<_> = batch.warnings.iter().map(|w| w.line).collect();
     assert_eq!(at, [Some(3), Some(4), Some(5), Some(6), Some(7)]);
-    assert!(batch.warnings.iter().all(|w| w.harness == HarnessId::GEMINI_CLI));
+    assert!(
+        batch
+            .warnings
+            .iter()
+            .all(|w| w.harness == HarnessId::GEMINI_CLI)
+    );
     let offset: usize = broken[..2].iter().map(|l| l.len() + 1).sum();
     assert_eq!(batch.warnings[0].byte_offset, Some(offset as u64));
     assert!(batch.warnings[0].message.starts_with("invalid JSON"));

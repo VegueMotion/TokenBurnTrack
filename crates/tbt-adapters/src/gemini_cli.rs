@@ -889,7 +889,9 @@ mod tests {
     #[test]
     fn path_identity_of_main_and_subagent_files() {
         assert_eq!(
-            path_identity(Path::new("/t/proj/chats/session-2026-01-01T00-00-abcd1234.jsonl")),
+            path_identity(Path::new(
+                "/t/proj/chats/session-2026-01-01T00-00-abcd1234.jsonl"
+            )),
             PathIdentity {
                 fallback_id: "session-2026-01-01T00-00-abcd1234".into(),
                 parent: None,
@@ -932,7 +934,10 @@ mod tests {
         }))
         .unwrap()
         .counts();
-        assert_eq!((sparse.input, sparse.cache_read, sparse.reasoning), (0, 5, 0));
+        assert_eq!(
+            (sparse.input, sparse.cache_read, sparse.reasoning),
+            (0, 5, 0)
+        );
     }
 
     #[test]
