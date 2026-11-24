@@ -5,7 +5,6 @@ use gpui::{
     Window, div,
 };
 use gpui_component::{ActiveTheme, h_flex, v_flex};
-use jiff::Timestamp;
 use tbt_store::ProjectStats;
 
 use super::{Loadable, spawn_load};
@@ -44,7 +43,7 @@ impl ProjectsPage {
     }
 
     pub fn reload(&mut self, cx: &mut Context<Self>) {
-        let filter = self.app_state.read(cx).query_filter(Timestamp::now());
+        let filter = self.app_state.read(cx).query_filter(crate::data::now());
         let data = self.data.clone();
         self._load = spawn_load(
             cx,
@@ -60,7 +59,7 @@ impl ProjectsPage {
             .iter()
             .map(|p| micros_to_usd(p.cost))
             .fold(0.0, f64::max);
-        let now = Timestamp::now();
+        let now = crate::data::now();
         v_flex()
             .gap_3()
             .p_4()

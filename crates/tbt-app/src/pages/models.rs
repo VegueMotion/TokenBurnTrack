@@ -5,7 +5,6 @@ use gpui::{
     Window, px,
 };
 use gpui_component::v_flex;
-use jiff::Timestamp;
 use tbt_store::ModelStats;
 
 use super::{Loadable, spawn_load};
@@ -52,7 +51,7 @@ impl ModelsPage {
     }
 
     pub fn reload(&mut self, cx: &mut Context<Self>) {
-        let filter = self.app_state.read(cx).query_filter(Timestamp::now());
+        let filter = self.app_state.read(cx).query_filter(crate::data::now());
         let data = self.data.clone();
         self._load = spawn_load(
             cx,

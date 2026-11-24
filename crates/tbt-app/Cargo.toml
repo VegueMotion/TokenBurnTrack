@@ -14,3 +14,8 @@ jiff.workspace = true
 gpui.workspace = true
 gpui-platform.workspace = true
 gpui-component.workspace = true
+
+[dev-dependencies]
+tbt-adapters.workspace = true
+tbt-pricing.workspace = true
+tempfile.workspace = true

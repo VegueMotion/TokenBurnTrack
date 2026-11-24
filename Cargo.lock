@@ -6653,8 +6653,11 @@ dependencies = [
  "gpui-pre",
  "gpui-pre-platform",
  "jiff",
+ "tbt-adapters",
  "tbt-core",
+ "tbt-pricing",
  "tbt-store",
+ "tempfile",
 ]
 
 [[package]]
