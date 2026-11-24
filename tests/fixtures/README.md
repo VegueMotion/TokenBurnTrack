@@ -189,3 +189,11 @@ Format notes:
 ## Gemini CLI (`gemini_cli/`)
 
 Synthetic, built from upstream source. See `gemini_cli/README.md`.
+
+## Database snapshots (`db/`)
+
+- `db/wave2/tbt.db`: a TokenBurnTrack database written by the Wave 2 code (`wave2-done` tag,
+  schema version 1) from these fixtures and `generic_jsonl/config.toml`: 640 events,
+  26 sources, 2 ingest runs. Source paths were rewritten to `/sandbox/...`. Used by
+  `crates/tbt-store/tests/migration.rs` and the collector's end-to-end test to check that
+  older databases open and continue with the current code.
