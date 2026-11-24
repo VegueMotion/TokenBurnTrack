@@ -9,6 +9,7 @@ use tbt_core::{
 
 use crate::api::{Result, StoreError};
 use crate::db::{DbTs, MAX_ACTIVE_GAP_SECS, fmt_ts, path_text, to_i64};
+use crate::worktree;
 
 pub(crate) fn ensure_harness(conn: &Connection, id: &str) -> Result<()> {
     conn.prepare_cached(
@@ -42,10 +43,38 @@ fn project_name(path: &str) -> Option<String> {
         .map(str::to_owned)
 }
 
+/// The one stored project named `name` that is not itself in a worktree.
+fn known_project(conn: &Connection, name: &str) -> Option<String> {
+    let mut stmt = conn
+        .prepare_cached(
+            "SELECT path FROM project
+             WHERE name = ?1 AND id != 0 AND path NOT LIKE '%/worktrees/%' LIMIT 2",
+        )
+        .ok()?;
+    let paths: Vec<String> = stmt
+        .query_map([name], |r| r.get(0))
+        .ok()?
+        .collect::<rusqlite::Result<_>>()
+        .ok()?;
+    match paths.as_slice() {
+        [one] => Some(one.clone()),
+        _ => None,
+    }
+}
+
+fn main_project_path(conn: &Connection, path: &str) -> Option<String> {
+    worktree::main_checkout(path, &mut |name| known_project(conn, name))
+}
+
 pub(crate) fn upsert_project(conn: &Connection, path: Option<&str>) -> Result<ProjectId> {
     let Some(path) = path.filter(|p| !p.is_empty()) else {
         return Ok(ProjectId::NONE);
     };
+    let main = main_project_path(conn, path);
+    insert_project(conn, main.as_deref().unwrap_or(path))
+}
+
+fn insert_project(conn: &Connection, path: &str) -> Result<ProjectId> {
     conn.prepare_cached(
         "INSERT INTO project(path, name) VALUES (?1, ?2) ON CONFLICT(path) DO NOTHING",
     )?
@@ -54,6 +83,69 @@ pub(crate) fn upsert_project(conn: &Connection, path: Option<&str>) -> Result<Pr
         .prepare_cached("SELECT id FROM project WHERE path = ?1")?
         .query_row([path], |r| r.get(0))?;
     Ok(ProjectId(id))
+}
+
+/// Folds every stored project that lies in a git worktree into its main
+/// checkout's project. Returns how many projects were folded.
+pub(crate) fn merge_worktree_projects(conn: &Connection) -> Result<usize> {
+    let projects: Vec<(i64, String)> = conn
+        .prepare("SELECT id, path FROM project WHERE id != 0")?
+        .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
+        .collect::<rusqlite::Result<_>>()?;
+    let mut merged = 0;
+    for (from, path) in projects {
+        let Some(main) = main_project_path(conn, &path) else {
+            continue;
+        };
+        let to = insert_project(conn, &main)?.0;
+        if to == from {
+            continue;
+        }
+        conn.execute(
+            "UPDATE session SET project_id = ?2 WHERE project_id = ?1",
+            params![from, to],
+        )?;
+        conn.execute(
+            "UPDATE usage_event SET project_id = ?2 WHERE project_id = ?1",
+            params![from, to],
+        )?;
+        conn.execute(
+            "INSERT INTO hourly_usage(hour, harness_id, model, project_id, events,
+               input_tokens, output_tokens, cache_write_tokens, cache_read_tokens,
+               cost_micros, unpriced_events)
+             SELECT hour, harness_id, model, ?2, events, input_tokens, output_tokens,
+                    cache_write_tokens, cache_read_tokens, cost_micros, unpriced_events
+             FROM hourly_usage WHERE project_id = ?1 AND true
+             ON CONFLICT(hour, harness_id, model, project_id) DO UPDATE SET
+               events = events + excluded.events,
+               input_tokens = input_tokens + excluded.input_tokens,
+               output_tokens = output_tokens + excluded.output_tokens,
+               cache_write_tokens = cache_write_tokens + excluded.cache_write_tokens,
+               cache_read_tokens = cache_read_tokens + excluded.cache_read_tokens,
+               cost_micros = cost_micros + excluded.cost_micros,
+               unpriced_events = unpriced_events + excluded.unpriced_events",
+            params![from, to],
+        )?;
+        conn.execute(
+            "INSERT INTO hourly_session_usage(hour, session_id, project_id, events,
+               cost_micros, last_ts)
+             SELECT hour, session_id, ?2, events, cost_micros, last_ts
+             FROM hourly_session_usage WHERE project_id = ?1 AND true
+             ON CONFLICT(hour, session_id, project_id) DO UPDATE SET
+               events = events + excluded.events,
+               cost_micros = cost_micros + excluded.cost_micros,
+               last_ts = max(last_ts, excluded.last_ts)",
+            params![from, to],
+        )?;
+        conn.execute("DELETE FROM hourly_usage WHERE project_id = ?1", [from])?;
+        conn.execute(
+            "DELETE FROM hourly_session_usage WHERE project_id = ?1",
+            [from],
+        )?;
+        conn.execute("DELETE FROM project WHERE id = ?1", [from])?;
+        merged += 1;
+    }
+    Ok(merged)
 }
 
 pub(crate) fn upsert_session(

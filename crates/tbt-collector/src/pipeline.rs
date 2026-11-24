@@ -313,6 +313,15 @@ impl Collector {
         });
 
         let mut report = writer.report;
+        match store.merge_worktree_projects() {
+            Ok(0) => {}
+            Ok(n) => tracing::info!(projects = n, "worktree projects folded into main projects"),
+            Err(e) => report.errors.push(RunError {
+                harness: None,
+                source: None,
+                message: format!("folding worktree projects failed: {e}"),
+            }),
+        }
         if let Some(days) = self.config.raw_json_retention_days {
             match store.drop_raw_json_older_than(days, Timestamp::now()) {
                 Ok(n) => report.raw_json_dropped = n as u64,

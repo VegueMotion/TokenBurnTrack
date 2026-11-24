@@ -6,5 +6,6 @@ pub mod paths;
 mod query;
 mod recompute;
 mod schema;
+mod worktree;
 
 pub use api::*;
