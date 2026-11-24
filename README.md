@@ -23,7 +23,9 @@ Design notes are in [`ARCHITECTURE.md`](ARCHITECTURE.md).
   counted as $0. When a harness logs its own cost, both values are kept.
 - Desktop app: dashboard (KPIs, hourly/daily cost bars, tokens by type, top models and
   projects, weekday × hour heatmap), sessions table and session detail, models,
-  projects, harnesses and settings pages, CSV/JSON export.
+  projects, harnesses and settings pages, CSV/JSON export. While it is open, the app
+  syncs at startup, every `sync_interval_minutes` on the hour grid, and on *Sync now*;
+  set `TBT_WATCH=1` to also sync shortly after log files change.
 - Headless collector `tbt-daemon` for a systemd user timer, a launchd agent or a Windows
   scheduled task. The app and the daemon share a lock, so only one of them ingests at a
   time.

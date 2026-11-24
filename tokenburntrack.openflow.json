@@ -9,7 +9,7 @@
     {
       "id": "page-1",
       "name": "Page 1",
-      "diagramKind": "sequence",
+      "diagramKind": "architecture",
       "layers": [
         {
           "id": "default",
@@ -19,1279 +19,6 @@
         }
       ],
       "nodes": [
-        {
-          "id": "dsl-da2955",
-          "kind": "frame",
-          "parentId": null,
-          "layerId": "default",
-          "zIndex": 0,
-          "transform": {
-            "translation": {
-              "x": 160,
-              "y": 80
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 3473,
-            "height": 921
-          },
-          "content": {
-            "label": "TokenBurnTrack — System Architecture"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "family": "architecture",
-              "version": 1,
-              "source": "%% ofk 1\narchitecture right\ntitle: TokenBurnTrack — System Architecture\nappearance: pastel\n\ngroup \"Harness logs (local disk)\" [gray] {\n  cc = Claude Code [doc, orange, rank: 0, desc: \"~/.claude/projects/**/*.jsonl · incl. subagents/\"]\n  codex = Codex CLI [doc, teal, rank: 0, desc: ~/.codex/sessions/*.jsonl]\n  gemini = Gemini CLI [doc, blue, rank: 0, desc: ~/.gemini/tmp/…]\n  opencode = OpenCode [cylinder, violet, rank: 0, desc: \"~/.local/share/opencode/opencode.db\"]\n  generic = Generic JSONL [doc, gray, rank: 0, desc: user-mapped fields]\n}\n\ngroup \"tbt-adapters\" [orange] {\n  registry = Adapter Registry [component, rank: 1, desc: \"HarnessAdapter trait · discover() · read()\"]\n}\n\ngroup \"Runners\" [teal] {\n  daemon = tbt-daemon [component, rank: 1, desc: \"systemd/launchd hourly timer\"]\n  app = tbt-app GPUI [component, rank: 1, desc: \"background executor\"]\n}\n\ngroup \"External price source (optional)\" [gray] {\n  litellm = LiteLLM price list [cloud, rank: 2, desc: \"model_prices_and_context_window.json · fetched on demand\"]\n}\n\ngroup \"tbt-collector\" [blue] {\n  sched = Scheduler [hexagon, rank: 2, desc: \"hourly :00 · startup · manual · collector.lock\"]\n  pipe = Ingest Pipeline [rounded, rank: 3, desc: \"discover → read → price → tx\"]\n  cursor = Cursors & Dedup [rounded, rank: 4, desc: \"byte offset / row watermark · UNIQUE dedup_key\"]\n}\n\ngroup \"tbt-pricing\" [green] {\n  prices = Price Catalog [doc, rank: 3, desc: \"bundled / imported / user\"]\n  pricer = Cost Engine [rounded, rank: 4, desc: \"tokens × versioned price\"]\n}\n\ngroup \"tbt-store\" [violet] {\n  db = SQLite WAL [cylinder, rank: 5, desc: \"sessions · usage_event · hourly_usage\"]\n}\n\ngroup \"GPUI UI\" [pink] {\n  dash = Dashboard [browser, rank: 6, desc: \"KPIs · hourly burn · heatmap\"]\n  sess = Sessions [browser, rank: 6, desc: \"table + session detail\"]\n  models = Models & Projects [browser, rank: 6]\n  settings = Settings [browser, rank: 6, desc: \"harness roots · prices · privacy\"]\n}\n\ncc -> registry\ncodex -> registry\ngemini -> registry\nopencode -> registry\ngeneric -> registry\ndaemon -> sched : runs\napp -> sched : runs\nsched -> pipe : tick\nregistry -> pipe : sessions + events\npipe -> cursor\nlitellm --> prices : \"import → new row, effective_from = now\"\nprices -> pricer\npipe -> pricer : price\npricer -> db : cost_micros\ncursor -> db : tx per source\ndb -> dash\ndb -> sess\ndb -> models\ndb -> settings",
-              "hash": "1medqyf",
-              "direction": "right",
-              "title": "TokenBurnTrack — System Architecture",
-              "autoIcons": true
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "harness-logs-local-disk",
-          "kind": "frame",
-          "parentId": "dsl-da2955",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 28,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 344,
-            "height": 628
-          },
-          "content": {
-            "label": "Harness logs (local disk)",
-            "color": "slate"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "harness-logs-local-disk",
-              "line": 6
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "tbt-adapters",
-          "kind": "frame",
-          "parentId": "dsl-da2955",
-          "layerId": "default",
-          "zIndex": 2,
-          "transform": {
-            "translation": {
-              "x": 452,
-              "y": 97
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 276,
-            "height": 213
-          },
-          "content": {
-            "label": "tbt-adapters",
-            "color": "amber"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "tbt-adapters",
-              "line": 14
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "runners",
-          "kind": "frame",
-          "parentId": "dsl-da2955",
-          "layerId": "default",
-          "zIndex": 3,
-          "transform": {
-            "translation": {
-              "x": 493,
-              "y": 358
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 235,
-            "height": 228
-          },
-          "content": {
-            "label": "Runners",
-            "color": "cyan"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "runners",
-              "line": 18
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "external-price-source-optional",
-          "kind": "frame",
-          "parentId": "dsl-da2955",
-          "layerId": "default",
-          "zIndex": 4,
-          "transform": {
-            "translation": {
-              "x": 1482,
-              "y": 114
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 384,
-            "height": 172
-          },
-          "content": {
-            "label": "External price source (optional)",
-            "color": "slate"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "external-price-source-optional",
-              "line": 23
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "tbt-collector",
-          "kind": "frame",
-          "parentId": "dsl-da2955",
-          "layerId": "default",
-          "zIndex": 5,
-          "transform": {
-            "translation": {
-              "x": 1001,
-              "y": 335
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 865,
-            "height": 224
-          },
-          "content": {
-            "label": "tbt-collector",
-            "color": "blue"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "tbt-collector",
-              "line": 27
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "tbt-pricing",
-          "kind": "frame",
-          "parentId": "dsl-da2955",
-          "layerId": "default",
-          "zIndex": 6,
-          "transform": {
-            "translation": {
-              "x": 2160,
-              "y": 114
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 401,
-            "height": 183
-          },
-          "content": {
-            "label": "tbt-pricing",
-            "color": "emerald"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "tbt-pricing",
-              "line": 33
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "tbt-store",
-          "kind": "frame",
-          "parentId": "dsl-da2955",
-          "layerId": "default",
-          "zIndex": 7,
-          "transform": {
-            "translation": {
-              "x": 2799,
-              "y": 144
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 288,
-            "height": 164
-          },
-          "content": {
-            "label": "tbt-store",
-            "color": "violet"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "tbt-store",
-              "line": 38
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "gpui-ui",
-          "kind": "frame",
-          "parentId": "dsl-da2955",
-          "layerId": "default",
-          "zIndex": 8,
-          "transform": {
-            "translation": {
-              "x": 3161,
-              "y": 77
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 284,
-            "height": 816
-          },
-          "content": {
-            "label": "GPUI UI",
-            "color": "pink"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "gpui-ui",
-              "line": 42
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "cc",
-          "kind": "process",
-          "parentId": "harness-logs-local-disk",
-          "layerId": "default",
-          "zIndex": 9,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 170
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 300,
-            "height": 96
-          },
-          "content": {
-            "label": "Claude Code",
-            "shape": "document",
-            "subLabel": "~/.claude/projects/**/*.jsonl · incl. subagents/"
-          },
-          "appearance": {
-            "fill": "#fffbeb",
-            "stroke": "#fbbf24",
-            "textColor": "#78350f"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "cc",
-              "line": 7,
-              "color": "orange",
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "~/.claude/projects/**/*.jsonl · incl. subagents/"
-                },
-                {
-                  "key": "rank",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "codex",
-          "kind": "process",
-          "parentId": "harness-logs-local-disk",
-          "layerId": "default",
-          "zIndex": 10,
-          "transform": {
-            "translation": {
-              "x": 147,
-              "y": 286
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 175,
-            "height": 96
-          },
-          "content": {
-            "label": "Codex CLI",
-            "shape": "document",
-            "subLabel": "~/.codex/sessions/*.jsonl"
-          },
-          "appearance": {
-            "fill": "#ecfeff",
-            "stroke": "#22d3ee",
-            "textColor": "#0e7490"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "codex",
-              "line": 8,
-              "color": "teal",
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "~/.codex/sessions/*.jsonl"
-                },
-                {
-                  "key": "rank",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "gemini",
-          "kind": "process",
-          "parentId": "harness-logs-local-disk",
-          "layerId": "default",
-          "zIndex": 11,
-          "transform": {
-            "translation": {
-              "x": 190,
-              "y": 54
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 132,
-            "height": 96
-          },
-          "content": {
-            "label": "Gemini CLI",
-            "shape": "document",
-            "subLabel": "~/.gemini/tmp/…"
-          },
-          "appearance": {
-            "fill": "#eff6ff",
-            "stroke": "#60a5fa",
-            "textColor": "#1e293b"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "gemini",
-              "line": 9,
-              "color": "blue",
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "~/.gemini/tmp/…"
-                },
-                {
-                  "key": "rank",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "opencode",
-          "kind": "process",
-          "parentId": "harness-logs-local-disk",
-          "layerId": "default",
-          "zIndex": 12,
-          "transform": {
-            "translation": {
-              "x": 85,
-              "y": 402
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 237,
-            "height": 88
-          },
-          "content": {
-            "label": "OpenCode",
-            "shape": "cylinder",
-            "subLabel": "~/.local/share/opencode/opencode.db"
-          },
-          "appearance": {
-            "fill": "#f5f3ff",
-            "stroke": "#8b5cf6",
-            "textColor": "#5b21b6"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "opencode",
-              "line": 10,
-              "color": "violet",
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "~/.local/share/opencode/opencode.db"
-                },
-                {
-                  "key": "rank",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "generic",
-          "kind": "process",
-          "parentId": "harness-logs-local-disk",
-          "layerId": "default",
-          "zIndex": 13,
-          "transform": {
-            "translation": {
-              "x": 187,
-              "y": 510
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 135,
-            "height": 96
-          },
-          "content": {
-            "label": "Generic JSONL",
-            "shape": "document",
-            "subLabel": "user-mapped fields"
-          },
-          "appearance": {
-            "fill": "#f8fafc",
-            "stroke": "#94a3b8",
-            "textColor": "#1e293b"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "generic",
-              "line": 11,
-              "color": "gray",
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "user-mapped fields"
-                },
-                {
-                  "key": "rank",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "registry",
-          "kind": "architecture",
-          "parentId": "tbt-adapters",
-          "layerId": "default",
-          "zIndex": 14,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 54
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 232,
-            "height": 137
-          },
-          "content": {
-            "label": "Adapter Registry",
-            "subLabel": "HarnessAdapter trait · discover() · read()",
-            "icon": "tabler/package",
-            "archProvider": "tabler",
-            "archResourceType": "package",
-            "archIconPackId": "tabler-outline-v3",
-            "archIconShapeId": "package",
-            "assetPresentation": "icon"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "registry",
-              "line": 15,
-              "shape": "component",
-              "autoIcon": "tabler/package",
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "HarnessAdapter trait · discover() · read()"
-                },
-                {
-                  "key": "rank",
-                  "value": "1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "daemon",
-          "kind": "process",
-          "parentId": "runners",
-          "layerId": "default",
-          "zIndex": 15,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 54
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 191,
-            "height": 66
-          },
-          "content": {
-            "label": "tbt-daemon",
-            "shape": "rounded",
-            "subLabel": "systemd/launchd hourly timer"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "daemon",
-              "line": 19,
-              "shape": "component",
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "systemd/launchd hourly timer"
-                },
-                {
-                  "key": "rank",
-                  "value": "1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "app",
-          "kind": "process",
-          "parentId": "runners",
-          "layerId": "default",
-          "zIndex": 16,
-          "transform": {
-            "translation": {
-              "x": 66,
-              "y": 140
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 147,
-            "height": 66
-          },
-          "content": {
-            "label": "tbt-app GPUI",
-            "shape": "rounded",
-            "subLabel": "background executor"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "app",
-              "line": 20,
-              "shape": "component",
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "background executor"
-                },
-                {
-                  "key": "rank",
-                  "value": "1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "litellm",
-          "kind": "process",
-          "parentId": "external-price-source-optional",
-          "layerId": "default",
-          "zIndex": 17,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 54
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 340,
-            "height": 96
-          },
-          "content": {
-            "label": "LiteLLM price list",
-            "shape": "cloud",
-            "subLabel": "model_prices_and_context_window.json · fetched on demand"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "litellm",
-              "line": 24,
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "model_prices_and_context_window.json · fetched on demand"
-                },
-                {
-                  "key": "rank",
-                  "value": "2"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "sched",
-          "kind": "architecture",
-          "parentId": "tbt-collector",
-          "layerId": "default",
-          "zIndex": 18,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 65
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 232,
-            "height": 137
-          },
-          "content": {
-            "label": "Scheduler",
-            "subLabel": "hourly :00 · startup · manual · collector.lock",
-            "icon": "tabler/clock",
-            "archProvider": "tabler",
-            "archResourceType": "clock",
-            "archIconPackId": "tabler-outline-v3",
-            "archIconShapeId": "clock",
-            "assetPresentation": "icon"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "sched",
-              "line": 28,
-              "shape": "hexagon",
-              "autoIcon": "tabler/clock",
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "hourly :00 · startup · manual · collector.lock"
-                },
-                {
-                  "key": "rank",
-                  "value": "2"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "pipe",
-          "kind": "process",
-          "parentId": "tbt-collector",
-          "layerId": "default",
-          "zIndex": 19,
-          "transform": {
-            "translation": {
-              "x": 345,
-              "y": 90
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 183,
-            "height": 66
-          },
-          "content": {
-            "label": "Ingest Pipeline",
-            "shape": "rounded",
-            "subLabel": "discover → read → price → tx"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "pipe",
-              "line": 29,
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "discover → read → price → tx"
-                },
-                {
-                  "key": "rank",
-                  "value": "3"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "cursor",
-          "kind": "process",
-          "parentId": "tbt-collector",
-          "layerId": "default",
-          "zIndex": 20,
-          "transform": {
-            "translation": {
-              "x": 548,
-              "y": 101
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 295,
-            "height": 66
-          },
-          "content": {
-            "label": "Cursors & Dedup",
-            "shape": "rounded",
-            "subLabel": "byte offset / row watermark · UNIQUE dedup_key"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "cursor",
-              "line": 30,
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "byte offset / row watermark · UNIQUE dedup_key"
-                },
-                {
-                  "key": "rank",
-                  "value": "4"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "prices",
-          "kind": "process",
-          "parentId": "tbt-pricing",
-          "layerId": "default",
-          "zIndex": 21,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 54
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 170,
-            "height": 96
-          },
-          "content": {
-            "label": "Price Catalog",
-            "shape": "document",
-            "subLabel": "bundled / imported / user"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "prices",
-              "line": 34,
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "bundled / imported / user"
-                },
-                {
-                  "key": "rank",
-                  "value": "3"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "pricer",
-          "kind": "process",
-          "parentId": "tbt-pricing",
-          "layerId": "default",
-          "zIndex": 22,
-          "transform": {
-            "translation": {
-              "x": 212,
-              "y": 80
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 167,
-            "height": 66
-          },
-          "content": {
-            "label": "Cost Engine",
-            "shape": "rounded",
-            "subLabel": "tokens × versioned price"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "pricer",
-              "line": 35,
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "tokens × versioned price"
-                },
-                {
-                  "key": "rank",
-                  "value": "4"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "db",
-          "kind": "process",
-          "parentId": "tbt-store",
-          "layerId": "default",
-          "zIndex": 23,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 54
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 244,
-            "height": 88
-          },
-          "content": {
-            "label": "SQLite WAL",
-            "shape": "cylinder",
-            "subLabel": "sessions · usage_event · hourly_usage"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "db",
-              "line": 39,
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "sessions · usage_event · hourly_usage"
-                },
-                {
-                  "key": "rank",
-                  "value": "5"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "dash",
-          "kind": "browser",
-          "parentId": "gpui-ui",
-          "layerId": "default",
-          "zIndex": 24,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 54
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 170
-          },
-          "content": {
-            "label": "Dashboard",
-            "subLabel": "KPIs · hourly burn · heatmap"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "dash",
-              "line": 43,
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "KPIs · hourly burn · heatmap"
-                },
-                {
-                  "key": "rank",
-                  "value": "6"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "sess",
-          "kind": "browser",
-          "parentId": "gpui-ui",
-          "layerId": "default",
-          "zIndex": 25,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 244
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 170
-          },
-          "content": {
-            "label": "Sessions",
-            "subLabel": "table + session detail"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "sess",
-              "line": 44,
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "table + session detail"
-                },
-                {
-                  "key": "rank",
-                  "value": "6"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "models",
-          "kind": "browser",
-          "parentId": "gpui-ui",
-          "layerId": "default",
-          "zIndex": 26,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 434
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 170
-          },
-          "content": {
-            "label": "Models & Projects"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "models",
-              "line": 45,
-              "attrs": [
-                {
-                  "key": "rank",
-                  "value": "6"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "settings",
-          "kind": "browser",
-          "parentId": "gpui-ui",
-          "layerId": "default",
-          "zIndex": 27,
-          "transform": {
-            "translation": {
-              "x": 22,
-              "y": 624
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 240,
-            "height": 170
-          },
-          "content": {
-            "label": "Settings",
-            "subLabel": "harness roots · prices · privacy"
-          },
-          "appearance": {
-            "fill": "#ffffff",
-            "stroke": "#cbd5e1",
-            "textColor": "#0f172a"
-          },
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "settings",
-              "line": 46,
-              "attrs": [
-                {
-                  "key": "desc",
-                  "value": "harness roots · prices · privacy"
-                },
-                {
-                  "key": "rank",
-                  "value": "6"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        },
         {
           "id": "dsl-5gcwyq",
           "kind": "frame",
@@ -2496,687 +1223,1346 @@
             }
           },
           "extensions": {}
+        },
+        {
+          "id": "dsl-da2955",
+          "kind": "frame",
+          "parentId": null,
+          "layerId": "default",
+          "zIndex": 0,
+          "transform": {
+            "translation": {
+              "x": 160,
+              "y": 80
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 3587,
+            "height": 1106
+          },
+          "content": {
+            "label": "TokenBurnTrack — System Architecture"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "family": "architecture",
+              "version": 1,
+              "source": "%% ofk 1\narchitecture right\ntitle: TokenBurnTrack — System Architecture\nappearance: pastel\n\ngroup \"Harness logs (local disk)\" [gray] {\n  cc = Claude Code [doc, orange, rank: 0, desc: \"~/.claude/projects/**/*.jsonl · incl. subagents/\"]\n  codex = Codex CLI [doc, teal, rank: 0, desc: ~/.codex/sessions/*.jsonl]\n  gemini = Gemini CLI [doc, blue, rank: 0, desc: ~/.gemini/tmp/…]\n  opencode = OpenCode [cylinder, violet, rank: 0, desc: \"~/.local/share/opencode/opencode.db\"]\n  generic = Generic JSONL [doc, gray, rank: 0, desc: user-mapped fields]\n}\n\ngroup \"tbt-adapters\" [orange] {\n  registry = Adapter Registry [component, rank: 1, desc: \"HarnessAdapter trait · discover() · read()\"]\n}\n\ngroup \"Runners\" [teal] {\n  daemon = tbt-daemon [component, rank: 1, desc: \"systemd/launchd/Task Scheduler · tbt-daemon install\"]\n  app = tbt-app GPUI [component, rank: 1, desc: \"startup · hourly · Sync now · optional watcher\"]\n}\n\ngroup \"External price source (optional)\" [gray] {\n  litellm = LiteLLM price list [cloud, rank: 2, desc: \"model_prices_and_context_window.json · fetched on click\"]\n}\n\ngroup \"tbt-collector\" [blue] {\n  sched = Scheduler [hexagon, rank: 2, desc: \"hourly :00 · startup · manual · collector.lock\"]\n  pipe = Ingest Pipeline [rounded, rank: 3, desc: \"discover → read → price → tx\"]\n  cursor = Cursors & Dedup [rounded, rank: 4, desc: \"byte offset / row watermark · UNIQUE dedup_key\"]\n}\n\ngroup \"tbt-pricing\" [green] {\n  prices = Price Catalog [doc, rank: 3, desc: \"bundled / imported / user\"]\n  pricer = Cost Engine [rounded, rank: 4, desc: \"tokens × versioned price\"]\n}\n\ngroup \"tbt-store\" [violet] {\n  db = SQLite WAL [cylinder, rank: 5, desc: \"sessions · usage_event · hourly_usage\"]\n}\n\ngroup \"GPUI UI\" [pink] {\n  dash = Dashboard [browser, rank: 6, desc: \"KPIs · hourly burn · heatmap\"]\n  sess = Sessions [browser, rank: 6, desc: \"table + session detail\"]\n  models = Models & Projects [browser, rank: 6]\n  harn = Harnesses [browser, rank: 6, desc: \"enable · roots · warnings · runs\"]\n  settings = Settings [browser, rank: 6, desc: \"prices · LiteLLM import · privacy · export\"]\n}\n\ncc -> registry\ncodex -> registry\ngemini -> registry\nopencode -> registry\ngeneric -> registry\ndaemon -> sched : runs\napp -> sched : runs\nsched -> pipe : tick\nregistry -> pipe : sessions + events\npipe -> cursor\nlitellm --> prices : \"import → new row, effective_from = now\"\nprices -> pricer\npipe -> pricer : price\npricer -> db : cost_micros\ncursor -> db : tx per source\ndb -> dash\ndb -> sess\ndb -> models\ndb -> harn\ndb -> settings",
+              "hash": "l6cdhs",
+              "direction": "right",
+              "title": "TokenBurnTrack — System Architecture",
+              "autoIcons": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "harness-logs-local-disk",
+          "kind": "frame",
+          "parentId": "dsl-da2955",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 28,
+              "y": 141
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 344,
+            "height": 628
+          },
+          "content": {
+            "label": "Harness logs (local disk)",
+            "color": "slate"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "harness-logs-local-disk",
+              "line": 6
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "tbt-adapters",
+          "kind": "frame",
+          "parentId": "dsl-da2955",
+          "layerId": "default",
+          "zIndex": 2,
+          "transform": {
+            "translation": {
+              "x": 466,
+              "y": 531
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 276,
+            "height": 213
+          },
+          "content": {
+            "label": "tbt-adapters",
+            "color": "amber"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "tbt-adapters",
+              "line": 14
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "runners",
+          "kind": "frame",
+          "parentId": "dsl-da2955",
+          "layerId": "default",
+          "zIndex": 3,
+          "transform": {
+            "translation": {
+              "x": 447,
+              "y": 792
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 364,
+            "height": 242
+          },
+          "content": {
+            "label": "Runners",
+            "color": "cyan"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "runners",
+              "line": 18
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "external-price-source-optional",
+          "kind": "frame",
+          "parentId": "dsl-da2955",
+          "layerId": "default",
+          "zIndex": 4,
+          "transform": {
+            "translation": {
+              "x": 1565,
+              "y": 603
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 384,
+            "height": 172
+          },
+          "content": {
+            "label": "External price source (optional)",
+            "color": "slate"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "external-price-source-optional",
+              "line": 23
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "tbt-collector",
+          "kind": "frame",
+          "parentId": "dsl-da2955",
+          "layerId": "default",
+          "zIndex": 5,
+          "transform": {
+            "translation": {
+              "x": 1084,
+              "y": 823
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 865,
+            "height": 224
+          },
+          "content": {
+            "label": "tbt-collector",
+            "color": "blue"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "tbt-collector",
+              "line": 27
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "tbt-pricing",
+          "kind": "frame",
+          "parentId": "dsl-da2955",
+          "layerId": "default",
+          "zIndex": 6,
+          "transform": {
+            "translation": {
+              "x": 2243,
+              "y": 725
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 401,
+            "height": 183
+          },
+          "content": {
+            "label": "tbt-pricing",
+            "color": "emerald"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "tbt-pricing",
+              "line": 33
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "tbt-store",
+          "kind": "frame",
+          "parentId": "dsl-da2955",
+          "layerId": "default",
+          "zIndex": 7,
+          "transform": {
+            "translation": {
+              "x": 2882,
+              "y": 844
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 288,
+            "height": 164
+          },
+          "content": {
+            "label": "tbt-store",
+            "color": "violet"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "tbt-store",
+              "line": 38
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "gpui-ui",
+          "kind": "frame",
+          "parentId": "dsl-da2955",
+          "layerId": "default",
+          "zIndex": 8,
+          "transform": {
+            "translation": {
+              "x": 3250,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 309,
+            "height": 1006
+          },
+          "content": {
+            "label": "GPUI UI",
+            "color": "pink"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "gpui-ui",
+              "line": 42
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "cc",
+          "kind": "process",
+          "parentId": "harness-logs-local-disk",
+          "layerId": "default",
+          "zIndex": 9,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 170
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 300,
+            "height": 96
+          },
+          "content": {
+            "label": "Claude Code",
+            "shape": "document",
+            "subLabel": "~/.claude/projects/**/*.jsonl · incl. subagents/"
+          },
+          "appearance": {
+            "fill": "#fffbeb",
+            "stroke": "#fbbf24",
+            "textColor": "#78350f"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "cc",
+              "line": 7,
+              "color": "orange",
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "~/.claude/projects/**/*.jsonl · incl. subagents/"
+                },
+                {
+                  "key": "rank",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "codex",
+          "kind": "process",
+          "parentId": "harness-logs-local-disk",
+          "layerId": "default",
+          "zIndex": 10,
+          "transform": {
+            "translation": {
+              "x": 147,
+              "y": 286
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 175,
+            "height": 96
+          },
+          "content": {
+            "label": "Codex CLI",
+            "shape": "document",
+            "subLabel": "~/.codex/sessions/*.jsonl"
+          },
+          "appearance": {
+            "fill": "#ecfeff",
+            "stroke": "#22d3ee",
+            "textColor": "#0e7490"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "codex",
+              "line": 8,
+              "color": "teal",
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "~/.codex/sessions/*.jsonl"
+                },
+                {
+                  "key": "rank",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "gemini",
+          "kind": "process",
+          "parentId": "harness-logs-local-disk",
+          "layerId": "default",
+          "zIndex": 11,
+          "transform": {
+            "translation": {
+              "x": 190,
+              "y": 54
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 132,
+            "height": 96
+          },
+          "content": {
+            "label": "Gemini CLI",
+            "shape": "document",
+            "subLabel": "~/.gemini/tmp/…"
+          },
+          "appearance": {
+            "fill": "#eff6ff",
+            "stroke": "#60a5fa",
+            "textColor": "#1e293b"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "gemini",
+              "line": 9,
+              "color": "blue",
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "~/.gemini/tmp/…"
+                },
+                {
+                  "key": "rank",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "opencode",
+          "kind": "process",
+          "parentId": "harness-logs-local-disk",
+          "layerId": "default",
+          "zIndex": 12,
+          "transform": {
+            "translation": {
+              "x": 85,
+              "y": 402
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 237,
+            "height": 88
+          },
+          "content": {
+            "label": "OpenCode",
+            "shape": "cylinder",
+            "subLabel": "~/.local/share/opencode/opencode.db"
+          },
+          "appearance": {
+            "fill": "#f5f3ff",
+            "stroke": "#8b5cf6",
+            "textColor": "#5b21b6"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "opencode",
+              "line": 10,
+              "color": "violet",
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "~/.local/share/opencode/opencode.db"
+                },
+                {
+                  "key": "rank",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "generic",
+          "kind": "process",
+          "parentId": "harness-logs-local-disk",
+          "layerId": "default",
+          "zIndex": 13,
+          "transform": {
+            "translation": {
+              "x": 187,
+              "y": 510
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 135,
+            "height": 96
+          },
+          "content": {
+            "label": "Generic JSONL",
+            "shape": "document",
+            "subLabel": "user-mapped fields"
+          },
+          "appearance": {
+            "fill": "#f8fafc",
+            "stroke": "#94a3b8",
+            "textColor": "#1e293b"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "generic",
+              "line": 11,
+              "color": "gray",
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "user-mapped fields"
+                },
+                {
+                  "key": "rank",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "registry",
+          "kind": "architecture",
+          "parentId": "tbt-adapters",
+          "layerId": "default",
+          "zIndex": 14,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 54
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 232,
+            "height": 137
+          },
+          "content": {
+            "label": "Adapter Registry",
+            "subLabel": "HarnessAdapter trait · discover() · read()",
+            "icon": "tabler/package",
+            "archProvider": "tabler",
+            "archResourceType": "package",
+            "archIconPackId": "tabler-outline-v3",
+            "archIconShapeId": "package",
+            "assetPresentation": "icon"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "registry",
+              "line": 15,
+              "shape": "component",
+              "autoIcon": "tabler/package",
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "HarnessAdapter trait · discover() · read()"
+                },
+                {
+                  "key": "rank",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "daemon",
+          "kind": "process",
+          "parentId": "runners",
+          "layerId": "default",
+          "zIndex": 15,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 54
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 320,
+            "height": 80
+          },
+          "content": {
+            "label": "tbt-daemon",
+            "shape": "rounded",
+            "subLabel": "systemd/launchd/Task Scheduler · tbt-daemon install",
+            "sizingPolicy": {
+              "version": 1,
+              "mode": "fixed",
+              "minSize": {
+                "width": 24,
+                "height": 24
+              },
+              "maxSize": {
+                "width": 1600,
+                "height": 1200
+              },
+              "overflow": "wrap",
+              "clipContent": false,
+              "maxLines": 4
+            }
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "daemon",
+              "line": 19,
+              "shape": "component",
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "systemd/launchd/Task Scheduler · tbt-daemon install"
+                },
+                {
+                  "key": "rank",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "app",
+          "kind": "process",
+          "parentId": "runners",
+          "layerId": "default",
+          "zIndex": 16,
+          "transform": {
+            "translation": {
+              "x": 56,
+              "y": 154
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 286,
+            "height": 66
+          },
+          "content": {
+            "label": "tbt-app GPUI",
+            "shape": "rounded",
+            "subLabel": "startup · hourly · Sync now · optional watcher"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "app",
+              "line": 20,
+              "shape": "component",
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "startup · hourly · Sync now · optional watcher"
+                },
+                {
+                  "key": "rank",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "litellm",
+          "kind": "process",
+          "parentId": "external-price-source-optional",
+          "layerId": "default",
+          "zIndex": 17,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 54
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 340,
+            "height": 96
+          },
+          "content": {
+            "label": "LiteLLM price list",
+            "shape": "cloud",
+            "subLabel": "model_prices_and_context_window.json · fetched on click"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "litellm",
+              "line": 24,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "model_prices_and_context_window.json · fetched on click"
+                },
+                {
+                  "key": "rank",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "sched",
+          "kind": "architecture",
+          "parentId": "tbt-collector",
+          "layerId": "default",
+          "zIndex": 18,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 65
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 232,
+            "height": 137
+          },
+          "content": {
+            "label": "Scheduler",
+            "subLabel": "hourly :00 · startup · manual · collector.lock",
+            "icon": "tabler/clock",
+            "archProvider": "tabler",
+            "archResourceType": "clock",
+            "archIconPackId": "tabler-outline-v3",
+            "archIconShapeId": "clock",
+            "assetPresentation": "icon"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "sched",
+              "line": 28,
+              "shape": "hexagon",
+              "autoIcon": "tabler/clock",
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "hourly :00 · startup · manual · collector.lock"
+                },
+                {
+                  "key": "rank",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "pipe",
+          "kind": "process",
+          "parentId": "tbt-collector",
+          "layerId": "default",
+          "zIndex": 19,
+          "transform": {
+            "translation": {
+              "x": 345,
+              "y": 90
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 183,
+            "height": 66
+          },
+          "content": {
+            "label": "Ingest Pipeline",
+            "shape": "rounded",
+            "subLabel": "discover → read → price → tx"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "pipe",
+              "line": 29,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "discover → read → price → tx"
+                },
+                {
+                  "key": "rank",
+                  "value": "3"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "cursor",
+          "kind": "process",
+          "parentId": "tbt-collector",
+          "layerId": "default",
+          "zIndex": 20,
+          "transform": {
+            "translation": {
+              "x": 548,
+              "y": 101
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 295,
+            "height": 66
+          },
+          "content": {
+            "label": "Cursors & Dedup",
+            "shape": "rounded",
+            "subLabel": "byte offset / row watermark · UNIQUE dedup_key"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "cursor",
+              "line": 30,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "byte offset / row watermark · UNIQUE dedup_key"
+                },
+                {
+                  "key": "rank",
+                  "value": "4"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "prices",
+          "kind": "process",
+          "parentId": "tbt-pricing",
+          "layerId": "default",
+          "zIndex": 21,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 54
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 170,
+            "height": 96
+          },
+          "content": {
+            "label": "Price Catalog",
+            "shape": "document",
+            "subLabel": "bundled / imported / user"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "prices",
+              "line": 34,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "bundled / imported / user"
+                },
+                {
+                  "key": "rank",
+                  "value": "3"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "pricer",
+          "kind": "process",
+          "parentId": "tbt-pricing",
+          "layerId": "default",
+          "zIndex": 22,
+          "transform": {
+            "translation": {
+              "x": 212,
+              "y": 80
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 167,
+            "height": 66
+          },
+          "content": {
+            "label": "Cost Engine",
+            "shape": "rounded",
+            "subLabel": "tokens × versioned price"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "pricer",
+              "line": 35,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "tokens × versioned price"
+                },
+                {
+                  "key": "rank",
+                  "value": "4"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "db",
+          "kind": "process",
+          "parentId": "tbt-store",
+          "layerId": "default",
+          "zIndex": 23,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 54
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 244,
+            "height": 88
+          },
+          "content": {
+            "label": "SQLite WAL",
+            "shape": "cylinder",
+            "subLabel": "sessions · usage_event · hourly_usage"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "db",
+              "line": 39,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "sessions · usage_event · hourly_usage"
+                },
+                {
+                  "key": "rank",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "dash",
+          "kind": "browser",
+          "parentId": "gpui-ui",
+          "layerId": "default",
+          "zIndex": 24,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 54
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 170
+          },
+          "content": {
+            "label": "Dashboard",
+            "subLabel": "KPIs · hourly burn · heatmap"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "dash",
+              "line": 43,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "KPIs · hourly burn · heatmap"
+                },
+                {
+                  "key": "rank",
+                  "value": "6"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "sess",
+          "kind": "browser",
+          "parentId": "gpui-ui",
+          "layerId": "default",
+          "zIndex": 25,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 244
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 170
+          },
+          "content": {
+            "label": "Sessions",
+            "subLabel": "table + session detail"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "sess",
+              "line": 44,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "table + session detail"
+                },
+                {
+                  "key": "rank",
+                  "value": "6"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "models",
+          "kind": "browser",
+          "parentId": "gpui-ui",
+          "layerId": "default",
+          "zIndex": 26,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 434
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 170
+          },
+          "content": {
+            "label": "Models & Projects"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "models",
+              "line": 45,
+              "attrs": [
+                {
+                  "key": "rank",
+                  "value": "6"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "harn",
+          "kind": "browser",
+          "parentId": "gpui-ui",
+          "layerId": "default",
+          "zIndex": 27,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 624
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 240,
+            "height": 170
+          },
+          "content": {
+            "label": "Harnesses",
+            "subLabel": "enable · roots · warnings · runs"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "harn",
+              "line": 46,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "enable · roots · warnings · runs"
+                },
+                {
+                  "key": "rank",
+                  "value": "6"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "settings",
+          "kind": "browser",
+          "parentId": "gpui-ui",
+          "layerId": "default",
+          "zIndex": 28,
+          "transform": {
+            "translation": {
+              "x": 22,
+              "y": 814
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 265,
+            "height": 170
+          },
+          "content": {
+            "label": "Settings",
+            "subLabel": "prices · LiteLLM import · privacy · export"
+          },
+          "appearance": {
+            "fill": "#ffffff",
+            "stroke": "#cbd5e1",
+            "textColor": "#0f172a"
+          },
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "settings",
+              "line": 47,
+              "attrs": [
+                {
+                  "key": "desc",
+                  "value": "prices · LiteLLM import · privacy · export"
+                },
+                {
+                  "key": "rank",
+                  "value": "6"
+                }
+              ]
+            }
+          },
+          "extensions": {}
         }
       ],
       "connectors": [
-        {
-          "id": "edge:cc->registry:1",
-          "source": {
-            "nodeId": "cc",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "registry",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 49
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:codex->registry:1",
-          "source": {
-            "nodeId": "codex",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "registry",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 50
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:gemini->registry:1",
-          "source": {
-            "nodeId": "gemini",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "registry",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 51
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:opencode->registry:1",
-          "source": {
-            "nodeId": "opencode",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "registry",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 52
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:generic->registry:1",
-          "source": {
-            "nodeId": "generic",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "registry",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 53
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:daemon->sched:1",
-          "source": {
-            "nodeId": "daemon",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "sched",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "daemon->sched:1:label",
-              "text": "runs",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 54
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:app->sched:1",
-          "source": {
-            "nodeId": "app",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "sched",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "app->sched:1:label",
-              "text": "runs",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 55
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:sched->pipe:1",
-          "source": {
-            "nodeId": "sched",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "pipe",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "sched->pipe:1:label",
-              "text": "tick",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 56
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:registry->pipe:1",
-          "source": {
-            "nodeId": "registry",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "pipe",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "registry->pipe:1:label",
-              "text": "sessions + events",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 57
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:pipe->cursor:1",
-          "source": {
-            "nodeId": "pipe",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "cursor",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 58
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:litellm->prices:1",
-          "source": {
-            "nodeId": "litellm",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "prices",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "litellm->prices:1:label",
-              "text": "import → new row, effective_from = now",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {
-            "dashPattern": "dashed",
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 59
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:prices->pricer:1",
-          "source": {
-            "nodeId": "prices",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "pricer",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 60
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:pipe->pricer:1",
-          "source": {
-            "nodeId": "pipe",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "pricer",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "pipe->pricer:1:label",
-              "text": "price",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 61
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:pricer->db:1",
-          "source": {
-            "nodeId": "pricer",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "db",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "pricer->db:1:label",
-              "text": "cost_micros",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 62
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:cursor->db:1",
-          "source": {
-            "nodeId": "cursor",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "db",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "cursor->db:1:label",
-              "text": "tx per source",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 63
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:db->dash:1",
-          "source": {
-            "nodeId": "db",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "dash",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 64
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:db->sess:1",
-          "source": {
-            "nodeId": "db",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "sess",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 65
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:db->models:1",
-          "source": {
-            "nodeId": "db",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "models",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 66
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "edge:db->settings:1",
-          "source": {
-            "nodeId": "db",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "settings",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "orthogonal",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [],
-          "appearance": {
-            "markerEnd": "arrow"
-          },
-          "semantics": {},
-          "metadata": {
-            "dsl": {
-              "line": 67
-            }
-          },
-          "extensions": {}
-        },
         {
           "id": "rel:harness->source-file:1",
           "source": {
@@ -4587,6 +3973,715 @@
             "dsl": {
               "line": 34,
               "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:cc->registry:1",
+          "source": {
+            "nodeId": "cc",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "registry",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 50
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:codex->registry:1",
+          "source": {
+            "nodeId": "codex",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "registry",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 51
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:gemini->registry:1",
+          "source": {
+            "nodeId": "gemini",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "registry",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 52
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:opencode->registry:1",
+          "source": {
+            "nodeId": "opencode",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "registry",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 53
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:generic->registry:1",
+          "source": {
+            "nodeId": "generic",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "registry",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 54
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:daemon->sched:1",
+          "source": {
+            "nodeId": "daemon",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "sched",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "daemon->sched:1:label",
+              "text": "runs",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 55
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:app->sched:1",
+          "source": {
+            "nodeId": "app",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "sched",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "app->sched:1:label",
+              "text": "runs",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 56
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:sched->pipe:1",
+          "source": {
+            "nodeId": "sched",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "pipe",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "sched->pipe:1:label",
+              "text": "tick",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 57
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:registry->pipe:1",
+          "source": {
+            "nodeId": "registry",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "pipe",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "registry->pipe:1:label",
+              "text": "sessions + events",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 58
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:pipe->cursor:1",
+          "source": {
+            "nodeId": "pipe",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "cursor",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 59
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:litellm->prices:1",
+          "source": {
+            "nodeId": "litellm",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "prices",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "litellm->prices:1:label",
+              "text": "import → new row, effective_from = now",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {
+            "dashPattern": "dashed",
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 60
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:prices->pricer:1",
+          "source": {
+            "nodeId": "prices",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "pricer",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 61
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:pipe->pricer:1",
+          "source": {
+            "nodeId": "pipe",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "pricer",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "pipe->pricer:1:label",
+              "text": "price",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 62
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:pricer->db:1",
+          "source": {
+            "nodeId": "pricer",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "db",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "pricer->db:1:label",
+              "text": "cost_micros",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 63
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:cursor->db:1",
+          "source": {
+            "nodeId": "cursor",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "db",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "cursor->db:1:label",
+              "text": "tx per source",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 64
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:db->dash:1",
+          "source": {
+            "nodeId": "db",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "dash",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 65
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:db->sess:1",
+          "source": {
+            "nodeId": "db",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "sess",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 66
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:db->models:1",
+          "source": {
+            "nodeId": "db",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "models",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 67
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:db->harn:1",
+          "source": {
+            "nodeId": "db",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "harn",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 68
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "edge:db->settings:1",
+          "source": {
+            "nodeId": "db",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "settings",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "orthogonal",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [],
+          "appearance": {
+            "markerEnd": "arrow"
+          },
+          "semantics": {},
+          "metadata": {
+            "dsl": {
+              "line": 69
             }
           },
           "extensions": {}

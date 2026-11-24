@@ -191,8 +191,9 @@ Rules:
 
 ### Scheduler
 - Ticks are on a UTC grid (`next_tick(now, interval)`): hourly means UTC `:00`. Sleeping happens in chunks of at most 30 s against the wall clock, so a suspended laptop notices the missed tick when it wakes.
-- In the app: a GPUI background task loops until the next tick, plus a startup run.
-- Headless: `tbt-daemon --once` launched by a systemd user timer (`OnCalendar=hourly`) / launchd `StartInterval=3600` / Windows Task Scheduler. `tbt-daemon` can also run as a long-lived loop. It logs to `$DATA_DIR/logs/` (daily rotation) and exits 0 when the lock is busy.
+- In the app (`tbt-app::collector_bridge`): a startup run, then a GPUI background task that waits for the next tick; *Sync now* runs a manual one. Runs execute on the background executor and never overlap. When the daemon holds the lock, the app shows "Daemon is syncing…" and polls the newest `ingest_run` row (read-only) until the daemon's run lands, then refreshes. With `TBT_WATCH=1`, a debounced `notify` watcher on the enabled roots also triggers runs (30 s quiet period, at most one run per 2 min); it never replaces the hourly tick.
+- Headless: `tbt-daemon --once` launched by a systemd user timer (`OnCalendar=hourly`, `Persistent=true`) / launchd `StartInterval=3600` / Windows Task Scheduler. `tbt-daemon` can also run as a long-lived loop. It logs to `$DATA_DIR/logs/` (daily rotation) and exits 0 when the lock is busy.
+- `tbt-daemon install [--dry-run] [--no-enable] [--app <tbt-app>]` writes and enables the schedule for the current platform, and `uninstall` removes it. The unit, timer, plist, task XML, `.desktop` file and icon live in `packaging/` and are embedded into the binary, so the repo files are the single source.
 - Settings live in `~/.config/tokenburntrack/config.toml` (`privacy`, `sync_interval_minutes`, `data_dir`, `raw_json_retention_days`, `[[generic_jsonl]]` adapters). The data dir is `--data-dir`, else `TBT_DATA_DIR`, else the config, else the platform default.
 
 ---
@@ -349,28 +350,32 @@ TbtApp (Application)
    └─ Main view (one Entity per page)
 ```
 
-State: one `Entity<AppState>` holds the filters and the last-sync info. Each page owns an
-`Entity<PageModel>` that loads its query on the `BackgroundExecutor`, using its own read-only
-SQLite connection, and calls `cx.notify()` when the results arrive. The collector sends
-`IngestFinished` through a channel, which makes visible pages re-query.
+State: one `Entity<AppState>` holds the filters and the last-sync info, and emits
+`FiltersChanged`, `DataChanged`, `OpenSession(id)` and `CloseSession`. Each page loads its
+queries on the `BackgroundExecutor` through a `DataSource` (`StoreData`: a small pool of
+read-only SQLite connections; `MockData` with `TBT_MOCK=1`) and calls `cx.notify()` when the
+results arrive. After a finished sync, or after a page writes (harness toggles, prices,
+config), `DataChanged` makes visible pages re-query and refreshes the harness filter.
+Pages that write open a short-lived writable connection; price changes also hold
+`collector.lock` so they never interleave with an ingest run.
 
 ### Pages
 | Page | Contents |
 |---|---|
 | **Dashboard** | KPI tiles (cost in range, total tokens, sessions, cache-hit %, burn rate $/h); stacked **hourly/daily cost bars** by harness; tokens-by-type area chart; top models; top projects; heatmap (weekday × hour) |
 | **Sessions** | Virtualized table (`uniform_list`): start, harness, project, model(s), duration, tokens, cost; sort/filter/search |
-| **Session detail** | Timeline of calls (tokens per call bar strip), cumulative cost line, tool-use counts, reported vs computed cost, message list (if stored) |
+| **Session detail** | Opened from a Sessions row. Timeline of calls (tokens per call bar strip), cumulative cost line, tool-use counts, reported vs computed cost ("API-equivalent" when the harness logs none), resume chain with combined total, parent and subagents, message list (if stored) |
 | **Models** | Cost and tokens per model over time, effective $/Mtok, cache savings |
-| **Projects** | Cost per repo/branch |
-| **Harnesses** | Enable/disable, roots, last ingest, warnings, files tracked |
-| **Settings** | Prices editor, privacy level, sync interval, data dir, export CSV/JSON |
+| **Projects** | Cost per project (by the directory each call ran in) with a branch breakdown; "no project" as its own row |
+| **Harnesses** | Enable/disable, roots (custom or default, editable), last ingest, files tracked/missing, warnings and errors, recent runs |
+| **Settings** | Tabs: Prices (user overrides with "price changed from" or "fix this row", unpriced models with "add price", each followed by a recompute), LiteLLM import (preview, then apply), General (privacy level, sync interval, raw JSON retention, data dir), Generic JSONL (TOML editor validated by the adapter), Export (sessions or hourly usage as CSV/JSON for the current filter) |
 
 ### Charts
-GPUI has no built-in chart widget. Options:
-1. `gpui-component` charts (bar/line/area/pie), quickest if they cover what we need.
-2. A small in-house `tbt-app::charts` module built on `canvas()` + `window.paint_quad` / `PathBuilder`: bar, stacked bar, line/area, heatmap, sparkline. This takes about 500 lines and gives full control over hover tooltips and theming.
-
-Recommendation: start with (2) for the bar, line and heatmap charts the dashboard needs, and use `gpui-component` for the table and inputs.
+GPUI has no built-in chart widget. Charts are an in-house `tbt-app::charts` module built on
+`canvas()` + `window.paint_quad` / `PathBuilder`: bar, stacked bar, line/area, heatmap,
+sparkline and the call timeline, with hover tooltips. Scales, ticks, stacking, hit testing
+and formatting are plain functions with unit tests. `gpui-component` provides buttons,
+inputs and theming.
 
 Theme: dark by default. Each harness gets a consistent categorical colour, and the same colour is used in every chart and legend.
 
