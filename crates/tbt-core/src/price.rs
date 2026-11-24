@@ -8,16 +8,12 @@ use serde::{Deserialize, Serialize};
 use crate::PriceId;
 use crate::event::str_enum;
 
-/// One versioned price row (`model_price`). Rates are USD per 1M tokens.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ModelPrice {
-    /// `None` until the row is stored.
     pub id: Option<PriceId>,
     pub provider: String,
-    /// Exact model id, or a glob such as `claude-sonnet-4-5*`.
     pub model_pattern: String,
     pub effective_from: Timestamp,
-    /// Exclusive; `None` = still in effect.
     pub effective_to: Option<Timestamp>,
     pub input_per_mtok: Decimal,
     pub output_per_mtok: Decimal,
@@ -29,7 +25,6 @@ pub struct ModelPrice {
 }
 
 impl ModelPrice {
-    /// `effective_from <= ts < effective_to`.
     pub fn is_effective_at(&self, ts: Timestamp) -> bool {
         self.effective_from <= ts && self.effective_to.is_none_or(|to| ts < to)
     }
@@ -39,8 +34,6 @@ impl ModelPrice {
     }
 }
 
-/// Multipliers applied to every rate of the call when its prompt tokens
-/// (input + cache writes + cache reads) exceed `threshold_tokens`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LongContextTier {
     #[serde(rename = "threshold")]

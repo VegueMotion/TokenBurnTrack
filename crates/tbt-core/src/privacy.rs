@@ -8,16 +8,12 @@ use crate::event::str_enum;
 
 pub const PREVIEW_MAX_CHARS: usize = 280;
 
-/// How much of the `message` table is stored.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PrivacyLevel {
-    /// No messages at all.
     Off,
-    /// Role, kind, tool name and timestamps; no text.
     #[default]
     MetadataOnly,
-    /// Metadata plus a preview of at most [`PREVIEW_MAX_CHARS`] characters.
     TruncatedPreview,
 }
 
@@ -49,7 +45,6 @@ impl PrivacyLevel {
     }
 }
 
-/// Cuts `text` to at most `max_chars` characters, ending with `…` when cut.
 pub fn truncate_preview(text: &str, max_chars: usize) -> String {
     if text.chars().count() <= max_chars {
         return text.to_owned();

@@ -1,9 +1,3 @@
-//! Incremental line reader for append-only log files (JSONL).
-//!
-//! Only complete lines (terminated by `\n`) are consumed; a trailing partial line is left
-//! for the next run. The source is re-read from 0 when it was truncated, rotated (inode
-//! changed) or rewritten (the last consumed line no longer matches its hash).
-
 use std::fs::{File, Metadata};
 use std::io::{self, BufRead, BufReader, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
@@ -13,23 +7,15 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Cursor, Error, Result};
 
-/// Cursor state for a line-oriented file. Adapters that need more state embed it with
-/// `#[serde(flatten)]` and convert via [`Cursor::from_state`] / [`Cursor::state_or_default`].
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct FileCursor {
-    /// Start of the first unconsumed byte.
     pub byte_offset: u64,
-    /// Unix inode; `None` on other platforms.
     pub inode: Option<u64>,
-    /// File size when last read.
     pub size: u64,
-    /// File mtime when last read; `None` if the last read stopped before the end.
     pub mtime: Option<Timestamp>,
-    /// blake3 hex of the last consumed line, including its `\n`.
     pub last_line_hash: Option<String>,
     pub last_line_start: u64,
-    /// Number of lines consumed so far (blank lines included).
     pub line_no: u64,
 }
 
@@ -45,38 +31,26 @@ impl FileCursor {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReadStart {
-    /// Empty cursor: reading from the start.
     Fresh,
-    /// Continuing at the cursor's byte offset.
     Continue,
-    /// Size and mtime unchanged: nothing to read.
     Unchanged,
-    /// The cursor no longer fits the file; reading from the start.
     Restarted(RestartReason),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RestartReason {
-    /// Size is below the cursor's offset.
     Truncated,
-    /// Inode changed.
     Rotated,
-    /// Content before the offset changed.
     Rewritten,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JsonlLine {
-    /// Byte offset of the line start.
     pub offset: u64,
-    /// 1-based line number.
     pub line_no: u64,
-    /// Line without the trailing `\n` / `\r\n`; invalid UTF-8 is replaced lossily.
     pub text: String,
 }
 
-/// Iterator over the new complete, non-blank lines of a file.
-/// Call [`JsonlReader::into_cursor`] afterwards to get the cursor to save.
 pub struct JsonlReader {
     path: PathBuf,
     reader: Option<io::Take<BufReader<File>>>,
@@ -140,7 +114,6 @@ impl JsonlReader {
         self.start
     }
 
-    /// Cursor covering the lines yielded so far.
     pub fn cursor(&self) -> FileCursor {
         let mut c = self.next.clone();
         if self.finished {
@@ -197,7 +170,6 @@ impl Iterator for JsonlReader {
     }
 }
 
-/// Result of [`read_new_lines`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JsonlRead {
     pub start: ReadStart,
@@ -205,7 +177,6 @@ pub struct JsonlRead {
     pub next: FileCursor,
 }
 
-/// Reads all new complete lines at once.
 pub fn read_new_lines(path: &Path, cursor: &FileCursor) -> Result<JsonlRead> {
     let mut reader = JsonlReader::open(path, cursor)?;
     let lines = reader.by_ref().collect::<Result<Vec<_>>>()?;

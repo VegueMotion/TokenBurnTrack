@@ -3,7 +3,6 @@ use std::fmt;
 use jiff::{SignedDuration, Timestamp};
 use serde::{Deserialize, Serialize};
 
-/// A UTC hour bucket, identified by its start (`hourly_usage.hour`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Hour(Timestamp);
@@ -18,7 +17,6 @@ impl Hour {
         self.0
     }
 
-    /// Exclusive end; saturates at the maximum timestamp.
     pub fn end(self) -> Timestamp {
         self.0
             .checked_add(SignedDuration::from_hours(1))
@@ -32,7 +30,6 @@ impl fmt::Display for Hour {
     }
 }
 
-/// Half-open UTC range `[start, end)`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TimeRange {
     pub start: Timestamp,

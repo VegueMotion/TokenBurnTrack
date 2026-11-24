@@ -3,8 +3,6 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-/// Harness identifier, e.g. `claude_code`. Built-in harnesses have constants;
-/// generic JSONL harnesses use user-defined ids.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct HarnessId(Cow<'static, str>);
@@ -67,20 +65,7 @@ macro_rules! row_id {
     )*};
 }
 
-row_id!(
-    /// `session.id`
-    SessionId,
-    /// `usage_event.id`
-    EventId,
-    /// `model_price.id`
-    PriceId,
-    /// `project.id`; [`ProjectId::NONE`] is the seeded "no project" row.
-    ProjectId,
-    /// `source_file.id`
-    SourceFileId,
-    /// `ingest_run.id`
-    RunId,
-);
+row_id!(SessionId, EventId, PriceId, ProjectId, SourceFileId, RunId);
 
 impl ProjectId {
     pub const NONE: ProjectId = ProjectId(0);

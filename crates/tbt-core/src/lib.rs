@@ -1,5 +1,3 @@
-//! Shared domain types and contracts for TokenBurnTrack. See `CONTRACTS.md`.
-
 mod adapter;
 mod cursor;
 mod error;

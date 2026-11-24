@@ -25,9 +25,7 @@ pub struct UsageEvent {
     pub cache_write_5m_tokens: u64,
     pub cache_write_1h_tokens: u64,
     pub cache_read_tokens: u64,
-    /// Subset of `output_tokens`, informational only.
     pub reasoning_tokens: u64,
-    /// USD, as logged by the harness.
     pub reported_cost: Option<Decimal>,
     pub project_path: Option<String>,
     pub git_branch: Option<String>,
@@ -56,8 +54,6 @@ impl UsageEvent {
     }
 }
 
-/// An event after pricing, ready for `SourceTx::insert_events`.
-/// `price_id == None` means unpriced (`cost` is then zero and must not be shown as $0).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PricedEvent {
     pub event: UsageEvent,
@@ -79,9 +75,6 @@ impl PricedEvent {
     }
 }
 
-/// Session metadata seen in a source. `None` fields leave the stored value unchanged;
-/// `started_at` / `ended_at` are hints merged as min / max with what is stored and with
-/// event timestamps.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SessionUpsert {
     pub harness: HarnessId,
@@ -92,11 +85,8 @@ pub struct SessionUpsert {
     pub harness_version: Option<String>,
     pub started_at: Option<Timestamp>,
     pub ended_at: Option<Timestamp>,
-    /// Subagent run → `ext_id` of the session that spawned it.
     pub parent_ext_id: Option<String>,
-    /// Set when the harness itself says this session resumes another one.
     pub resumed_from_ext_id: Option<String>,
-    /// Only for harnesses that log running token totals; see `CONTRACTS.md`.
     pub baseline_hint: Option<BaselineHint>,
 }
 
@@ -118,30 +108,21 @@ impl SessionUpsert {
     }
 }
 
-/// Running-total state of a session whose harness logs cumulative counters.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BaselineHint {
-    /// `dedup_key` of the event in this batch whose tokens were computed against a zero
-    /// baseline (the first counter value of this source). `None` when the batch continues
-    /// from a cursor that already had a running total.
     pub first_event_key: Option<String>,
-    /// Raw running total as logged at the last event of this batch.
     pub last_total: TokenCounts,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MessageRecord {
     pub session_ext_id: String,
-    /// Stable per message within the harness (e.g. a line uuid), used to skip repeats.
     pub key: String,
     pub ts: Timestamp,
     pub role: MessageRole,
     pub kind: Option<MessageKind>,
     pub tool_name: Option<String>,
-    /// Adapters may fill up to [`crate::PREVIEW_MAX_CHARS`]; the collector applies the
-    /// privacy level before storing.
     pub preview: Option<String>,
-    /// Links the message to the `UsageEvent` with this `dedup_key`.
     pub event_dedup_key: Option<String>,
 }
 
@@ -207,9 +188,7 @@ str_enum!(MessageKind {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParseWarning {
     pub harness: HarnessId,
-    /// Source path (lossy UTF-8).
     pub source: String,
-    /// 1-based line number, when known.
     pub line: Option<u64>,
     pub byte_offset: Option<u64>,
     pub message: String,
