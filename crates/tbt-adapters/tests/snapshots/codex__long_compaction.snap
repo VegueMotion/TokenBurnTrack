@@ -1,0 +1,170 @@
+---
+source: crates/tbt-adapters/tests/codex.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 01a15880-1cd3-78c2-8cc0-d25d5501e60c
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/noble-orchid-25
+    title: ~
+    git_branch: master
+    harness_version: 0.163.0
+    started_at: "2026-10-20T08:50:19.051Z"
+    ended_at: "2026-10-20T14:09:15.656Z"
+    has_baseline_hint: false
+event_count: 126
+totals:
+  (all):
+    calls: 126
+    input: 211997
+    output: 70275
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 15188736
+    reasoning: 22994
+    total: 15471008
+  openai/gpt-6-astra:
+    calls: 126
+    input: 211997
+    output: 70275
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 15188736
+    reasoning: 22994
+    total: 15471008
+events:
+  - "2026-10-20T08:50:25.354Z resp_3574010f6004f70a30c765d915a6920f095c7c872e1e5bfcc3 gpt-6-astra in=5766 out=110 cw5m=0 cw1h=0 cr=15872 rs=0"
+  - "2026-10-20T08:50:28.554Z resp_940b957bdaeefc8052ec030fe956c427dc73d40200368a2644 gpt-6-astra in=564 out=45 cw5m=0 cw1h=0 cr=21248 rs=0"
+  - "2026-10-20T08:50:42.257Z resp_ff8b89eb0303507f24c23aef185b0c1b5cd4804cb085dc9ac0 gpt-6-astra in=1124 out=337 cw5m=0 cw1h=0 cr=21760 rs=17"
+  - "2026-10-20T08:51:26.121Z resp_5286081869cc72b989d66c2bfce960859211929f42b03e057b gpt-6-astra in=490 out=87 cw5m=0 cw1h=0 cr=22784 rs=0"
+  - "2026-10-20T08:51:42.738Z resp_512e74ee21bfee2020fac3f0dc9c4256b18f4d5b763b6214ac gpt-6-astra in=3929 out=469 cw5m=0 cw1h=0 cr=23168 rs=16"
+  - "2026-10-20T08:54:11.12Z resp_ba4064c381b9e433333daedadc27e7d5b2b09ff7093b746ac6 gpt-6-astra in=610 out=267 cw5m=0 cw1h=0 cr=27008 rs=201"
+  - "2026-10-20T08:54:15.495Z resp_525c73eb7146600b1303d050ac80fec27208781cab0d2d389b gpt-6-astra in=958 out=107 cw5m=0 cw1h=0 cr=27520 rs=11"
+  - "2026-10-20T08:54:54.715Z resp_a7cf1fa4e44697343cd311be2cfd02ce93fa57dc757ad077d5 gpt-6-astra in=4243 out=1049 cw5m=0 cw1h=0 cr=28416 rs=33"
+  - "2026-10-20T08:58:51.319Z resp_ac190bcdc988868a3ebd97b8ccaded30fa504dacfcb882f5ee gpt-6-astra in=1252 out=233 cw5m=0 cw1h=0 cr=32512 rs=64"
+  - "2026-10-20T08:59:24.265Z resp_60b4c51b2d9dd2682444d72bee041b61bbae16f49ced396587 gpt-6-astra in=4113 out=898 cw5m=0 cw1h=0 cr=33664 rs=0"
+  - "2026-10-20T09:00:09.08Z resp_a0cf7e21237fe00e89419cdcc10e102e6c6c0387106bf06839 gpt-6-astra in=1054 out=462 cw5m=0 cw1h=0 cr=37632 rs=0"
+  - "2026-10-20T09:00:43.384Z resp_e5de1eb6fa0145430a1d00cd2b1a655f9d51739813bdd181bd gpt-6-astra in=23490 out=131 cw5m=0 cw1h=0 cr=15872 rs=0"
+  - "2026-10-20T09:00:50.577Z resp_551ad502ec913e2b0939b2712dc1724151cbbadc71116ba24d gpt-6-astra in=3502 out=193 cw5m=0 cw1h=0 cr=39296 rs=48"
+  - "2026-10-20T09:01:04.655Z resp_af64a5c62aeddc3c21bae8f03643fdb0ace427fbc811f50ebd gpt-6-astra in=7340 out=400 cw5m=0 cw1h=0 cr=42752 rs=148"
+  - "2026-10-20T09:01:14.115Z resp_2010b106e5ae750527467af20b762d031e50c26a836ec2dea3 gpt-6-astra in=4803 out=222 cw5m=0 cw1h=0 cr=50048 rs=79"
+  - "2026-10-20T09:01:19.292Z resp_46b12f8849235dc1f38f3d82b3c5c166419877c3cbc85298ca gpt-6-astra in=2622 out=128 cw5m=0 cw1h=0 cr=54784 rs=40"
+  - "2026-10-20T09:01:23.629Z resp_2853a7ced71014bfd8053134826c0cd359d87e32bf6e8369ec gpt-6-astra in=316 out=119 cw5m=0 cw1h=0 cr=57344 rs=0"
+  - "2026-10-20T09:03:05.155Z resp_d37cb746d0c7a1ff9a9231bb89ebca327926e8675e69dba9ad gpt-6-astra in=305 out=445 cw5m=0 cw1h=0 cr=57600 rs=12"
+  - "2026-10-20T09:04:19.695Z resp_16c0b9dcf8825ab7c59a9e05397e1b130c9a3573aa7b8bf074 gpt-6-astra in=581 out=31 cw5m=0 cw1h=0 cr=57856 rs=0"
+  - "2026-10-20T09:04:32.039Z resp_5121bd4a31fc3f6e67e3861ea1d2888d5e67f1771407a00f8b gpt-6-astra in=880 out=359 cw5m=0 cw1h=0 cr=58368 rs=16"
+  - "2026-10-20T09:05:01.869Z resp_cb7c18f00b3177e30992d1202e608bc20d4e527e5c0f95f29c gpt-6-astra in=6219 out=527 cw5m=0 cw1h=0 cr=59136 rs=420"
+  - "2026-10-20T09:05:17.963Z resp_3a2a1e2487224b101ed4b551200690011e1516157d9483dc77 gpt-6-astra in=2968 out=384 cw5m=0 cw1h=0 cr=65280 rs=210"
+  - "2026-10-20T09:05:31.301Z resp_85ee35ba4690076e1a7a3e7c328b265bf6ed805ee0c68c2290 gpt-6-astra in=2010 out=272 cw5m=0 cw1h=0 cr=68096 rs=183"
+  - "2026-10-20T09:05:41.472Z resp_0501c099d2d4e4d6356f7abf189dcb0ca7570e75ec26b0f8c2 gpt-6-astra in=4383 out=233 cw5m=0 cw1h=0 cr=70016 rs=28"
+  - "2026-10-20T09:07:10.523Z resp_3000f58559b35aeaa27119777fc4f0a6f76957b73894614405 gpt-6-astra in=1688 out=3016 cw5m=0 cw1h=0 cr=74368 rs=37"
+  - "2026-10-20T09:07:23.576Z resp_a0816f6b9b6d12246976c60ef3e39fa76f7676e0b68f58ed07 gpt-6-astra in=3213 out=296 cw5m=0 cw1h=0 cr=75904 rs=127"
+  - "2026-10-20T09:07:26.826Z resp_4fbe257361db50b7e914673e4589a0c95c43c86578d4c7f229 gpt-6-astra in=490 out=62 cw5m=0 cw1h=0 cr=78976 rs=0"
+  - "2026-10-20T09:07:30.913Z resp_4778677bb850196529b8bd6ffb7a12a810cd8c206dca2c340f gpt-6-astra in=245 out=94 cw5m=0 cw1h=0 cr=79360 rs=0"
+  - "2026-10-20T09:09:47.491Z resp_a0bea670fd4b8bba71eeab01c234c83e274ed10d64fa5cbbe7 gpt-6-astra in=357 out=941 cw5m=0 cw1h=0 cr=79488 rs=45"
+  - "2026-10-20T09:09:54.834Z resp_af269c6631a32b8b6b1d50bd415ceba6ecad57f04da494f572 gpt-6-astra in=1097 out=143 cw5m=0 cw1h=0 cr=79744 rs=0"
+  - "2026-10-20T09:10:06.18Z resp_52a843c27a8d944ed194c34d043d0689ad17988bba4de0d95b gpt-6-astra in=2963 out=244 cw5m=0 cw1h=0 cr=80768 rs=72"
+  - "2026-10-20T09:10:12.41Z resp_59ac46bbee5f04c406306243d7ac5d5d540bb531297491ac95 gpt-6-astra in=1365 out=58 cw5m=0 cw1h=0 cr=83584 rs=19"
+  - "2026-10-20T09:13:48.959Z resp_92bb0634ccbfd73aa396cd56a586f8eda351af2d517b2cd4d2 gpt-6-astra in=552 out=4550 cw5m=0 cw1h=0 cr=85376 rs=0"
+  - "2026-10-20T09:15:08.752Z resp_ee0ef593eb8be45b040b3d079a72eae0f62d4f5c4aba174207 gpt-6-astra in=4628 out=3022 cw5m=0 cw1h=0 cr=85888 rs=516"
+  - "2026-10-20T09:15:12.834Z resp_b9cdc3cd14af0d11f340c4e2106598d480d0bb188be2313a48 gpt-6-astra in=3218 out=130 cw5m=0 cw1h=0 cr=90368 rs=8"
+  - "2026-10-20T09:15:18.157Z resp_0e7abc5cdaf472b753663829e844197ce98e4c67761c8df988 gpt-6-astra in=994 out=126 cw5m=0 cw1h=0 cr=93440 rs=25"
+  - "2026-10-20T09:15:25.714Z resp_754f9e4c50e6d6498434e0b40de91bdb7c77d31515b42bb145 gpt-6-astra in=1015 out=227 cw5m=0 cw1h=0 cr=94336 rs=79"
+  - "2026-10-20T09:15:31.972Z resp_b584f36e3f80ed0c6793e4c03268672aeb52427ad87fbd93e4 gpt-6-astra in=1744 out=96 cw5m=0 cw1h=0 cr=95232 rs=65"
+  - "2026-10-20T09:16:08.887Z resp_ffe0750f15e9a0d7956d816e83046985ce7aa37b5a63b0d033 gpt-6-astra in=2349 out=1479 cw5m=0 cw1h=0 cr=96896 rs=170"
+  - "2026-10-20T09:16:16.219Z resp_62375bab5f758dc0f12f6d1e35c3650a11b31541da7cb1c83b gpt-6-astra in=1965 out=179 cw5m=0 cw1h=0 cr=98816 rs=21"
+  - "2026-10-20T09:17:28.402Z resp_1515b3ee307e4ea1a86f0a39c8e77c95bfbe37946998a9405f gpt-6-astra in=299 out=2456 cw5m=0 cw1h=0 cr=100736 rs=103"
+  - "2026-10-20T09:17:35.04Z resp_4bdcc8632b2859d8328d4a7afc3e45975a26f511e335597f16 gpt-6-astra in=2546 out=171 cw5m=0 cw1h=0 cr=100992 rs=39"
+  - "2026-10-20T09:17:40.709Z resp_def933d14a202e428fd39e285f653b9ceda883c57a7c935b8c gpt-6-astra in=365 out=144 cw5m=0 cw1h=0 cr=103424 rs=20"
+  - "2026-10-20T09:23:37.152Z resp_9f1f741eabf718eadbcf1d5fc8ec4073b3a2f5157916635b94 gpt-6-astra in=1641 out=680 cw5m=0 cw1h=0 cr=103680 rs=429"
+  - "2026-10-20T09:23:42.787Z resp_b10e5b500b6da4a828ab8a96fde36c4b63bdc6ee5c032108e5 gpt-6-astra in=986 out=165 cw5m=0 cw1h=0 cr=105216 rs=16"
+  - "2026-10-20T09:23:57.928Z resp_3e082fe146e1633bd6c07c1c2c02ce62b6dd8e0141e665357d gpt-6-astra in=443 out=373 cw5m=0 cw1h=0 cr=106112 rs=268"
+  - "2026-10-20T09:24:07.357Z resp_23855180ad52a2f9bbea3545113d4ec96e124c1c6773996382 gpt-6-astra in=832 out=198 cw5m=0 cw1h=0 cr=106496 rs=112"
+  - "2026-10-20T09:24:42.02Z resp_f12121adb0103bde97ddb62fd6cbbb9aa4e173dc4a3368dd65 gpt-6-astra in=388 out=1382 cw5m=0 cw1h=0 cr=107264 rs=13"
+  - "2026-10-20T09:24:47.023Z resp_bb3c032224cba3d5918dc6ef1e089268ba884753a5febdfa82 gpt-6-astra in=1433 out=126 cw5m=0 cw1h=0 cr=107648 rs=0"
+  - "2026-10-20T09:24:50.544Z resp_71c7bb5f2a7d58800ff78b94dded328e1d3dcbc5c913020119 gpt-6-astra in=380 out=85 cw5m=0 cw1h=0 cr=109056 rs=0"
+  - "2026-10-20T09:24:58.396Z resp_d5f709e77e3e11141c5bb48ebe61d9d5bb80564520bf46e83b gpt-6-astra in=336 out=106 cw5m=0 cw1h=0 cr=109312 rs=26"
+  - "2026-10-20T09:25:08.417Z resp_adeea779140b5dac6bd40c8ad06e9790f3f9c0361312d2304c gpt-6-astra in=1079 out=322 cw5m=0 cw1h=0 cr=109568 rs=42"
+  - "2026-10-20T09:25:12.487Z resp_9323043a92b2116e6786bac407c364d84079f948de627bec3e gpt-6-astra in=428 out=117 cw5m=0 cw1h=0 cr=110592 rs=0"
+  - "2026-10-20T09:25:19.371Z resp_38d571d777385ded1dc8d65be181428f4111463b60a32fbfce gpt-6-astra in=236 out=162 cw5m=0 cw1h=0 cr=110976 rs=19"
+  - "2026-10-20T09:25:41.69Z resp_75f8c1e7169c7304abf9c8ac784f7b01689db8a0333f093e67 gpt-6-astra in=4004 out=399 cw5m=0 cw1h=0 cr=111104 rs=354"
+  - "2026-10-20T09:25:50.999Z resp_e66560f15a02796bf2f7536ad1bcf1dea787ac1dbb057432dd gpt-6-astra in=533 out=170 cw5m=0 cw1h=0 cr=115072 rs=116"
+  - "2026-10-20T09:26:02.474Z resp_a8c5f93c883ff47fdebe233b0ec7c50318e20bf125d087dcbb gpt-6-astra in=4009 out=214 cw5m=0 cw1h=0 cr=115584 rs=120"
+  - "2026-10-20T09:27:02.445Z resp_4bb15ae980bf2e988fc7550a2f0ce3971924e0ae5366a7369e gpt-6-astra in=1541 out=1735 cw5m=0 cw1h=0 cr=119552 rs=1421"
+  - "2026-10-20T09:27:10.508Z resp_bb26e9f366dd55848eb9b761efde6bff784231a76d4a75438b gpt-6-astra in=1786 out=183 cw5m=0 cw1h=0 cr=121088 rs=0"
+  - "2026-10-20T09:27:17.354Z resp_315a05f59be45b4884c8fce5736194739c3b40d3eb6b955c4a gpt-6-astra in=347 out=125 cw5m=0 cw1h=0 cr=122752 rs=0"
+  - "2026-10-20T09:27:27.189Z resp_e16f49c9abaec2f96f531d8f5db9acd8a406a6098ca74026ae gpt-6-astra in=289 out=202 cw5m=0 cw1h=0 cr=123008 rs=20"
+  - "2026-10-20T09:27:38.511Z resp_f0efb02af6b689bb4c97583c029802742477d3c2b56978884d gpt-6-astra in=3219 out=327 cw5m=0 cw1h=0 cr=123264 rs=136"
+  - "2026-10-20T09:28:00.903Z resp_f51969fce8ceb177f5c8fd1eadc067f6be30f30e581a11eca1 gpt-6-astra in=946 out=856 cw5m=0 cw1h=0 cr=126464 rs=516"
+  - "2026-10-20T09:29:19.855Z resp_441d3cbf20f18753b7f6d0373ad2922600e8f1697ceaeeace1 gpt-6-astra in=980 out=2235 cw5m=0 cw1h=0 cr=127360 rs=2131"
+  - "2026-10-20T09:29:52.006Z resp_7012d07c7386b7e939b971354516e2c10f230b31e83316463a gpt-6-astra in=3373 out=884 cw5m=0 cw1h=0 cr=128256 rs=626"
+  - "2026-10-20T09:30:31.222Z resp_db34c15a9d2bc567460ac315d5bcc439218ef20f65341cb3a6 gpt-6-astra in=974 out=1532 cw5m=0 cw1h=0 cr=131584 rs=51"
+  - "2026-10-20T09:30:45.171Z resp_aeb071c4c60c71d772a61aecd1b3f21302289a6c09bf2192bd gpt-6-astra in=1650 out=399 cw5m=0 cw1h=0 cr=132480 rs=248"
+  - "2026-10-20T09:30:49.135Z resp_4ab7516991d3d20548b11c1b8ff282cc017e0276fc64fe3890 gpt-6-astra in=587 out=48 cw5m=0 cw1h=0 cr=134016 rs=9"
+  - "2026-10-20T09:30:54.7Z resp_d3d45a267a0984dd3ee63f143905655a8bc6677f485ee2b4e0 gpt-6-astra in=207 out=109 cw5m=0 cw1h=0 cr=134528 rs=6"
+  - "2026-10-20T09:31:35.442Z resp_91b87ab4ad2b7f716ad578790d0cc3f535d720543f4d716e47 gpt-6-astra in=2032 out=1302 cw5m=0 cw1h=0 cr=134656 rs=955"
+  - "2026-10-20T09:31:45.486Z resp_f0bfd5a0ac81cd80081b376353ff834c3dbacddad702c73b76 gpt-6-astra in=1454 out=272 cw5m=0 cw1h=0 cr=136576 rs=0"
+  - "2026-10-20T09:31:59.235Z resp_384d5cc69856289607aed60debc6f9fd3789d7c38fc12a552f gpt-6-astra in=391 out=342 cw5m=0 cw1h=0 cr=137984 rs=208"
+  - "2026-10-20T09:32:26.756Z resp_1f21e5b8a12132cf0daaa019191e5817a3d332d033130ecfa2 gpt-6-astra in=459 out=859 cw5m=0 cw1h=0 cr=138368 rs=411"
+  - "2026-10-20T09:32:32.905Z resp_ab7543e52c71bd200a43fe471017b4dc45c17fb904a0964acb gpt-6-astra in=974 out=125 cw5m=0 cw1h=0 cr=138752 rs=0"
+  - "2026-10-20T09:32:41.777Z resp_b4293b54ccf41832e09b5365a0ce36b1ecadca03f1401d50d3 gpt-6-astra in=650 out=285 cw5m=0 cw1h=0 cr=139648 rs=42"
+  - "2026-10-20T09:32:48.361Z resp_6fae383eebf6c7a54a6778379cb7fdf1a1d6ab8b27abea6b95 gpt-6-astra in=367 out=156 cw5m=0 cw1h=0 cr=140288 rs=57"
+  - "2026-10-20T09:33:03.866Z resp_226e4989b13db5b7cab43124e510a979affdad5f6ae151434f gpt-6-astra in=1690 out=460 cw5m=0 cw1h=0 cr=140544 rs=364"
+  - "2026-10-20T09:33:15.244Z resp_41bcb9b1d2dcc12a1fa2ff8240942a52f1db3b4137c20d5894 gpt-6-astra in=4350 out=145 cw5m=0 cw1h=0 cr=142208 rs=101"
+  - "2026-10-20T09:33:25.484Z resp_b248cdb7e558084b883b917ef770f2b494071367b5bdd82722 gpt-6-astra in=1413 out=322 cw5m=0 cw1h=0 cr=146432 rs=64"
+  - "2026-10-20T13:51:37.234Z resp_aa5f2f53d609042aa3c69cb518dff874903b4e3764917a52af gpt-6-astra in=4629 out=118 cw5m=0 cw1h=0 cr=147840 rs=26"
+  - "2026-10-20T13:51:46.336Z resp_58f14ff720de47418a33a0d278c616d98e78da521050fa77e3 gpt-6-astra in=893 out=263 cw5m=0 cw1h=0 cr=152448 rs=48"
+  - "2026-10-20T13:51:50.321Z resp_cd26aa3e8f19f498b6d47d22dc59787a830b7307e0f7dab10f gpt-6-astra in=438 out=49 cw5m=0 cw1h=0 cr=153216 rs=13"
+  - "2026-10-20T13:52:15.469Z resp_6923743b0c04a9a6049d20617e2cc696b892242041f4bcb5bb gpt-6-astra in=2276 out=570 cw5m=0 cw1h=0 cr=153600 rs=409"
+  - "2026-10-20T13:52:21.517Z resp_c84b0a846508594b79a2b345a460b141d6ce2260d5ec1078ec gpt-6-astra in=3149 out=152 cw5m=0 cw1h=0 cr=155392 rs=36"
+  - "2026-10-20T13:52:26.725Z resp_838bd90130e44c34a75c81bec5c889898c9bcc1502c6fdcb7c gpt-6-astra in=923 out=136 cw5m=0 cw1h=0 cr=158336 rs=24"
+  - "2026-10-20T13:53:00.218Z resp_624028f22e4a6cf88f2ea8f7a31318621bff77208b78c112fa gpt-6-astra in=806 out=821 cw5m=0 cw1h=0 cr=159104 rs=632"
+  - "2026-10-20T13:53:49.36Z resp_5f74ee401ca9e9530a968fb13e1c33a09260f58981f0230b7c gpt-6-astra in=1235 out=1308 cw5m=0 cw1h=0 cr=159744 rs=1150"
+  - "2026-10-20T13:55:06.103Z resp_69a32b059aed5670dfc3ad5e03609d8ca7cde889211756ac7d gpt-6-astra in=1821 out=2745 cw5m=0 cw1h=0 cr=160768 rs=632"
+  - "2026-10-20T13:55:11.379Z resp_3fa752d905d4be4d1d3ade0414c7ab2cac3460d99fd6546375 gpt-6-astra in=2942 out=112 cw5m=0 cw1h=0 cr=162432 rs=47"
+  - "2026-10-20T13:55:14.181Z resp_0941bdb2adbaae4d9f5a0c3ef6f47d4a3dd790d48cac77c2b5 gpt-6-astra in=282 out=31 cw5m=0 cw1h=0 cr=165248 rs=0"
+  - "2026-10-20T13:55:25.281Z resp_03822ca04cb618bc6f7ec29488ef4eea5f761b9b5e399f0132 gpt-6-astra in=639 out=269 cw5m=0 cw1h=0 cr=165376 rs=141"
+  - "2026-10-20T13:55:37.365Z resp_0c0bb42fec6edf985f93113c3aa2487100acaeca23801d3db4 gpt-6-astra in=742 out=279 cw5m=0 cw1h=0 cr=165888 rs=105"
+  - "2026-10-20T13:55:43.695Z resp_6407223d94748c60d1782722f7205a7751f1fa5caa7f990702 gpt-6-astra in=836 out=141 cw5m=0 cw1h=0 cr=166400 rs=43"
+  - "2026-10-20T13:55:53.405Z resp_66443c99a63b61d56d8f4d950a5be7a1aaf9e81cd23f2fdc22 gpt-6-astra in=655 out=288 cw5m=0 cw1h=0 cr=167040 rs=68"
+  - "2026-10-20T13:56:02.017Z resp_03daf89ecc9bffa815befcaf7d6a0dd9a8df4aa48e90f7f53f gpt-6-astra in=491 out=175 cw5m=0 cw1h=0 cr=167552 rs=52"
+  - "2026-10-20T13:56:06.864Z resp_074e50f567dec73db78edad5cf512dc000a613a0f1944d14be gpt-6-astra in=328 out=33 cw5m=0 cw1h=0 cr=167936 rs=0"
+  - "2026-10-20T13:56:45.236Z resp_517f68b07c4d45aa69afb1d96dfd32288ab90d73de14b1593d gpt-6-astra in=502 out=1045 cw5m=0 cw1h=0 cr=168064 rs=776"
+  - "2026-10-20T13:57:10.535Z resp_d3a66a60e7d0af679421386f5f795f8338bf3a40f0016c6996 gpt-6-astra in=1411 out=702 cw5m=0 cw1h=0 cr=168448 rs=496"
+  - "2026-10-20T13:57:15.025Z resp_bb9bc8258fb909d7258722345ff6a81392b103a6302fbfcead gpt-6-astra in=880 out=33 cw5m=0 cw1h=0 cr=169728 rs=0"
+  - "2026-10-20T13:57:48.548Z resp_b14458401356e382f92a6d677b6bed4583d3296f9ed9462311 gpt-6-astra in=353 out=978 cw5m=0 cw1h=0 cr=170496 rs=566"
+  - "2026-10-20T13:57:52.291Z resp_b02a34fd745ee4de4e36eeca1a471d5f7c4b9661faf8110d4b gpt-6-astra in=1248 out=33 cw5m=0 cw1h=0 cr=170624 rs=0"
+  - "2026-10-20T13:58:00.176Z resp_e78b32559019432fd0b33ed6e95c9e2aba13834f65a6d8d89b gpt-6-astra in=614 out=253 cw5m=0 cw1h=0 cr=171648 rs=19"
+  - "2026-10-20T13:58:21.659Z resp_69d667e0ec8b5df9b355a3d98c8abe7680327aae3e6085efa7 gpt-6-astra in=568 out=565 cw5m=0 cw1h=0 cr=172032 rs=371"
+  - "2026-10-20T13:58:28.41Z resp_db38cb2db0a58c58565f04006053aa82a0579b8f08f2816763 gpt-6-astra in=795 out=45 cw5m=0 cw1h=0 cr=172416 rs=10"
+  - "2026-10-20T13:58:37.329Z resp_033ebc72120ca04bf41f93a47f5c87b66d56ece2fd4b6e434d gpt-6-astra in=436 out=251 cw5m=0 cw1h=0 cr=173056 rs=16"
+  - "2026-10-20T13:58:44.945Z resp_183ae0cf514dc98ea45e261c46868b52ab6e8456710ea7c774 gpt-6-astra in=511 out=202 cw5m=0 cw1h=0 cr=173312 rs=80"
+  - "2026-10-20T13:58:56.08Z resp_b15c6a3896720583450c473de1c3ad0e8c0a43473ffed2d0a1 gpt-6-astra in=733 out=325 cw5m=0 cw1h=0 cr=173696 rs=163"
+  - "2026-10-20T13:58:59.775Z resp_fa4042a44a5573feb33f72f45ef0bfadf4bf1d440bede815c6 gpt-6-astra in=591 out=33 cw5m=0 cw1h=0 cr=174208 rs=0"
+  - "2026-10-20T13:59:28.458Z resp_7e50264d20c98c974fba17538618aa345c5b5824bf3babc3c7 gpt-6-astra in=452 out=906 cw5m=0 cw1h=0 cr=174592 rs=546"
+  - "2026-10-20T13:59:32.761Z resp_ad04ba533d7798cf816cabd02db0e264ffd34c766aedc6673f gpt-6-astra in=1150 out=54 cw5m=0 cw1h=0 cr=174848 rs=19"
+  - "2026-10-20T13:59:51.015Z resp_56347ebac18a61c71678211e8f084ab36a7a4eb2fd84e447b5 gpt-6-astra in=360 out=494 cw5m=0 cw1h=0 cr=175872 rs=295"
+  - "2026-10-20T14:00:01.251Z resp_829feabe2e0b7c87aff167ec9e1f2ab3c48c5dba0f5b621d82 gpt-6-astra in=2292 out=190 cw5m=0 cw1h=0 cr=176000 rs=98"
+  - "2026-10-20T14:00:46.008Z resp_821405c51e57044c37be3b1c213d546f714d3fedb0d6d0802a gpt-6-astra in=1118 out=1034 cw5m=0 cw1h=0 cr=178176 rs=847"
+  - "2026-10-20T14:01:42.732Z resp_43e4ecf8be00cbd458906c502a34392c8befb71685dd7965a7 gpt-6-astra in=1427 out=1703 cw5m=0 cw1h=0 cr=179072 rs=833"
+  - "2026-10-20T14:02:27.586Z resp_120a6dfff20257a35c7377ad69f3c59e06e29cce7dc4b076ca gpt-6-astra in=1898 out=1451 cw5m=0 cw1h=0 cr=180352 rs=431"
+  - "2026-10-20T14:02:35.563Z resp_596ca68fd90e211c7595e60fbdef71cde1d5ab3c3b3a8c95db gpt-6-astra in=1598 out=213 cw5m=0 cw1h=0 cr=182144 rs=25"
+  - "2026-10-20T14:02:40.486Z resp_891a86383d816bfb7b9922349263f41732986f27e61e147f42 gpt-6-astra in=564 out=94 cw5m=0 cw1h=0 cr=183552 rs=20"
+  - "2026-10-20T14:02:45.525Z resp_10cd6e46558898626eb35cf38d761587f551eacaa8ec6eec9f gpt-6-astra in=416 out=139 cw5m=0 cw1h=0 cr=183936 rs=0"
+  - "2026-10-20T14:03:13.626Z resp_e4b07f768a4e95122136d639b173e7637aca2b50ce5ca6311d gpt-6-astra in=359 out=702 cw5m=0 cw1h=0 cr=184192 rs=331"
+  - "2026-10-20T14:03:44.372Z resp_76240026c0570cd1d05eb54082c2bc7b6f35c8ae21464e31e3 gpt-6-astra in=2381 out=800 cw5m=0 cw1h=0 cr=184320 rs=739"
+  - "2026-10-20T14:04:16.061Z resp_d3bd4171c886e4608c5154d875fec9bd04e4e1e19e5a703ceb gpt-6-astra in=1209 out=1071 cw5m=0 cw1h=0 cr=186496 rs=371"
+  - "2026-10-20T14:04:21.909Z resp_ee6024209f21b64ab970e886ccb180f1aad5fd2be60ce5d019 gpt-6-astra in=1339 out=110 cw5m=0 cw1h=0 cr=187520 rs=10"
+  - "2026-10-20T14:04:40.991Z resp_26859367e5adfae206a3fe291b4da672bb37f376c7cbf90380 gpt-6-astra in=703 out=676 cw5m=0 cw1h=0 cr=188672 rs=237"
+  - "2026-10-20T14:04:49.01Z resp_56db2b1e0cc9db8dffe703919200eafac8737d3ba1d3dd2fc1 gpt-6-astra in=920 out=250 cw5m=0 cw1h=0 cr=189184 rs=0"
+  - "2026-10-20T14:06:03.405Z resp_9153aab67a336be6efaa84eca119f200eee9e38802c89d8d36 gpt-6-astra in=278 out=614 cw5m=0 cw1h=0 cr=190208 rs=516"
+  - "2026-10-20T14:09:14.788Z resp_363b4b0222c888dba8301704e3664210fc8b4a909aa062a7db gpt-6-astra in=784 out=5475 cw5m=0 cw1h=0 cr=190336 rs=0"
+message_count: 40
+messages_by_kind:
+  assistant/thinking: 39
+  system/text: 1
+messages_linked_to_events: 39
+messages_with_preview: 1
+tools: {}
+warnings: []

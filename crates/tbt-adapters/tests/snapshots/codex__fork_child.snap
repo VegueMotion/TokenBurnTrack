@@ -1,0 +1,57 @@
+---
+source: crates/tbt-adapters/tests/codex.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 01a1a2de-0e3c-709f-85bd-85d08a98fcd0
+    parent_ext_id: ~
+    resumed_from_ext_id: 01a1a15f-00cc-7ca3-b42e-51fcf7d71147
+    project_path: /u/user/user/projects/lunar-delta-4f
+    title: ~
+    git_branch: ~
+    harness_version: 0.165.0
+    started_at: "2026-11-03T19:23:44.179Z"
+    ended_at: "2026-11-03T19:26:27.561Z"
+    has_baseline_hint: false
+event_count: 7
+totals:
+  (all):
+    calls: 7
+    input: 197979
+    output: 3988
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 1266048
+    reasoning: 699
+    total: 1468015
+  openai/gpt-6.1-sol:
+    calls: 7
+    input: 197979
+    output: 3988
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 1266048
+    reasoning: 699
+    total: 1468015
+events:
+  - "2026-11-03T19:23:55.849Z resp_d912e069ed5415f4bea930ea5e0095fc4637a77efa417f7aea gpt-6.1-sol in=191315 out=125 cw5m=0 cw1h=0 cr=12416 rs=64"
+  - "2026-11-03T19:23:59.029Z resp_66402b33aefd3188b183ad1b78550bc124fdbaa3e3d36be539 gpt-6.1-sol in=1079 out=72 cw5m=0 cw1h=0 cr=203776 rs=0"
+  - "2026-11-03T19:24:28.303Z resp_5f5ec448fd5aac31ea9a7cc7e4d701f480419f4eee37ab6e0f gpt-6.1-sol in=5061 out=256 cw5m=0 cw1h=0 cr=204800 rs=199"
+  - "2026-11-03T19:25:18.301Z resp_2435fe87f85ba0bb02bc2773fcb103110f2ab6f4d6cb876ca8 gpt-6.1-sol in=80 out=463 cw5m=0 cw1h=0 cr=210048 rs=335"
+  - "2026-11-03T19:25:22.708Z resp_f349de69e917da9458bdc0d540a9da81f3b0426611b735f9dc gpt-6.1-sol in=106 out=51 cw5m=0 cw1h=0 cr=210560 rs=0"
+  - "2026-11-03T19:26:15.89Z resp_8023fcff4f08f36308f43e3e08b6c22559d8ba89479f577fb1 gpt-6.1-sol in=232 out=2883 cw5m=0 cw1h=0 cr=210688 rs=18"
+  - "2026-11-03T19:26:27.555Z resp_2c61073ba19896c1852efc07de95eb4b4b9f0d57a412c64510 gpt-6.1-sol in=106 out=138 cw5m=0 cw1h=0 cr=213760 rs=83"
+message_count: 29
+messages_by_kind:
+  assistant/text: 4
+  assistant/thinking: 5
+  assistant/tool_use: 5
+  system/text: 6
+  tool/tool_result: 5
+  user/text: 4
+messages_linked_to_events: 14
+messages_with_preview: 28
+tools:
+  tool_result/exec: 5
+  tool_use/exec: 5
+warnings: []

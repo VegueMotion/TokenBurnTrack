@@ -1,0 +1,134 @@
+---
+source: crates/tbt-adapters/tests/codex.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 019eb89e-e981-75ab-83fb-4ce7015e2fb7
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/hazy-orchid-70
+    title: ~
+    git_branch: master
+    harness_version: 0.139.0
+    started_at: "2026-06-11T21:38:02.847Z"
+    ended_at: "2026-06-11T22:02:02.452Z"
+    has_baseline_hint: false
+event_count: 77
+totals:
+  (all):
+    calls: 77
+    input: 324611
+    output: 29156
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 6684544
+    reasoning: 10181
+    total: 7038311
+  openai/gpt-5.5:
+    calls: 77
+    input: 324611
+    output: 29156
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 6684544
+    reasoning: 10181
+    total: 7038311
+events:
+  - "2026-06-11T21:38:15.289Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:12785 gpt-5.5 in=2810 out=375 cw5m=0 cw1h=0 cr=9600 rs=50"
+  - "2026-06-11T21:38:21.896Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:26023 gpt-5.5 in=3343 out=295 cw5m=0 cw1h=0 cr=9600 rs=8"
+  - "2026-06-11T21:39:40.81Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:53450 gpt-5.5 in=14242 out=1025 cw5m=0 cw1h=0 cr=12160 rs=524"
+  - "2026-06-11T21:39:50.152Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:80857 gpt-5.5 in=11245 out=418 cw5m=0 cw1h=0 cr=15744 rs=148"
+  - "2026-06-11T21:39:58.396Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:109210 gpt-5.5 in=1590 out=267 cw5m=0 cw1h=0 cr=26496 rs=10"
+  - "2026-06-11T21:40:04.898Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:138652 gpt-5.5 in=1122 out=288 cw5m=0 cw1h=0 cr=28032 rs=43"
+  - "2026-06-11T21:40:12.593Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:169577 gpt-5.5 in=1596 out=273 cw5m=0 cw1h=0 cr=29056 rs=10"
+  - "2026-06-11T21:40:23.689Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:218593 gpt-5.5 in=17941 out=483 cw5m=0 cw1h=0 cr=30592 rs=14"
+  - "2026-06-11T21:40:27.308Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:276261 gpt-5.5 in=9052 out=104 cw5m=0 cw1h=0 cr=48512 rs=12"
+  - "2026-06-11T21:40:37.227Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:334830 gpt-5.5 in=883 out=470 cw5m=0 cw1h=0 cr=57216 rs=16"
+  - "2026-06-11T21:40:45.242Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:401758 gpt-5.5 in=8837 out=363 cw5m=0 cw1h=0 cr=57728 rs=10"
+  - "2026-06-11T21:40:59.047Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:474245 gpt-5.5 in=5371 out=684 cw5m=0 cw1h=0 cr=66432 rs=486"
+  - "2026-06-11T21:41:06.991Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:547131 gpt-5.5 in=1104 out=230 cw5m=0 cw1h=0 cr=71552 rs=105"
+  - "2026-06-11T21:41:23.565Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:620845 gpt-5.5 in=355 out=783 cw5m=0 cw1h=0 cr=72576 rs=619"
+  - "2026-06-11T21:41:26.608Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:694731 gpt-5.5 in=1221 out=89 cw5m=0 cw1h=0 cr=72576 rs=0"
+  - "2026-06-11T21:41:47.35Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:769869 gpt-5.5 in=468 out=1070 cw5m=0 cw1h=0 cr=73600 rs=926"
+  - "2026-06-11T21:42:02.27Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:846450 gpt-5.5 in=2310 out=671 cw5m=0 cw1h=0 cr=73600 rs=618"
+  - "2026-06-11T21:42:09.491Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:923505 gpt-5.5 in=1107 out=300 cw5m=0 cw1h=0 cr=75648 rs=187"
+  - "2026-06-11T21:42:16.15Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1001014 gpt-5.5 in=624 out=213 cw5m=0 cw1h=0 cr=76672 rs=32"
+  - "2026-06-11T21:42:21.01Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1078766 gpt-5.5 in=413 out=155 cw5m=0 cw1h=0 cr=77184 rs=59"
+  - "2026-06-11T21:43:00.487Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1158757 gpt-5.5 in=711 out=2096 cw5m=0 cw1h=0 cr=77184 rs=190"
+  - "2026-06-11T21:44:20.478Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1237176 gpt-5.5 in=68498 out=321 cw5m=0 cw1h=0 cr=9600 rs=108"
+  - "2026-06-11T21:44:33.548Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1316380 gpt-5.5 in=869 out=639 cw5m=0 cw1h=0 cr=77696 rs=217"
+  - "2026-06-11T21:44:37.752Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1397985 gpt-5.5 in=3246 out=151 cw5m=0 cw1h=0 cr=78208 rs=15"
+  - "2026-06-11T21:44:44.706Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1480446 gpt-5.5 in=881 out=300 cw5m=0 cw1h=0 cr=81280 rs=164"
+  - "2026-06-11T21:44:51.752Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1563206 gpt-5.5 in=714 out=254 cw5m=0 cw1h=0 cr=81792 rs=188"
+  - "2026-06-11T21:45:00.041Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1646391 gpt-5.5 in=502 out=379 cw5m=0 cw1h=0 cr=82304 rs=269"
+  - "2026-06-11T21:45:03.387Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1729792 gpt-5.5 in=1005 out=92 cw5m=0 cw1h=0 cr=82304 rs=0"
+  - "2026-06-11T21:45:11.901Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1814553 gpt-5.5 in=1565 out=380 cw5m=0 cw1h=0 cr=82816 rs=283"
+  - "2026-06-11T21:45:22.032Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1901165 gpt-5.5 in=1913 out=347 cw5m=0 cw1h=0 cr=84352 rs=243"
+  - "2026-06-11T21:45:26.652Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:1988038 gpt-5.5 in=849 out=136 cw5m=0 cw1h=0 cr=85888 rs=0"
+  - "2026-06-11T21:46:24.136Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2078207 gpt-5.5 in=656 out=3113 cw5m=0 cw1h=0 cr=86400 rs=189"
+  - "2026-06-11T21:46:32.141Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2168822 gpt-5.5 in=3348 out=355 cw5m=0 cw1h=0 cr=86912 rs=83"
+  - "2026-06-11T21:46:36.613Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2259624 gpt-5.5 in=669 out=149 cw5m=0 cw1h=0 cr=89984 rs=0"
+  - "2026-06-11T21:46:45.398Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2350812 gpt-5.5 in=447 out=245 cw5m=0 cw1h=0 cr=90496 rs=19"
+  - "2026-06-11T21:47:23.06Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2442382 gpt-5.5 in=823 out=251 cw5m=0 cw1h=0 cr=90496 rs=111"
+  - "2026-06-11T21:47:26.6Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2540064 gpt-5.5 in=6571 out=103 cw5m=0 cw1h=0 cr=91008 rs=7"
+  - "2026-06-11T21:47:39.296Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2638894 gpt-5.5 in=1099 out=579 cw5m=0 cw1h=0 cr=97152 rs=7"
+  - "2026-06-11T21:47:49.714Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2738363 gpt-5.5 in=806 out=487 cw5m=0 cw1h=0 cr=98176 rs=23"
+  - "2026-06-11T21:47:52.898Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2837959 gpt-5.5 in=818 out=90 cw5m=0 cw1h=0 cr=98688 rs=8"
+  - "2026-06-11T21:48:03.697Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:2937839 gpt-5.5 in=527 out=153 cw5m=0 cw1h=0 cr=99200 rs=53"
+  - "2026-06-11T21:48:12.494Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3039762 gpt-5.5 in=1886 out=325 cw5m=0 cw1h=0 cr=99712 rs=186"
+  - "2026-06-11T21:48:17.938Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3141841 gpt-5.5 in=715 out=116 cw5m=0 cw1h=0 cr=101248 rs=8"
+  - "2026-06-11T21:48:24.851Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3244586 gpt-5.5 in=708 out=277 cw5m=0 cw1h=0 cr=101760 rs=127"
+  - "2026-06-11T21:48:28.259Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3348599 gpt-5.5 in=1639 out=102 cw5m=0 cw1h=0 cr=102272 rs=17"
+  - "2026-06-11T21:48:40.272Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3453221 gpt-5.5 in=249 out=565 cw5m=0 cw1h=0 cr=103808 rs=306"
+  - "2026-06-11T21:48:56.291Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3558678 gpt-5.5 in=1296 out=353 cw5m=0 cw1h=0 cr=103808 rs=173"
+  - "2026-06-11T21:49:08.598Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3665127 gpt-5.5 in=1192 out=425 cw5m=0 cw1h=0 cr=104832 rs=291"
+  - "2026-06-11T21:49:18.452Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3772389 gpt-5.5 in=1079 out=327 cw5m=0 cw1h=0 cr=105856 rs=199"
+  - "2026-06-11T21:49:28.859Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3879797 gpt-5.5 in=422 out=106 cw5m=0 cw1h=0 cr=106880 rs=0"
+  - "2026-06-11T21:49:37.749Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:3987544 gpt-5.5 in=688 out=179 cw5m=0 cw1h=0 cr=106880 rs=23"
+  - "2026-06-11T21:49:42.152Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:4095853 gpt-5.5 in=802 out=115 cw5m=0 cw1h=0 cr=107392 rs=22"
+  - "2026-06-11T21:49:50.397Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:4204676 gpt-5.5 in=605 out=314 cw5m=0 cw1h=0 cr=107904 rs=48"
+  - "2026-06-11T21:49:58.656Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:4314781 gpt-5.5 in=1359 out=330 cw5m=0 cw1h=0 cr=108416 rs=124"
+  - "2026-06-11T21:50:32.794Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:4425445 gpt-5.5 in=1111 out=113 cw5m=0 cw1h=0 cr=109440 rs=9"
+  - "2026-06-11T21:51:06.427Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:4538675 gpt-5.5 in=2666 out=100 cw5m=0 cw1h=0 cr=110464 rs=11"
+  - "2026-06-11T21:51:40.63Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:4652026 gpt-5.5 in=254 out=73 cw5m=0 cw1h=0 cr=113024 rs=0"
+  - "2026-06-11T21:52:00.612Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:4765496 gpt-5.5 in=375 out=71 cw5m=0 cw1h=0 cr=113024 rs=0"
+  - "2026-06-11T21:52:06.89Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:4879914 gpt-5.5 in=1140 out=254 cw5m=0 cw1h=0 cr=113024 rs=38"
+  - "2026-06-11T21:52:11.149Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:4995109 gpt-5.5 in=1026 out=121 cw5m=0 cw1h=0 cr=114048 rs=9"
+  - "2026-06-11T21:52:18.039Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:5110685 gpt-5.5 in=211 out=293 cw5m=0 cw1h=0 cr=115072 rs=62"
+  - "2026-06-11T21:52:23.863Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:5226469 gpt-5.5 in=542 out=170 cw5m=0 cw1h=0 cr=115072 rs=8"
+  - "2026-06-11T21:53:00.522Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:5342809 gpt-5.5 in=589 out=167 cw5m=0 cw1h=0 cr=115584 rs=43"
+  - "2026-06-11T21:53:03.701Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:5461611 gpt-5.5 in=2622 out=84 cw5m=0 cw1h=0 cr=116096 rs=7"
+  - "2026-06-11T21:53:09.344Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:5580699 gpt-5.5 in=215 out=217 cw5m=0 cw1h=0 cr=118656 rs=28"
+  - "2026-06-11T21:53:15.998Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:5700344 gpt-5.5 in=726 out=263 cw5m=0 cw1h=0 cr=118656 rs=154"
+  - "2026-06-11T21:53:20.505Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:5820134 gpt-5.5 in=538 out=84 cw5m=0 cw1h=0 cr=119168 rs=0"
+  - "2026-06-11T21:53:55.318Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:5940520 gpt-5.5 in=148 out=558 cw5m=0 cw1h=0 cr=119680 rs=417"
+  - "2026-06-11T21:54:01.43Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:6061149 gpt-5.5 in=746 out=203 cw5m=0 cw1h=0 cr=119680 rs=15"
+  - "2026-06-11T21:54:08.907Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:6182071 gpt-5.5 in=474 out=256 cw5m=0 cw1h=0 cr=120192 rs=14"
+  - "2026-06-11T21:54:20.49Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:6303675 gpt-5.5 in=998 out=414 cw5m=0 cw1h=0 cr=120192 rs=194"
+  - "2026-06-11T21:54:28.614Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:6425862 gpt-5.5 in=1191 out=292 cw5m=0 cw1h=0 cr=120704 rs=153"
+  - "2026-06-11T21:54:39.131Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:6548330 gpt-5.5 in=497 out=243 cw5m=0 cw1h=0 cr=121728 rs=10"
+  - "2026-06-11T21:54:53.094Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:6671584 gpt-5.5 in=1012 out=514 cw5m=0 cw1h=0 cr=121728 rs=181"
+  - "2026-06-11T22:01:14.039Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:6790500 gpt-5.5 in=106232 out=524 cw5m=0 cw1h=0 cr=12160 rs=208"
+  - "2026-06-11T22:01:43.009Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:6913814 gpt-5.5 in=3862 out=1308 cw5m=0 cw1h=0 cr=118144 rs=1010"
+  - "2026-06-11T22:01:47.311Z 019eb89e-e981-75ab-83fb-4ce7015e2fb7:7038311 gpt-5.5 in=2645 out=124 cw5m=0 cw1h=0 cr=121728 rs=32"
+message_count: 394
+messages_by_kind:
+  assistant/text: 63
+  assistant/thinking: 71
+  assistant/tool_use: 127
+  system/text: 2
+  tool/tool_result: 125
+  user/text: 6
+messages_linked_to_events: 261
+messages_with_preview: 323
+tools:
+  tool_result/apply_patch: 11
+  tool_result/exec_command: 108
+  tool_result/request_user_input: 1
+  tool_result/write_stdin: 5
+  tool_use/apply_patch: 11
+  tool_use/exec_command: 108
+  tool_use/request_user_input: 1
+  tool_use/web_search: 2
+  tool_use/write_stdin: 5
+warnings: []
