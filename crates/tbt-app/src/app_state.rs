@@ -157,6 +157,17 @@ impl AppState {
         changed
     }
 
+    pub fn set_harnesses(&mut self, harnesses: Vec<HarnessOption>) -> bool {
+        self.harnesses = harnesses;
+        let before = self.selected.len();
+        let known: BTreeSet<HarnessId> = self.harnesses.iter().map(|h| h.id.clone()).collect();
+        self.selected.retain(|id| known.contains(id));
+        if !self.selected.is_empty() && self.selected.len() == known.len() {
+            self.selected.clear();
+        }
+        self.selected.len() != before
+    }
+
     pub fn toggle_harness(&mut self, id: &HarnessId) {
         if !self.selected.remove(id) {
             self.selected.insert(id.clone());
@@ -385,6 +396,23 @@ mod tests {
         s.toggle_harness(&HarnessId::OPENCODE);
         assert!(s.is_all());
         assert!(s.query_filter(now).harnesses.is_empty());
+    }
+
+    #[test]
+    fn reloading_harnesses_prunes_the_selection() {
+        let mut s = state();
+        s.toggle_harness(&HarnessId::CODEX);
+        s.toggle_harness(&HarnessId::OPENCODE);
+        let mut fewer = s.harnesses.clone();
+        fewer.retain(|h| h.id != HarnessId::OPENCODE);
+        assert!(s.set_harnesses(fewer.clone()));
+        assert_eq!(s.selected, BTreeSet::from([HarnessId::CODEX]));
+        assert_eq!(s.harnesses, fewer);
+        assert!(!s.set_harnesses(fewer.clone()));
+        fewer.retain(|h| h.id != HarnessId::CLAUDE_CODE);
+        assert!(s.set_harnesses(fewer));
+        assert!(s.is_all());
+        assert!(!s.set_harnesses(Vec::new()));
     }
 
     #[test]

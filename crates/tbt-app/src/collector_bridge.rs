@@ -5,7 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
-use gpui::{AsyncApp, Context, Entity, Task, WeakEntity};
+use gpui::{AsyncApp, Context, Entity, Subscription, Task, WeakEntity};
 use jiff::{SignedDuration, Timestamp};
 use notify::event::{EventKind, ModifyKind};
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
@@ -298,6 +298,7 @@ pub struct CollectorBridge {
     refresh_task: Option<Task<()>>,
     daemon_task: Option<Task<()>>,
     _tasks: Vec<Task<()>>,
+    _subscription: Subscription,
 }
 
 impl CollectorBridge {
@@ -323,6 +324,11 @@ impl CollectorBridge {
             watcher: None,
             task: None,
         });
+        let subscription = cx.subscribe(&app_state, |b, _, ev: &AppStateEvent, cx| {
+            if *ev == AppStateEvent::DataChanged {
+                b.refresh(cx);
+            }
+        });
         let mut bridge = CollectorBridge {
             core,
             app_state,
@@ -332,8 +338,9 @@ impl CollectorBridge {
             refresh_task: None,
             daemon_task: None,
             _tasks: Vec::new(),
+            _subscription: subscription,
         };
-        bridge.refresh(false, cx);
+        bridge.refresh(cx);
         bridge._tasks.push(Self::spawn_status_ticker(cx));
         if let Some(core) = &bridge.core {
             let interval = core.collector().config().sync_interval_minutes;
@@ -420,10 +427,7 @@ impl CollectorBridge {
             cx.notify();
         });
         match result {
-            SyncResult::Finished(_) => {
-                self.daemon_task = None;
-                self.refresh(false, cx);
-            }
+            SyncResult::Finished(_) => self.daemon_task = None,
             SyncResult::Busy => self.wait_for_daemon(cx),
             SyncResult::Failed(_) | SyncResult::Skipped => {}
         }
@@ -449,15 +453,15 @@ impl CollectorBridge {
                 b.daemon_task = None;
                 b.app_state.update(cx, |s, cx| {
                     s.daemon_busy = false;
+                    cx.emit(AppStateEvent::DataChanged);
                     cx.notify();
                 });
-                b.refresh(true, cx);
             })
             .ok();
         }));
     }
 
-    fn refresh(&mut self, emit: bool, cx: &mut Context<Self>) {
+    fn refresh(&mut self, cx: &mut Context<Self>) {
         let data = self.data.clone();
         let defaults = self
             .core
@@ -469,7 +473,7 @@ impl CollectorBridge {
                 .background_executor()
                 .spawn(async move { (data.harness_status(), data.ingest_runs(RECENT_RUNS)) })
                 .await;
-            this.update(cx, |b, cx| b.apply_refresh(loaded, defaults, emit, cx))
+            this.update(cx, |b, cx| b.apply_refresh(loaded, defaults, cx))
                 .ok();
         }));
     }
@@ -478,18 +482,16 @@ impl CollectorBridge {
         &mut self,
         (status, runs): Refreshed,
         defaults: Option<Vec<(HarnessId, Vec<PathBuf>)>>,
-        emit: bool,
         cx: &mut Context<Self>,
     ) {
         self.app_state.update(cx, |s, cx| {
-            if let Ok(status) = &status {
-                s.harnesses = harness_options(status);
+            if let Ok(status) = &status
+                && s.set_harnesses(harness_options(status))
+            {
+                cx.emit(AppStateEvent::FiltersChanged);
             }
             if let Some(last) = runs.iter().flatten().find_map(LastSync::from_run) {
                 s.last_sync = Some(last);
-            }
-            if emit {
-                cx.emit(AppStateEvent::DataChanged);
             }
             cx.notify();
         });
