@@ -1,0 +1,146 @@
+---
+source: crates/tbt-adapters/tests/opencode.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: ses_1859d3a5bffemujK39r99FD3lm
+    parent_ext_id: ses_1859d49beffej0mYxVImsxvVj8
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/lunar-birch-b1
+    title: est voluptate excepteur esse enim amet
+    git_branch: ~
+    harness_version: local
+    started_at: "2026-05-30T19:35:54.021Z"
+    ended_at: "2026-05-30T19:36:36.947Z"
+    has_baseline_hint: false
+  - ext_id: ses_1859d49beffej0mYxVImsxvVj8
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/lunar-birch-b1
+    title: anim do commodo lorem laboris tempor s
+    git_branch: ~
+    harness_version: local
+    started_at: "2026-05-30T19:35:50.081Z"
+    ended_at: "2026-05-30T19:37:46.084Z"
+    has_baseline_hint: false
+  - ext_id: ses_181a135d8ffeSoBOc79SFXyyZC
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/lunar-birch-b1
+    title: adipiscing deserunt cillum ex velit ad
+    git_branch: ~
+    harness_version: local
+    started_at: "2026-05-31T14:10:01.896Z"
+    ended_at: "2026-05-31T14:12:23.656Z"
+    has_baseline_hint: false
+  - ext_id: ses_181201c62ffeQgnySZGanr7kRM
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/eager-delta-51
+    title: commodo cillum labore duis ex cupidatat cill
+    git_branch: ~
+    harness_version: 1.15.13
+    started_at: "2026-05-31T16:31:02.557Z"
+    ended_at: "2026-05-31T16:31:08.923Z"
+    has_baseline_hint: false
+  - ext_id: ses_e20abeb75ffeKnigVjBVuBB9rl
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/keen-meadow-d6
+    title: dolor laborum adipiscing
+    git_branch: ~
+    harness_version: 1.19.5
+    started_at: "2026-11-15T13:09:51.882Z"
+    ended_at: "2026-11-15T13:21:21.419Z"
+    has_baseline_hint: false
+  - ext_id: ses_dff56f2c1ffe76FuAVDEgQ7xwT
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /mnt/bold-juniper-8a/projects/pale-quartz-b9
+    title: commodo aliquip sed ipsum elit incidid
+    git_branch: ~
+    harness_version: 1.19.5
+    started_at: "2026-11-22T00:30:08.702Z"
+    ended_at: "2026-11-22T00:31:52.2Z"
+    has_baseline_hint: false
+event_count: 33
+totals:
+  (all):
+    calls: 33
+    input: 39686
+    output: 12865
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 457344
+    reasoning: 2938
+    total: 509895
+  "ollama/qwen3.5:9b":
+    calls: 1
+    input: 1750
+    output: 46
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 9728
+    reasoning: 0
+    total: 11524
+  opencode/deepseek-v4-flash-free:
+    calls: 32
+    input: 37936
+    output: 12819
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 447616
+    reasoning: 2938
+    total: 498371
+events:
+  - "2026-05-30T19:35:56.757Z msg_e7a62c5b7001A37WU308RDuhQv deepseek-v4-flash-free in=3850 out=314 cw5m=0 cw1h=0 cr=0 rs=41"
+  - "2026-05-30T19:36:01.276Z msg_e7a62d059001KaQLo61UB31vYX deepseek-v4-flash-free in=500 out=541 cw5m=0 cw1h=0 cr=4096 rs=82"
+  - "2026-05-30T19:36:04.278Z msg_e7a62e1ff001tIRIejlhIgaGRD deepseek-v4-flash-free in=1370 out=329 cw5m=0 cw1h=0 cr=5120 rs=49"
+  - "2026-05-30T19:36:08.794Z msg_e7a62edb8001ncK32RYnSRggdu deepseek-v4-flash-free in=1175 out=547 cw5m=0 cw1h=0 cr=6784 rs=88"
+  - "2026-05-30T19:36:12.526Z msg_e7a62ff5c001VqFKHgnY2KtgKj deepseek-v4-flash-free in=1872 out=379 cw5m=0 cw1h=0 cr=8448 rs=75"
+  - "2026-05-30T19:36:14.885Z msg_e7a630df00015jOHWBbRoAP6ds deepseek-v4-flash-free in=914 out=157 cw5m=0 cw1h=0 cr=10624 rs=57"
+  - "2026-05-30T19:36:17.405Z msg_e7a631727001FXCs0hVb8TaTQu deepseek-v4-flash-free in=138 out=166 cw5m=0 cw1h=0 cr=11648 rs=67"
+  - "2026-05-30T19:36:20.217Z msg_e7a632100001HUpPIqTNzGq6tt deepseek-v4-flash-free in=91 out=159 cw5m=0 cw1h=0 cr=11904 rs=69"
+  - "2026-05-30T19:36:36.854Z msg_e7a632bfc001oM1RHHTNJr1gbD deepseek-v4-flash-free in=136 out=2732 cw5m=0 cw1h=0 cr=12032 rs=201"
+  - "2026-05-30T19:36:36.91Z msg_e7a62b66f001bm5eXk4J2eZzbJ deepseek-v4-flash-free in=8445 out=293 cw5m=0 cw1h=0 cr=0 rs=95"
+  - "2026-05-30T19:36:51.363Z msg_e7a636d2f001pVwTJLINGro2Zp deepseek-v4-flash-free in=2613 out=1864 cw5m=0 cw1h=0 cr=8704 rs=1253"
+  - "2026-05-30T19:36:54.946Z msg_e7a63a5a5001lqJgcFf7e1slBh deepseek-v4-flash-free in=2166 out=378 cw5m=0 cw1h=0 cr=13056 rs=270"
+  - "2026-05-30T19:36:56.996Z msg_e7a63b3a4001jbJqAGs4QU7p5k deepseek-v4-flash-free in=205 out=160 cw5m=0 cw1h=0 cr=15488 rs=15"
+  - "2026-05-30T19:36:58.673Z msg_e7a63bba6001Cu09yKmHh3o1Fb deepseek-v4-flash-free in=581 out=73 cw5m=0 cw1h=0 cr=15744 rs=14"
+  - "2026-05-30T19:37:00.79Z msg_e7a63c233001XQ4rWrhw3NQzQc deepseek-v4-flash-free in=334 out=68 cw5m=0 cw1h=0 cr=16384 rs=21"
+  - "2026-05-30T19:37:03.987Z msg_e7a63ca79001GhQ4u4kfuEgrnv deepseek-v4-flash-free in=155 out=333 cw5m=0 cw1h=0 cr=16768 rs=116"
+  - "2026-05-30T19:37:07.163Z msg_e7a63d6f5001gT56wSKeYERdAN deepseek-v4-flash-free in=557 out=318 cw5m=0 cw1h=0 cr=16896 rs=14"
+  - "2026-05-30T19:37:09.635Z msg_e7a63e35d001WgzHgWEH95CgQi deepseek-v4-flash-free in=134 out=201 cw5m=0 cw1h=0 cr=17664 rs=13"
+  - "2026-05-30T19:37:13.426Z msg_e7a63ed06001JA4tDe1vNFwFKu deepseek-v4-flash-free in=305 out=525 cw5m=0 cw1h=0 cr=17920 rs=12"
+  - "2026-05-30T19:37:18.215Z msg_e7a63fbd4001Wjj27pHFbkv57c deepseek-v4-flash-free in=110 out=700 cw5m=0 cw1h=0 cr=18688 rs=15"
+  - "2026-05-30T19:37:20.836Z msg_e7a640e89001IP3GOK68BX39mH deepseek-v4-flash-free in=90 out=199 cw5m=0 cw1h=0 cr=19456 rs=11"
+  - "2026-05-30T19:37:24.731Z msg_e7a6418c60011WFZmef08ORqS6 deepseek-v4-flash-free in=259 out=404 cw5m=0 cw1h=0 cr=19712 rs=137"
+  - "2026-05-30T19:37:27.402Z msg_e7a6427fe0010xY4ombUTKJs3R deepseek-v4-flash-free in=38 out=221 cw5m=0 cw1h=0 cr=20352 rs=33"
+  - "2026-05-30T19:37:29.114Z msg_e7a64326d001t6IZS7yfLBwPhk deepseek-v4-flash-free in=229 out=61 cw5m=0 cw1h=0 cr=20608 rs=7"
+  - "2026-05-30T19:37:31.484Z msg_e7a64391c001ymI2hpu5B47H8l deepseek-v4-flash-free in=62 out=117 cw5m=0 cw1h=0 cr=20864 rs=26"
+  - "2026-05-30T19:37:33.581Z msg_e7a64425e001Lckmqy63InhTJX deepseek-v4-flash-free in=68 out=129 cw5m=0 cw1h=0 cr=20992 rs=34"
+  - "2026-05-30T19:37:36.646Z msg_e7a644a8f001XF9UAXPZBxMWce deepseek-v4-flash-free in=119 out=210 cw5m=0 cw1h=0 cr=21120 rs=45"
+  - "2026-05-30T19:37:40.424Z msg_e7a645688001b9DPatjKHbvD7T deepseek-v4-flash-free in=692 out=456 cw5m=0 cw1h=0 cr=21376 rs=12"
+  - "2026-05-30T19:37:42.798Z msg_e7a64654a001844Ryd8vHD2LYh deepseek-v4-flash-free in=1636 out=198 cw5m=0 cw1h=0 cr=22400 rs=12"
+  - "2026-05-30T19:37:46.055Z msg_e7a646e90001SmDIwRt5V0ANLH deepseek-v4-flash-free in=266 out=238 cw5m=0 cw1h=0 cr=24192 rs=12"
+  - "2026-05-31T16:31:06.496Z msg_e7edfe747001YLAbaBhSp8TPJN deepseek-v4-flash-free in=8499 out=184 cw5m=0 cw1h=0 cr=0 rs=25"
+  - "2026-05-31T16:31:08.897Z msg_e7edff3030013W7w6UMritA5IW deepseek-v4-flash-free in=327 out=165 cw5m=0 cw1h=0 cr=8576 rs=17"
+  - "2026-11-15T13:21:21.417Z msg_1df541652001TsMmyHlsEivsMH qwen3.5:9b in=1750 out=46 cw5m=0 cw1h=0 cr=9728 rs=0"
+message_count: 137
+messages_by_kind:
+  assistant/text: 10
+  assistant/thinking: 33
+  assistant/tool_use: 87
+  user/text: 7
+messages_linked_to_events: 130
+messages_with_preview: 137
+tools:
+  tool_use/bash: 4
+  tool_use/edit: 10
+  tool_use/glob: 9
+  tool_use/grep: 9
+  tool_use/read: 48
+  tool_use/task: 1
+  tool_use/todowrite: 5
+  tool_use/write: 1
+warnings: []
