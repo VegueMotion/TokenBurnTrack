@@ -1,0 +1,60 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+env:
+  FORGE_API: ${{ github.server_url }}/api/v1
+  FORGE_REPO: ${{ github.repository }}
+  FORGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  RELEASE_TAG: ${{ github.ref_name }}
+
+jobs:
+  appimage:
+    runs-on: docker
+    container:
+      image: docker.io/library/ubuntu:22.04
+    steps:
+      - name: Install build dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends ca-certificates curl git gcc g++ clang \
+            cmake pkg-config libxkbcommon-dev libwayland-dev libxcb1-dev libx11-dev \
+            libfontconfig1-dev libfreetype-dev file >/dev/null
+          curl -sSf https://sh.rustup.rs | sh -s -- -y -q --default-toolchain none --profile minimal
+      - name: Check out
+        run: |
+          git init -q .
+          git -c http.extraHeader="Authorization: token $FORGE_TOKEN" \
+            fetch -q --depth 1 "${{ github.server_url }}/$FORGE_REPO" "${{ github.sha }}"
+          git checkout -q FETCH_HEAD
+      - name: Build
+        run: scripts/build-appimage.sh --host
+      - name: Upload
+        run: scripts/upload-release-asset.sh dist/TokenBurnTrack-*.AppImage dist/tbt-daemon-*-linux-*
+
+  flatpak:
+    runs-on: docker
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-26.08
+    steps:
+      - name: Check out
+        run: |
+          git init -q .
+          git -c http.extraHeader="Authorization: token $FORGE_TOKEN" \
+            fetch -q --depth 1 "${{ github.server_url }}/$FORGE_REPO" "${{ github.sha }}"
+          git checkout -q FETCH_HEAD
+      - name: Build
+        run: |
+          VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          ID=io.VagueMotion.TokenBurnTrack
+          flatpak-builder --disable-rofiles-fuse --force-clean --repo=repo build-dir \
+            packaging/flatpak/$ID.yml
+          mkdir -p dist
+          flatpak build-bundle repo dist/TokenBurnTrack-$VERSION-$(uname -m).flatpak $ID \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+      - name: Upload
+        run: scripts/upload-release-asset.sh dist/*.flatpak
+

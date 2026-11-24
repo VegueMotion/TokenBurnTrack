@@ -82,6 +82,13 @@ The AppImage contains only the app. The script also writes a standalone `tbt-dae
 binary next to it; install that one for collection while the app is closed, because
 the AppImage's mount path changes on every run.
 
+Pushing a `v*` tag runs `.forgejo/workflows/release.yml`, which builds the Flatpak
+bundle and the AppImage on a Linux runner with the `docker` label and attaches them to
+the tag's release (a prerelease if the tag contains `-`). `flatpak-builder` needs
+privileged containers, so set `container.privileged: true` in that runner's config.
+Windows and macOS packages are not built there; build them with the scripts above and
+attach them by hand.
+
 ## Install
 
 Copy the binaries somewhere stable first, because the schedule points at an absolute
