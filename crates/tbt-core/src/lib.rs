@@ -10,6 +10,9 @@ mod time;
 mod tokens;
 
 pub mod jsonl;
+pub mod sandbox;
+
+pub const APP_ID: &str = "io.VagueMotion.TokenBurnTrack";
 
 pub use adapter::{HarnessAdapter, ReadBatch, SourceKind, SourceRef};
 pub use cursor::Cursor;

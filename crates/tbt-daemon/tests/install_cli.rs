@@ -76,7 +76,7 @@ fn install_dry_run_prints_plan_and_touches_nothing() {
     assert!(stdout.contains(&format!(
         "write {}",
         home.path()
-            .join(".local/share/icons/hicolor/scalable/apps/tbt-app.svg")
+            .join(".local/share/icons/hicolor/scalable/apps/io.VagueMotion.TokenBurnTrack.svg")
             .display()
     )));
     assert!(stdout.contains("run systemctl --user daemon-reload\n"));
@@ -100,7 +100,7 @@ fn install_dry_run_defaults_and_env_data_dir() {
         home.path().join(".local/share/tokenburntrack").display()
     )));
     assert!(!stdout.contains("enable --now"));
-    assert!(!stdout.contains("tbt-app.desktop"));
+    assert!(!stdout.contains(".desktop"));
 
     let data = home.path().join("data");
     let out = daemon(

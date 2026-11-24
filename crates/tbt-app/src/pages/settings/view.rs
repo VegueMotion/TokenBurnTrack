@@ -768,6 +768,39 @@ impl SettingsPage {
                         cx,
                     )),
             )
+            .when(crate::background::available(), |d| {
+                d.child(
+                    v_flex()
+                        .gap_1()
+                        .child(label("Collect while closed", cx))
+                        .child(
+                            h_flex()
+                                .gap_2()
+                                .child(
+                                    Button::new("autostart-on")
+                                        .small()
+                                        .outline()
+                                        .label("Turn on")
+                                        .on_click(cx.listener(|this, _, window, cx| {
+                                            this.set_autostart(true, window, cx)
+                                        })),
+                                )
+                                .child(
+                                    Button::new("autostart-off")
+                                        .small()
+                                        .outline()
+                                        .label("Turn off")
+                                        .on_click(cx.listener(|this, _, window, cx| {
+                                            this.set_autostart(false, window, cx)
+                                        })),
+                                ),
+                        )
+                        .child(ui::muted_text(
+                            "Starts tbt-daemon at login through the desktop's background permission, so syncs continue while the app is closed.",
+                            cx,
+                        )),
+                )
+            })
             .children(g.errors.iter().map(|e| {
                 div()
                     .text_sm()

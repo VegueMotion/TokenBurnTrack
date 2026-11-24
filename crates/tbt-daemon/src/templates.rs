@@ -2,8 +2,10 @@ pub const SERVICE: &str = include_str!("../../../packaging/systemd/tbt-daemon.se
 pub const TIMER: &str = include_str!("../../../packaging/systemd/tbt-daemon.timer");
 pub const PLIST: &str = include_str!("../../../packaging/launchd/com.tokenburntrack.daemon.plist");
 pub const TASK_XML: &str = include_str!("../../../packaging/windows/tbt-daemon-task.xml");
-pub const DESKTOP: &str = include_str!("../../../packaging/linux/tbt-app.desktop");
-pub const ICON_SVG: &str = include_str!("../../../packaging/icons/tbt-app.svg");
+pub const DESKTOP: &str =
+    include_str!("../../../packaging/linux/io.VagueMotion.TokenBurnTrack.desktop");
+pub const ICON_SVG: &str =
+    include_str!("../../../packaging/icons/io.VagueMotion.TokenBurnTrack.svg");
 
 const SERVICE_EXEC: &str = "ExecStart=%h/.local/bin/tbt-daemon --once";
 const SERVICE_RW: &str = "ReadWritePaths=%h/.local/share/tokenburntrack";
@@ -220,7 +222,10 @@ mod tests {
         assert_well_formed_xml(ICON_SVG);
         assert!(SERVICE.contains(SERVICE_EXEC) && SERVICE.contains(SERVICE_RW));
         assert!(TIMER.contains("OnCalendar=hourly") && TIMER.contains("Persistent=true"));
-        assert!(DESKTOP.contains(DESKTOP_EXEC) && DESKTOP.contains("StartupWMClass=tbt-app\n"));
+        assert!(
+            DESKTOP.contains(DESKTOP_EXEC)
+                && DESKTOP.contains("StartupWMClass=io.VagueMotion.TokenBurnTrack\n")
+        );
     }
 
     #[test]
@@ -294,7 +299,7 @@ mod tests {
         assert_eq!(desktop_entry(None), DESKTOP);
         let entry = desktop_entry(Some("/home/u/.local/bin/tbt-app"));
         assert!(entry.contains("\nExec=/home/u/.local/bin/tbt-app\n"));
-        assert!(entry.contains("\nIcon=tbt-app\n"));
+        assert!(entry.contains("\nIcon=io.VagueMotion.TokenBurnTrack\n"));
         let entry = desktop_entry(Some("/home/u/my apps/100%/tbt-app"));
         assert!(
             entry.contains("\nExec=\"/home/u/my apps/100%%/tbt-app\"\n"),

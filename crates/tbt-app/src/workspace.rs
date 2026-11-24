@@ -418,7 +418,7 @@ pub fn open_main_window(
     cx.open_window(
         WindowOptions {
             window_bounds: Some(WindowBounds::Windowed(bounds)),
-            app_id: Some("tbt-app".into()),
+            app_id: Some(tbt_core::APP_ID.into()),
             titlebar: Some(gpui::TitlebarOptions {
                 title: Some("TokenBurnTrack".into()),
                 ..Default::default()

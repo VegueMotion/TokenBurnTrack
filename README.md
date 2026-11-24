@@ -90,9 +90,9 @@ Install the daemon schedule if you also want collection while the app is closed.
 `$XDG_CONFIG_HOME/systemd/user/` with the binary path and data directory filled in,
 creates the data directory, then runs `systemctl --user daemon-reload` and
 `systemctl --user enable --now tbt-daemon.timer`. With `--app` it also installs
-`tbt-app.desktop` to `$XDG_DATA_HOME/applications/` and the icon to
+`io.VagueMotion.TokenBurnTrack.desktop` to `$XDG_DATA_HOME/applications/` and the icon to
 `$XDG_DATA_HOME/icons/hicolor/scalable/apps/`, so launchers show the app with its name
-and icon.
+and icon. Files from older versions (`tbt-app.desktop`, `tbt-app.svg`) are removed.
 
 | Option | Effect |
 |---|---|
@@ -134,10 +134,43 @@ systemctl --user daemon-reload
 systemctl --user enable --now tbt-daemon.timer
 ```
 
-For the launcher entry, copy `packaging/linux/tbt-app.desktop` to
-`~/.local/share/applications/` and `packaging/icons/tbt-app.svg` to
+For the launcher entry, copy `packaging/linux/io.VagueMotion.TokenBurnTrack.desktop` to
+`~/.local/share/applications/` and `packaging/icons/io.VagueMotion.TokenBurnTrack.svg` to
 `~/.local/share/icons/hicolor/scalable/apps/` (`Exec=tbt-app` expects `tbt-app` in
 `PATH`).
+
+### Linux (Flatpak)
+
+The manifest is `packaging/flatpak/io.VagueMotion.TokenBurnTrack.yml`. It builds offline with the pinned
+Rust 1.100.0 toolchain (downloaded as a checksummed source) and the crates listed in
+`packaging/flatpak/cargo-sources.json`. Regenerate that file whenever `Cargo.lock`
+changes:
+
+```sh
+scripts/flatpak-cargo-sources.py
+flatpak-builder --user --install --force-clean build-dir packaging/flatpak/io.VagueMotion.TokenBurnTrack.yml
+flatpak run io.VagueMotion.TokenBurnTrack
+```
+
+The sandbox can read `~/.claude`, `~/.codex` and `~/.gemini`, and can read and write
+`~/.local/share/opencode` (SQLite needs to create the `-shm` file of a database in
+WAL mode). Config and data stay in the usual host locations
+(`~/.config/tokenburntrack`, `~/.local/share/tokenburntrack`), so the Flatpak and a
+`tbt-daemon` installed on the host share one database and one collector lock.
+
+Roots outside those directories (custom roots, `[[generic_jsonl]]` paths, a
+`CLAUDE_CONFIG_DIR` elsewhere) are not visible until you grant them; the Harnesses
+page shows the command:
+
+```sh
+flatpak override --user --filesystem=/path/to/logs:ro io.VagueMotion.TokenBurnTrack
+```
+
+`tbt-daemon install` does not work inside the sandbox. To collect while the app is
+closed, use *Settings → General → Collect while closed*. It asks the desktop's
+background portal to start `tbt-daemon` at login, which then syncs every
+`sync_interval_minutes`. Only the Wayland backend is built, so the app needs a Wayland
+session.
 
 ### macOS (launchd)
 

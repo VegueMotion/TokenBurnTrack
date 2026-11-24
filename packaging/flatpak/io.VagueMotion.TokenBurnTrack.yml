@@ -1,0 +1,52 @@
+id: io.VagueMotion.TokenBurnTrack
+runtime: org.freedesktop.Platform
+runtime-version: '26.08'
+sdk: org.freedesktop.Sdk
+command: tbt-app
+finish-args:
+  - --socket=wayland
+  - --device=dri
+  - --share=ipc
+  - --share=network
+  - --filesystem=~/.claude:ro
+  - --filesystem=~/.codex:ro
+  - --filesystem=~/.gemini:ro
+  - --filesystem=xdg-data/opencode
+  - --filesystem=xdg-config/tokenburntrack:create
+  - --filesystem=xdg-data/tokenburntrack:create
+modules:
+  - name: tokenburntrack
+    buildsystem: simple
+    build-options:
+      append-path: /run/build/tokenburntrack/rust/bin
+      env:
+        CARGO_HOME: /run/build/tokenburntrack/cargo
+        CARGO_NET_OFFLINE: 'true'
+    build-commands:
+      - ./rust-dist/install.sh --prefix="$PWD/rust" --disable-ldconfig
+        --components="rustc,cargo,rust-std-${FLATPAK_ARCH}-unknown-linux-gnu"
+      - cargo build --release --locked --offline -p tbt-app -p tbt-daemon
+      - install -Dm755 -t /app/bin target/release/tbt-app target/release/tbt-daemon
+      - install -Dm644 packaging/linux/${FLATPAK_ID}.desktop -t /app/share/applications
+      - install -Dm644 packaging/icons/${FLATPAK_ID}.svg -t /app/share/icons/hicolor/scalable/apps
+      - install -Dm644 packaging/flatpak/${FLATPAK_ID}.metainfo.xml -t /app/share/metainfo
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - target
+          - .git
+          - .flatpak-builder
+          - build-dir
+          - repo
+      - cargo-sources.json
+      - type: archive
+        only-arches: [x86_64]
+        url: https://static.rust-lang.org/dist/rust-1.100.0-x86_64-unknown-linux-gnu.tar.xz
+        sha256: 98ee6bec240e1cfe944f17e7092412dc5ef6e008484bb668c6936d35a7d15acd
+        dest: rust-dist
+      - type: archive
+        only-arches: [aarch64]
+        url: https://static.rust-lang.org/dist/rust-1.100.0-aarch64-unknown-linux-gnu.tar.xz
+        sha256: a21f6a21818df07c1e2e7addb570af5444b3fa9dd61e3a207f4fb1c5a5e665c9
+        dest: rust-dist

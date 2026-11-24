@@ -130,6 +130,11 @@ fn main() -> ExitCode {
 }
 
 fn run(cli: Cli) -> anyhow::Result<()> {
+    if cli.command.is_some() && tbt_core::sandbox::in_flatpak() {
+        bail!(
+            "install and uninstall do not work inside Flatpak; turn on \"Collect while closed\" in the app's settings instead"
+        );
+    }
     match &cli.command {
         Some(Command::Install(args)) => return install(args),
         Some(Command::Uninstall(args)) => return uninstall(args),

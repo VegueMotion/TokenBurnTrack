@@ -77,7 +77,13 @@ impl RootIssue {
         match self {
             RootIssue::Empty => "Enter at least one path, or reset to the defaults".to_owned(),
             RootIssue::Relative(p) => format!("{} is not an absolute path", p.display()),
-            RootIssue::Missing(p) => format!("{} does not exist (yet)", p.display()),
+            RootIssue::Missing(p) => match tbt_core::sandbox::override_command(p) {
+                Some(cmd) => format!(
+                    "{} does not exist (yet) or is outside the Flatpak sandbox; to grant access run: {cmd}",
+                    p.display()
+                ),
+                None => format!("{} does not exist (yet)", p.display()),
+            },
         }
     }
 
@@ -454,7 +460,15 @@ impl HarnessesPage {
                             .child(path.to_string_lossy().into_owned()),
                     )
                     .when(!*exists, |d| {
-                        d.child(div().text_color(warn).child("not found"))
+                        d.child(
+                            div()
+                                .text_color(warn)
+                                .child(if tbt_core::sandbox::in_flatpak() {
+                                    "not found (or outside the Flatpak sandbox)"
+                                } else {
+                                    "not found"
+                                }),
+                        )
                     })
             }))
             .child(

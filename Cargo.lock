@@ -6671,6 +6671,7 @@ name = "tbt-app"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "ashpd",
  "crossbeam-channel",
  "gpui-component",
  "gpui-pre",
@@ -6694,7 +6695,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "crossbeam-channel",
- "directories",
  "fs4",
  "jiff",
  "proptest",
