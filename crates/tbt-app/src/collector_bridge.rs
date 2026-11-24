@@ -271,7 +271,7 @@ pub fn watch_targets(
         let roots = config
             .and_then(|c| c.roots.clone())
             .unwrap_or_else(|| default_roots.clone());
-        let recursive = *id != HarnessId::OPENCODE;
+        let recursive = *id != HarnessId::OPENCODE && *id != HarnessId::CURSOR;
         for path in roots {
             if !out.iter().any(|t| t.path == path) {
                 out.push(WatchTarget { path, recursive });
@@ -733,6 +733,10 @@ mod tests {
                 vec![PathBuf::from("/h/.local/share/opencode")],
             ),
             (HarnessId::GEMINI_CLI, vec![PathBuf::from("/h/.gemini/tmp")]),
+            (
+                HarnessId::CURSOR,
+                vec![PathBuf::from("/h/.config/Cursor/User/globalStorage")],
+            ),
         ];
         let configs = vec![
             config(HarnessId::CLAUDE_CODE, true, Some(vec!["/custom/claude"])),
@@ -753,6 +757,10 @@ mod tests {
                 WatchTarget {
                     path: PathBuf::from("/h/.gemini/tmp"),
                     recursive: true
+                },
+                WatchTarget {
+                    path: PathBuf::from("/h/.config/Cursor/User/globalStorage"),
+                    recursive: false
                 },
             ]
         );

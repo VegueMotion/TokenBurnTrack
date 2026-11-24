@@ -3,7 +3,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use rusqlite::{Connection, ErrorCode, OpenFlags, OptionalExtension, Row, params};
+use rusqlite::{Connection, OptionalExtension, Row, params};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tbt_core::{
@@ -11,6 +11,8 @@ use tbt_core::{
     PREVIEW_MAX_CHARS, ParseWarning, ReadBatch, Result, SessionUpsert, SourceKind, SourceRef,
     Timestamp, TokenCounts, UsageEvent, truncate_preview,
 };
+
+use crate::sqlite::{is_busy, is_read_only, open_read_only, table_exists, wal_path};
 
 const DB_FILE: &str = "opencode.db";
 const DEFAULT_BUSY_TIMEOUT: Duration = Duration::from_secs(2);
@@ -206,47 +208,6 @@ impl OpenCodeAdapter {
         tx.rollback()?;
         Ok(out)
     }
-}
-
-fn open_read_only(path: &Path, immutable: bool) -> rusqlite::Result<Connection> {
-    let flags = OpenFlags::SQLITE_OPEN_READ_ONLY
-        | OpenFlags::SQLITE_OPEN_URI
-        | OpenFlags::SQLITE_OPEN_NO_MUTEX;
-    Connection::open_with_flags(read_only_uri(path, immutable), flags)
-}
-
-fn wal_path(path: &Path) -> PathBuf {
-    let mut wal = path.as_os_str().to_owned();
-    wal.push("-wal");
-    PathBuf::from(wal)
-}
-
-fn read_only_uri(path: &Path, immutable: bool) -> String {
-    let path = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
-    let mut uri = String::from("file:");
-    for c in path.to_string_lossy().chars() {
-        match c {
-            '\\' => uri.push('/'),
-            '?' | '#' | '%' | ' ' => uri.push_str(&format!("%{:02X}", c as u32)),
-            c => uri.push(c),
-        }
-    }
-    uri.push_str("?mode=ro");
-    if immutable {
-        uri.push_str("&immutable=1");
-    }
-    uri
-}
-
-fn is_busy(e: &rusqlite::Error) -> bool {
-    matches!(
-        e.sqlite_error_code(),
-        Some(ErrorCode::DatabaseBusy | ErrorCode::DatabaseLocked)
-    )
-}
-
-fn is_read_only(e: &rusqlite::Error) -> bool {
-    e.sqlite_error_code() == Some(ErrorCode::ReadOnly)
 }
 
 fn is_db_name(path: &Path) -> bool {
@@ -796,14 +757,6 @@ impl<'a> Reader<'a> {
     }
 }
 
-fn table_exists(conn: &Connection, name: &str) -> rusqlite::Result<bool> {
-    conn.query_row(
-        "SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1)",
-        [name],
-        |r| r.get(0),
-    )
-}
-
 fn schema_version(conn: &Connection) -> rusqlite::Result<Option<String>> {
     let mut latest: Option<String> = None;
     for (table, column) in [("migration", "id"), ("__drizzle_migrations", "name")] {
@@ -879,18 +832,6 @@ mod tests {
             [PathBuf::from("/data/opencode")]
         );
         assert!(default_roots_from(None, None).is_empty());
-    }
-
-    #[test]
-    fn uri_escapes_special_characters() {
-        assert_eq!(
-            read_only_uri(Path::new("/a b/x?y#z%.db"), false),
-            "file:/a%20b/x%3Fy%23z%25.db?mode=ro"
-        );
-        assert_eq!(
-            read_only_uri(Path::new("/d/opencode.db"), true),
-            "file:/d/opencode.db?mode=ro&immutable=1"
-        );
     }
 
     #[test]

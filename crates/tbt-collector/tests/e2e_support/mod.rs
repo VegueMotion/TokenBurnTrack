@@ -23,6 +23,7 @@ pub const BUILTIN_SETS: &[(HarnessId, &str)] = &[
     (HarnessId::CODEX, "codex"),
     (HarnessId::OPENCODE, "opencode/1.19.5"),
     (HarnessId::GEMINI_CLI, "gemini_cli/0.71.0-nightly"),
+    (HarnessId::CURSOR, "cursor/3.31.15/User/globalStorage"),
 ];
 
 pub const GENERIC_SETS: &[(&str, &str)] = &[
@@ -33,14 +34,15 @@ pub const GENERIC_SETS: &[(&str, &str)] = &[
 pub const GOLDEN: &[(&str, i64)] = &[
     ("claude_code", 204),
     ("codex", 381),
+    ("cursor", 3),
     ("gemini_cli", 12),
     (IN_HOUSE, 4),
     (LLM_PROXY, 6),
     ("opencode", 33),
 ];
 
-pub const GOLDEN_TOTAL: u64 = 640;
-pub const SOURCES: u64 = 26;
+pub const GOLDEN_TOTAL: u64 = 643;
+pub const SOURCES: u64 = 27;
 
 pub const KNOWN_WARNINGS: &[(&str, &str, u64, &str)] = &[
     (

@@ -12,6 +12,7 @@ finish-args:
   - --filesystem=~/.codex:ro
   - --filesystem=~/.gemini:ro
   - --filesystem=xdg-data/opencode
+  - --filesystem=xdg-config/Cursor/User:ro
   - --filesystem=xdg-config/tokenburntrack:create
   - --filesystem=xdg-data/tokenburntrack:create
 modules:

@@ -36,6 +36,11 @@ const FIXTURE_SETS: &[FixtureSet] = &[
         root: "gemini_cli/0.71.0-nightly",
         split_jsonl: false,
     },
+    FixtureSet {
+        adapter: cursor,
+        root: "cursor/3.31.15/User/globalStorage",
+        split_jsonl: false,
+    },
 ];
 
 fn codex() -> Arc<dyn HarnessAdapter> {
@@ -44,6 +49,10 @@ fn codex() -> Arc<dyn HarnessAdapter> {
 
 fn opencode() -> Arc<dyn HarnessAdapter> {
     Arc::new(tbt_adapters::OpenCodeAdapter::new())
+}
+
+fn cursor() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::CursorAdapter::new())
 }
 
 fn gemini() -> Arc<dyn HarnessAdapter> {
@@ -220,6 +229,7 @@ fn reference_matches_golden_counts() {
         [
             ("claude_code", claude_golden_total()),
             ("codex", 381),
+            ("cursor", 3),
             ("gemini_cli", 12),
             ("opencode", 33),
         ]
