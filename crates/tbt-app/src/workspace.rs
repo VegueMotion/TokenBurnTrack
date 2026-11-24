@@ -284,7 +284,7 @@ impl Workspace {
     fn render_top_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let state = self.app_state.read(cx).clone();
         let t = cx.theme();
-        let (border, muted, fg, danger) = (t.border, t.muted_foreground, t.foreground, t.danger);
+        let (border, muted, danger) = (t.border, t.muted_foreground, t.danger);
         let now = Timestamp::now();
         let failed = state.sync_failed();
         let ranges = h_flex()
@@ -335,14 +335,6 @@ impl Workspace {
             .items_center()
             .border_b_1()
             .border_color(border)
-            .child(
-                div()
-                    .text_lg()
-                    .font_semibold()
-                    .text_color(fg)
-                    .min_w(px(110.))
-                    .child(self.page.label()),
-            )
             .child(
                 h_flex()
                     .gap_4()
