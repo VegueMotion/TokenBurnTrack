@@ -66,6 +66,22 @@ scripts/cargo build --release
 # target/release/tbt-daemon  headless collector
 ```
 
+### Release packages
+
+Each script writes to `dist/`. GPUI compiles its shaders with platform tools (`fxc.exe`
+on Windows, the Metal compiler on macOS), so Windows and macOS packages must be built on
+those systems.
+
+| Package | Command | Needs |
+|---|---|---|
+| AppImage | `scripts/build-appimage.sh` | podman; builds in `ubuntu:22.04` (glibc 2.35) so the result runs on older distributions. `--host` builds with the local toolchain instead. Runs on Wayland only; X11 sessions are not supported |
+| Windows zip | `powershell scripts\build-windows.ps1` | rustup, Visual Studio Build Tools (C++ workload) and the Windows SDK |
+| macOS dmg | `scripts/build-macos.sh` | rustup and Xcode; produces a universal `TokenBurnTrack.app`, ad-hoc signed unless `CODESIGN_IDENTITY` is set. Set `NOTARY_PROFILE` to a `xcrun notarytool store-credentials` profile to also notarize and staple the dmg; without it, Gatekeeper blocks the dmg on other Macs |
+
+The AppImage contains only the app. The script also writes a standalone `tbt-daemon`
+binary next to it; install that one for collection while the app is closed, because
+the AppImage's mount path changes on every run.
+
 ## Install
 
 Copy the binaries somewhere stable first, because the schedule points at an absolute
