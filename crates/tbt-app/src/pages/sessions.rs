@@ -332,6 +332,11 @@ impl SessionsPage {
             .border_b_1()
             .border_color(t.border.opacity(0.4))
             .hover(|s| s.bg(t.foreground.opacity(0.04)))
+            .cursor_pointer()
+            .on_click({
+                let (app_state, id) = (self.app_state.clone(), row.id);
+                move |_, _, cx| app_state.update(cx, |s, cx| s.open_session(id, cx))
+            })
             .children(COLUMNS.iter().zip(cells).map(|((_, c), cell)| c.cell(cell)))
             .into_any_element()
     }
