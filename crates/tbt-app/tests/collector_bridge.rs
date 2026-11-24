@@ -160,6 +160,75 @@ fn collector_errors_become_status_text() {
 }
 
 #[test]
+fn config_saved_while_running_applies_to_the_next_run() {
+    let sb = sandbox();
+    {
+        let mut store = Store::open(&tbt_store::paths::db_path(&sb.data_dir)).unwrap();
+        for id in [HarnessId::CODEX, HarnessId::OPENCODE, HarnessId::GEMINI_CLI] {
+            store.register_harness(&id, id.as_str()).unwrap();
+            store.set_harness_enabled(&id, false).unwrap();
+        }
+    }
+    let logs = sb.data_dir.parent().unwrap().join("proxy-logs");
+    std::fs::create_dir_all(&logs).unwrap();
+    std::fs::write(
+        logs.join("a.jsonl"),
+        "{\"ts\":\"2026-11-20T10:00:00Z\",\"id\":\"r1\",\"in\":10,\"out\":5}\n",
+    )
+    .unwrap();
+    let edited = CollectorConfig::parse(&format!(
+        r#"
+privacy = "off"
+[[generic_jsonl]]
+id = "proxy"
+roots = [{:?}]
+glob = "*.jsonl"
+timestamp = "$.ts"
+provider = "openai"
+model = "gpt-5"
+input_tokens = "$.in"
+output_tokens = "$.out"
+dedup_key = "{{$.id}}"
+"#,
+        logs.display().to_string()
+    ))
+    .unwrap();
+
+    let saved = Arc::new(std::sync::Mutex::new(CollectorConfig::default()));
+    let config = saved.clone();
+    let core = SyncCore::new(collector(&sb.data_dir))
+        .reloading_config(move || Ok(config.lock().unwrap().clone()));
+    let data = store_data(&sb.data_dir);
+    let proxy = HarnessId::new("proxy");
+
+    assert!(matches!(
+        core.run(RunTrigger::Startup),
+        SyncResult::Finished(_)
+    ));
+    assert!(
+        data.harness_status()
+            .unwrap()
+            .iter()
+            .all(|h| h.config.id != proxy)
+    );
+
+    *saved.lock().unwrap() = edited.clone();
+    let SyncResult::Finished(run) = core.run(RunTrigger::Manual) else {
+        panic!("expected a finished run");
+    };
+    assert_eq!(run.events_new, 1);
+    assert_eq!(*core.collector().config(), edited);
+    let status = data.harness_status().unwrap();
+    assert_eq!(
+        status
+            .iter()
+            .find(|h| h.config.id == proxy)
+            .map(|h| h.events),
+        Some(1)
+    );
+}
+
+#[test]
 fn app_and_collector_share_the_data_dir() {
     let sb = sandbox();
     let (dir, source) = resolve_sync(Some(sb.data_dir.clone()), Ok(CollectorConfig::default()));

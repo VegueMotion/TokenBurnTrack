@@ -74,21 +74,47 @@ pub enum SyncResult {
     Skipped,
 }
 
+type ConfigLoader = Box<dyn Fn() -> Result<CollectorConfig, ConfigError> + Send + Sync>;
+
 pub struct SyncCore {
-    collector: Arc<Collector>,
+    collector: Mutex<Arc<Collector>>,
+    reload: Option<ConfigLoader>,
     running: AtomicBool,
 }
 
 impl SyncCore {
     pub fn new(collector: Arc<Collector>) -> SyncCore {
         SyncCore {
-            collector,
+            collector: Mutex::new(collector),
+            reload: None,
             running: AtomicBool::new(false),
         }
     }
 
-    pub fn collector(&self) -> &Arc<Collector> {
-        &self.collector
+    pub fn reloading_config(
+        mut self,
+        load: impl Fn() -> Result<CollectorConfig, ConfigError> + Send + Sync + 'static,
+    ) -> SyncCore {
+        self.reload = Some(Box::new(load));
+        self
+    }
+
+    pub fn collector(&self) -> Arc<Collector> {
+        self.collector
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
+    }
+
+    fn current_collector(&self) -> Arc<Collector> {
+        let mut collector = self.collector.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(Ok(config)) = self.reload.as_ref().map(|load| load())
+            && config != *collector.config()
+        {
+            let data_dir = collector.data_dir().to_path_buf();
+            *collector = Arc::new(Collector::builtin(data_dir, config));
+        }
+        collector.clone()
     }
 
     pub fn is_running(&self) -> bool {
@@ -99,7 +125,9 @@ impl SyncCore {
         if self.running.swap(true, Ordering::AcqRel) {
             return SyncResult::Skipped;
         }
-        let outcome = catch_unwind(AssertUnwindSafe(|| self.collector.ingest_run(trigger)));
+        let outcome = catch_unwind(AssertUnwindSafe(|| {
+            self.current_collector().ingest_run(trigger)
+        }));
         self.running.store(false, Ordering::Release);
         match outcome {
             Ok(Ok(RunOutcome::Finished(report))) => SyncResult::Finished(report.finished_event()),
@@ -110,7 +138,7 @@ impl SyncCore {
     }
 
     pub fn adapter_defaults(&self) -> Vec<(HarnessId, Vec<PathBuf>)> {
-        self.collector
+        self.collector()
             .registry()
             .adapters()
             .iter()
@@ -309,7 +337,12 @@ impl CollectorBridge {
         cx: &mut Context<Self>,
     ) -> CollectorBridge {
         let (core, unavailable) = match source {
-            SyncSource::Collector(c) => (Some(Arc::new(SyncCore::new(c))), None),
+            SyncSource::Collector(c) => (
+                Some(Arc::new(
+                    SyncCore::new(c).reloading_config(CollectorConfig::load_default),
+                )),
+                None,
+            ),
             SyncSource::Unavailable(msg) => (None, Some(msg)),
             SyncSource::Mock => (None, None),
         };
@@ -342,9 +375,8 @@ impl CollectorBridge {
         };
         bridge.refresh(cx);
         bridge._tasks.push(Self::spawn_status_ticker(cx));
-        if let Some(core) = &bridge.core {
-            let interval = core.collector().config().sync_interval_minutes;
-            bridge._tasks.push(Self::spawn_scheduler(interval, cx));
+        if bridge.core.is_some() {
+            bridge._tasks.push(Self::spawn_scheduler(cx));
         }
         if bridge.watch.is_some() {
             bridge._tasks.push(Self::spawn_watch_poll(cx));
@@ -368,12 +400,19 @@ impl CollectorBridge {
         })
     }
 
-    fn spawn_scheduler(interval: u32, cx: &mut Context<Self>) -> Task<()> {
+    fn spawn_scheduler(cx: &mut Context<Self>) -> Task<()> {
         cx.spawn(async move |this, cx| {
             if !run_inline(&this, RunTrigger::Startup, cx).await {
                 return;
             }
             loop {
+                let Ok(Some(interval)) = this.update(cx, |b, _| {
+                    b.core
+                        .as_ref()
+                        .map(|c| c.collector().config().sync_interval_minutes)
+                }) else {
+                    return;
+                };
                 let next = next_tick(Timestamp::now(), interval);
                 while let Some(chunk) = sleep_chunk(Timestamp::now(), next) {
                     cx.background_executor().timer(chunk).await;
