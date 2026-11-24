@@ -30,8 +30,6 @@ pub enum StoreError {
     ReadOnly,
 }
 
-/// Sync SQLite store. One writer (the collector) plus any number of read-only
-/// connections (UI pages, one per background query).
 pub struct Store {
     conn: rusqlite::Connection,
 }
@@ -44,8 +42,6 @@ impl Store {
         Ok(())
     }
 
-    /// Opens or creates the DB, applies WAL + `foreign_keys=ON`, runs migrations and
-    /// seeds the `project(id = 0)` "no project" row.
     pub fn open(path: &Path) -> Result<Store> {
         Ok(Store {
             conn: schema::open(path)?,
@@ -58,7 +54,6 @@ impl Store {
         })
     }
 
-    /// Read-only connection; never migrates. Write calls return [`StoreError::ReadOnly`].
     pub fn open_read_only(path: &Path) -> Result<Store> {
         Ok(Store {
             conn: schema::open_read_only(path)?,
@@ -82,26 +77,19 @@ impl Store {
         admin::finish_run(&self.conn, run, finished_at, stats, warnings, error)
     }
 
-    /// `None` if the source was never read.
     pub fn cursor_for(&self, harness: &HarnessId, path: &Path) -> Result<Option<Cursor>> {
         admin::cursor_for(&self.conn, harness, path)
     }
 
-    /// Paths of all `source_file` rows of `harness` that are not marked missing.
     pub fn known_sources(&self, harness: &HarnessId) -> Result<Vec<PathBuf>> {
         admin::known_sources(&self.conn, harness)
     }
 
-    /// Flags a source that `discover` no longer returns. Its data stays.
-    /// A later `SourceTx::save_cursor` for the same path clears the flag.
     pub fn mark_source_missing(&mut self, harness: &HarnessId, path: &Path) -> Result<()> {
         self.writable()?;
         admin::mark_source_missing(&self.conn, harness, path)
     }
 
-    /// Starts the single transaction in which one source's batch is written.
-    /// Creates the `source_file` row if needed. Dropping the `SourceTx` without
-    /// [`SourceTx::commit`] rolls everything back, cursor included.
     pub fn begin_source_tx(&mut self, harness: &HarnessId, path: &Path) -> Result<SourceTx<'_>> {
         self.writable()?;
         let tx = self
@@ -115,8 +103,6 @@ impl Store {
         })
     }
 
-    /// Inserts the `harness` row if missing (keeps `enabled` / roots of an existing row,
-    /// updates `display_name`). Called for every registered adapter at startup.
     pub fn register_harness(&mut self, id: &HarnessId, display_name: &str) -> Result<()> {
         self.writable()?;
         admin::register_harness(&self.conn, id, display_name)
@@ -131,18 +117,15 @@ impl Store {
         admin::set_harness_enabled(&self.conn, id, enabled)
     }
 
-    /// `None` = use the adapter's default roots.
     pub fn set_harness_roots(&mut self, id: &HarnessId, roots: Option<&[PathBuf]>) -> Result<()> {
         self.writable()?;
         admin::set_harness_roots(&self.conn, id, roots)
     }
 
-    /// All rows, open and closed, with `id` set.
     pub fn model_prices(&self) -> Result<Vec<ModelPrice>> {
         admin::model_prices(&self.conn)
     }
 
-    /// Ignores `price.id`; returns the new id.
     pub fn insert_price(&mut self, price: &ModelPrice) -> Result<PriceId> {
         self.writable()?;
         admin::insert_price(&self.conn, price)
@@ -153,14 +136,11 @@ impl Store {
         admin::close_price(&self.conn, id, effective_to)
     }
 
-    /// Overwrites the row `price.id` (must be `Some`). Does not touch event costs;
-    /// run a recompute for `RecomputeFilter { price_id: Some(id), .. }` afterwards.
     pub fn update_price(&mut self, price: &ModelPrice) -> Result<()> {
         self.writable()?;
         admin::update_price(&self.conn, price)
     }
 
-    /// Inserts `prices` only if `model_price` is empty. Returns rows inserted.
     pub fn seed_prices_if_empty(&mut self, prices: &[ModelPrice]) -> Result<usize> {
         self.writable()?;
         let tx = self
@@ -171,8 +151,6 @@ impl Store {
         Ok(n)
     }
 
-    /// One page of events matching `filter`, ordered by id, starting after `after`.
-    /// `RecomputeRow::event.raw` is always `None`.
     pub fn events_for_recompute(
         &self,
         filter: &RecomputeFilter,
@@ -191,7 +169,6 @@ impl Store {
         })
     }
 
-    /// Sets `raw_json = NULL` on events older than `now - days`. Returns rows changed.
     pub fn drop_raw_json_older_than(&mut self, days: u32, now: Timestamp) -> Result<usize> {
         self.writable()?;
         recompute::drop_raw_json_older_than(&self.conn, days, now)
@@ -201,7 +178,6 @@ impl Store {
         query::kpi_summary(&self.conn, filter)
     }
 
-    /// One row per (bucket, group key) with usage; empty buckets are omitted.
     pub fn cost_buckets(
         &self,
         filter: &QueryFilter,
@@ -210,12 +186,10 @@ impl Store {
         query::cost_buckets(&self.conn, filter, group)
     }
 
-    /// Weekday × hour-of-day in `filter.time_zone`; only cells with usage.
     pub fn heatmap(&self, filter: &QueryFilter) -> Result<Vec<HeatCell>> {
         query::heatmap(&self.conn, filter)
     }
 
-    /// Sessions with at least one event in `filter.range`, newest first.
     pub fn sessions(&self, filter: &QueryFilter) -> Result<Vec<SessionRow>> {
         query::sessions(&self.conn, filter)
     }
@@ -240,19 +214,15 @@ impl Store {
         query::harness_status(&self.conn)
     }
 
-    /// Models that have events with `price_id IS NULL`, all time.
     pub fn unpriced_models(&self) -> Result<Vec<UnpricedModel>> {
         query::unpriced_models(&self.conn)
     }
 
-    /// Newest first.
     pub fn ingest_runs(&self, limit: usize) -> Result<Vec<IngestRunSummary>> {
         admin::ingest_runs(&self.conn, limit)
     }
 }
 
-/// Write transaction for one source. Every method runs inside it; nothing is visible
-/// to other connections until [`SourceTx::commit`].
 pub struct SourceTx<'a> {
     tx: rusqlite::Transaction<'a>,
     harness: HarnessId,
@@ -264,16 +234,10 @@ impl SourceTx<'_> {
         self.source_file
     }
 
-    /// `None` → [`ProjectId::NONE`]. Otherwise inserts the project by path if missing.
     pub fn upsert_project(&mut self, path: Option<&str>) -> Result<ProjectId> {
         ingest::upsert_project(&self.tx, path)
     }
 
-    /// Inserts or merges by `(harness, ext_id)`: non-`None` fields overwrite,
-    /// `started_at` / `ended_at` merge as min / max. A new row without a `started_at`
-    /// hint gets the current time until events move it. Does not resolve
-    /// `parent_ext_id` / `resumed_from_ext_id`; see `set_parent_session` and
-    /// `link_resumed_session`.
     pub fn upsert_session(
         &mut self,
         session: &SessionUpsert,
@@ -294,7 +258,6 @@ impl SourceTx<'_> {
         ingest::link_session(&self.tx, "parent_session_id", subagent, parent)
     }
 
-    /// Session of the already stored event with this dedup key (sees this tx's inserts).
     pub fn session_holding_dedup_key(
         &self,
         harness: &HarnessId,
@@ -303,7 +266,6 @@ impl SourceTx<'_> {
         ingest::session_holding_dedup_key(&self.tx, harness.as_str(), dedup_key)
     }
 
-    /// Raw running total last saved for `session` (cumulative-counter harnesses only).
     pub fn last_cumulative_total(&self, session: SessionId) -> Result<Option<TokenCounts>> {
         ingest::last_cumulative_total(&self.tx, session)
     }
@@ -312,22 +274,14 @@ impl SourceTx<'_> {
         ingest::save_cumulative_total(&self.tx, session, total)
     }
 
-    /// `INSERT … ON CONFLICT(harness_id, dedup_key) DO NOTHING`. For every row actually
-    /// inserted it also updates the session totals, `active_seconds`, `ended_at` and the
-    /// `hourly_usage` bucket (project from `event.project_path`, else the session's).
-    /// A session not yet upserted in this tx is created with defaults.
-    /// Returns the number of new events.
     pub fn insert_events(&mut self, events: &[PricedEvent]) -> Result<usize> {
         ingest::insert_events(&self.tx, self.source_file, events)
     }
 
-    /// Skips messages whose `(session, key)` is already stored; links
-    /// `event_dedup_key` to `usage_event.id`. Returns the number of new messages.
     pub fn insert_messages(&mut self, messages: &[MessageRecord]) -> Result<usize> {
         ingest::insert_messages(&self.tx, self.harness.as_str(), messages)
     }
 
-    /// Also clears the source's `missing` flag and sets `last_read = now`.
     pub fn save_cursor(&mut self, cursor: &Cursor, now: Timestamp) -> Result<()> {
         ingest::save_cursor(&self.tx, self.source_file, cursor, now)
     }
@@ -338,14 +292,11 @@ impl SourceTx<'_> {
     }
 }
 
-/// Write transaction for a recompute job (F).
 pub struct RecomputeTx<'a> {
     tx: rusqlite::Transaction<'a>,
 }
 
 impl RecomputeTx<'_> {
-    /// Sets `cost_micros` and `price_id` per event. Returns the sessions and hours the
-    /// changed events belong to, to pass to the two rebuild calls.
     pub fn update_event_costs(&mut self, updates: &[CostUpdate]) -> Result<Affected> {
         recompute::update_event_costs(&self.tx, updates)
     }
@@ -384,11 +335,9 @@ pub struct HarnessConfig {
     pub id: HarnessId,
     pub display_name: String,
     pub enabled: bool,
-    /// `None` = adapter defaults.
     pub roots: Option<Vec<PathBuf>>,
 }
 
-/// Criteria are ANDed; an all-default filter matches every event.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RecomputeFilter {
     pub price_id: Option<PriceId>,
@@ -423,10 +372,8 @@ pub struct Affected {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct QueryFilter {
     pub range: TimeRange,
-    /// Empty = all harnesses.
     pub harnesses: Vec<HarnessId>,
     pub bucket: BucketSize,
-    /// IANA zone used for day buckets and the heatmap, e.g. `Europe/Berlin`.
     pub time_zone: String,
 }
 
@@ -456,7 +403,6 @@ pub enum BucketGroup {
     Project,
 }
 
-/// Token sums as kept in rollups (cache writes not split by TTL, no reasoning).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TokenSums {
     pub input: u64,
@@ -470,7 +416,6 @@ impl TokenSums {
         self.input + self.output + self.cache_write + self.cache_read
     }
 
-    /// `cache_read / (input + cache_write + cache_read)`; `None` without prompt tokens.
     pub fn cache_hit_ratio(&self) -> Option<f64> {
         let prompt = self.input + self.cache_write + self.cache_read;
         (prompt > 0).then(|| self.cache_read as f64 / prompt as f64)
@@ -495,15 +440,12 @@ pub struct KpiSummary {
     pub events: u64,
     pub sessions: u64,
     pub unpriced_events: u64,
-    /// Distinct hours with at least one event; the burn rate is `cost / active_hours`.
     pub active_hours: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CostBucket {
-    /// Bucket start (hour, or local midnight for day buckets).
     pub start: Timestamp,
-    /// Harness id, model id, or project path ("" for no project), per [`BucketGroup`].
     pub key: String,
     pub cost: Micros,
     pub tokens: TokenSums,
@@ -514,7 +456,6 @@ pub struct CostBucket {
 pub struct HeatCell {
     /// 0 = Monday … 6 = Sunday.
     pub weekday: u8,
-    /// 0..=23
     pub hour: u8,
     pub cost: Micros,
     pub events: u64,
@@ -545,16 +486,10 @@ pub struct SessionRow {
 pub struct SessionDetail {
     pub session: SessionRow,
     pub harness_version: Option<String>,
-    /// Ordered by `ts`.
     pub events: Vec<EventRow>,
-    /// Empty unless messages were stored (privacy level).
     pub messages: Vec<MessageRow>,
-    /// `(tool_name, count)`, most used first.
     pub tool_counts: Vec<(String, u64)>,
-    /// Sum of `reported_cost` over events that have one.
     pub reported_cost: Option<Micros>,
-    /// Earlier sessions this one was resumed from, this session, then sessions resumed from it,
-    /// oldest first.
     pub resume_chain: Vec<SessionRow>,
     pub chain_cost: Micros,
     pub subagents: Vec<SessionRow>,
@@ -590,14 +525,12 @@ pub struct ModelStats {
     pub tokens: TokenSums,
     pub cost: Micros,
     pub unpriced_events: u64,
-    /// What cache reads saved compared with paying the input rate, per the events' price rows.
     pub cache_savings: Micros,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProjectStats {
     pub id: ProjectId,
-    /// `None` for the "no project" row.
     pub path: Option<String>,
     pub name: Option<String>,
     pub sessions: u64,
@@ -623,7 +556,6 @@ pub struct HarnessStatus {
     pub last_read: Option<Timestamp>,
     pub events: u64,
     pub sessions: u64,
-    /// Warnings of this harness from the latest finished run.
     pub last_warnings: Vec<ParseWarning>,
 }
 

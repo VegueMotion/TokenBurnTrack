@@ -21,14 +21,12 @@ pub enum PricingError {
     Invalid(String),
 }
 
-/// All known price rows, indexed for lookup.
 pub struct PriceCatalog {
     prices: Vec<ModelPrice>,
     matchers: Vec<Option<GlobMatcher>>,
 }
 
 impl PriceCatalog {
-    /// Validates rows and compiles glob patterns.
     pub fn load(prices: Vec<ModelPrice>) -> Result<PriceCatalog> {
         let matchers = prices
             .iter()
@@ -46,9 +44,6 @@ impl PriceCatalog {
         &self.prices
     }
 
-    /// Considers only rows of `provider` effective at `ts`. Precedence: source priority
-    /// (`User > Imported > Bundled`), then exact id over glob, then the most specific glob
-    /// (longest literal prefix).
     pub fn price_for(&self, provider: &str, model: &str, ts: Timestamp) -> PriceMatch<'_> {
         let mut best: Option<(MatchRank, &ModelPrice)> = None;
         for (price, matcher) in self.prices.iter().zip(&self.matchers) {
@@ -78,8 +73,6 @@ impl PriceCatalog {
         }
     }
 
-    /// Looks up the price and computes the cost; unpriced events get
-    /// `cost = 0, price_id = None`. Requires prices loaded from the store (`id` set).
     pub fn apply(&self, event: UsageEvent) -> PricedEvent {
         let Some(price) = self
             .price_for(&event.provider, &event.model, event.ts)
@@ -102,9 +95,6 @@ impl PriceCatalog {
         }
     }
 
-    /// Diffs the LiteLLM `model_prices_and_context_window.json` against the open
-    /// `Imported` rows: changed price → `Close` + `Open` (`effective_from = now`), new
-    /// model → `Open`, unchanged → nothing. Never touches `Bundled` or `User` rows.
     pub fn import_litellm(&self, json: &str, now: Timestamp) -> Result<Vec<PriceChange>> {
         let mut changes = Vec::new();
         for new in litellm::parse(json, now)? {
@@ -225,9 +215,6 @@ impl<'a> PriceMatch<'a> {
     }
 }
 
-/// `Σ tokens × rate_per_mtok` (which is already micro-USD), long-context multipliers
-/// applied when prompt tokens exceed the threshold, rounded once at the end. Missing
-/// cache rates fall back to the input rate. `reasoning_tokens` is not billed separately.
 pub fn cost(event: &UsageEvent, price: &ModelPrice) -> Micros {
     let tokens = event.tokens();
     let tier = price
@@ -286,19 +273,16 @@ pub enum PriceChange {
     Open(Box<ModelPrice>),
 }
 
-/// `assets/prices.toml`: a list of `[[price]]` tables.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct PriceFile {
     #[serde(rename = "price", default)]
     pub prices: Vec<PriceEntry>,
 }
 
-/// One `[[price]]` table. Rates are USD per 1M tokens, written as strings.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PriceEntry {
     pub provider: String,
-    /// Exact id or glob.
     pub model: String,
     pub effective_from: Timestamp,
     #[serde(default)]
@@ -334,7 +318,6 @@ impl PriceEntry {
     }
 }
 
-/// Parses the bundled price file; every row gets `source = Bundled`, `id = None`.
 pub const BUNDLED_PRICES_TOML: &str = include_str!("../../../assets/prices.toml");
 
 pub fn bundled_prices() -> Result<Vec<ModelPrice>> {

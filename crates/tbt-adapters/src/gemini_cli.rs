@@ -327,7 +327,7 @@ struct Part {
     kind: Option<MessageKind>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     tool: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(skip)]
     preview: Option<String>,
 }
 

@@ -33,7 +33,6 @@ fn map_provider(litellm_provider: &str) -> Option<(&'static str, u8)> {
 
 type Entry<'a> = BTreeMap<String, &'a RawValue>;
 
-/// One open `Imported` row per `(provider, model)`, sorted by provider then model.
 pub(crate) fn parse(json: &str, now: Timestamp) -> Result<Vec<ModelPrice>> {
     let root: BTreeMap<String, &RawValue> = serde_json::from_str(json)?;
     let mut best: BTreeMap<(String, String), (u8, ModelPrice)> = BTreeMap::new();
@@ -145,7 +144,6 @@ fn per_mtok(per_token: Decimal) -> Option<Decimal> {
         .map(|d| d.normalize())
 }
 
-/// Exact decimal value of a JSON number (or numeric string) from its source text.
 pub(crate) fn decimal_from_json(text: &str) -> Option<Decimal> {
     let text = text.trim();
     if text.starts_with('"') {

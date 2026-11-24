@@ -4,9 +4,6 @@ use serde_json::Value;
 
 use crate::{Error, Result};
 
-/// Opaque per-source read position. The collector stores it as JSON and hands it back
-/// unchanged; only the adapter that produced it interprets it. `Cursor::default()` (JSON
-/// `null`) means "never read".
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Cursor(Value);
@@ -24,7 +21,6 @@ impl Cursor {
         Ok(Cursor(serde_json::to_value(state)?))
     }
 
-    /// `Ok(None)` for an empty cursor; an error if the stored JSON does not fit `T`.
     pub fn state<T: DeserializeOwned>(&self) -> Result<Option<T>> {
         if self.is_empty() {
             return Ok(None);

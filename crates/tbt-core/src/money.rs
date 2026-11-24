@@ -6,7 +6,6 @@ use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::{Decimal, RoundingStrategy};
 use serde::{Deserialize, Serialize};
 
-/// Money as integer micro-USD (USD × 1e6).
 #[derive(
     Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
@@ -17,7 +16,6 @@ impl Micros {
     pub const ZERO: Micros = Micros(0);
     pub const PER_USD: i64 = 1_000_000;
 
-    /// Rounds to the nearest micro (midpoint away from zero); saturates at the i64 range.
     pub fn from_usd(usd: Decimal) -> Micros {
         match usd.checked_mul(Decimal::from(Self::PER_USD)) {
             Some(micros) => Self::from_micros_decimal(micros),
@@ -26,7 +24,6 @@ impl Micros {
         }
     }
 
-    /// For values already expressed in micro-USD, e.g. `tokens × usd_per_mtok`.
     pub fn from_micros_decimal(micros: Decimal) -> Micros {
         let rounded = micros.round_dp_with_strategy(0, RoundingStrategy::MidpointAwayFromZero);
         match rounded.to_i64() {
@@ -46,7 +43,6 @@ impl Micros {
 }
 
 impl fmt::Display for Micros {
-    /// Formats as `$1.234567`.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let d = self.to_usd();
         if d.is_sign_negative() {

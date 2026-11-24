@@ -25,7 +25,6 @@ impl TokenCounts {
         self.cache_write_5m + self.cache_write_1h
     }
 
-    /// Prompt-side tokens: uncached input + cache writes + cache reads.
     pub fn prompt(&self) -> u64 {
         self.input + self.cache_write() + self.cache_read
     }
@@ -34,7 +33,6 @@ impl TokenCounts {
         *self == TokenCounts::default()
     }
 
-    /// `None` if any component of `other` is larger, i.e. a running counter went down (reset).
     pub fn checked_sub(&self, other: &TokenCounts) -> Option<TokenCounts> {
         Some(TokenCounts {
             input: self.input.checked_sub(other.input)?,
@@ -46,7 +44,6 @@ impl TokenCounts {
         })
     }
 
-    /// Delta of a running counter: `self - prev`, or all of `self` when the counter was reset.
     pub fn delta_since(&self, prev: &TokenCounts) -> TokenCounts {
         self.checked_sub(prev).unwrap_or(*self)
     }

@@ -412,6 +412,32 @@ fn pending_message_is_finalized_after_grace_period() {
 }
 
 #[test]
+fn pending_message_text_is_not_stored_in_the_cursor() {
+    let (_dir, chats) = chats_dir();
+    let path = chats.join("session-secret.jsonl");
+    write_lines(
+        &path,
+        &[
+            r#"{"sessionId":"s1","projectHash":"h"}"#.into(),
+            r#"{"id":"u1","timestamp":"2026-01-01T00:00:00Z","type":"user","content":"SECRET-PROMPT"}"#.into(),
+            r#"{"id":"m1","timestamp":"2026-01-01T00:00:01Z","type":"gemini","content":"SECRET-ANSWER","model":"m","tokens":{"input":1,"output":1,"cached":0,"total":2},"thoughts":[{"subject":"SECRET-THOUGHT","description":"x"}],"toolCalls":[{"id":"t1","name":"glob","args":{"pattern":"SECRET-ARGS"},"result":"SECRET-RESULT"}]}"#.into(),
+        ],
+    );
+    let clock = Clock::new();
+    clock.at_mtime(&path, Duration::ZERO);
+    let a = clock.adapter();
+    let first = a.read(&jsonl(&path), &Cursor::empty()).unwrap();
+    let cursor = first.next_cursor.as_json().to_string();
+    assert!(cursor.contains("\"m1\""), "{cursor}");
+    assert!(!cursor.contains("SECRET"), "{cursor}");
+
+    clock.at_mtime(&path, GRACE);
+    let late = a.read(&jsonl(&path), &first.next_cursor).unwrap();
+    assert_eq!(dedup_keys(&late), ["m1"]);
+    assert!(late.messages.iter().any(|m| m.key == "m1:tool:t1"));
+}
+
+#[test]
 fn rewind_finalizes_the_rewound_message_immediately() {
     let lines = read_lines(&fixture(MAIN));
     let rewind = lines.iter().position(|l| l.contains("$rewindTo")).unwrap();
