@@ -1,0 +1,24 @@
+[Unit]
+Description=TokenBurnTrack usage collector (single run)
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/tbt-daemon --once
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=30min
+
+ProtectSystem=strict
+ReadWritePaths=%h/.local/share/tokenburntrack
+PrivateTmp=true
+PrivateDevices=true
+PrivateNetwork=true
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+UMask=0077
