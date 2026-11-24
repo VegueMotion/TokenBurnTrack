@@ -125,9 +125,9 @@ pub struct UsageEvent {
 | Harness | Typical source | Notes |
 |---|---|---|
 | Claude Code | `~/.claude/projects/<slug>/*.jsonl` and `~/.claude/projects/<slug>/<session-id>/subagents/agent-*.jsonl` | One file per session, plus one per subagent run. Discovery is recursive. `assistant` lines carry `message.usage`. The same `message.id` can repeat across content blocks, so dedup on `message.id + requestId`. Subagent runs become their own `session` rows with `parent_session_id` set to the session in the `<session-id>` directory |
-| Codex CLI | `~/.codex/sessions/YYYY/MM/DD/*.jsonl` | `token_count` events can be **cumulative**, so store deltas |
-| Gemini CLI | `~/.gemini/tmp/<hash>/…` | Session/chat JSON with usage metadata |
-| OpenCode | `~/.local/share/opencode/opencode.db` | SQLite (`session`, `message`, `part` tables), opened read-only. Cursor is a row watermark, not a byte offset. Messages sometimes include cost. Older versions used per-message JSON under `storage/` |
+| Codex CLI | `~/.codex/sessions/YYYY/MM/DD/*.jsonl` | One event per response: `token_usage_record` lines (0.155+, dedup key = `response_id`; also the only place compaction calls appear), else `token_count.last_token_usage` (key = thread id + running total; repeated totals are skipped). `cached_input_tokens` is part of `input_tokens` and is subtracted. A resume keeps the thread id, so both files are one session; a fork becomes a new session linked with `resumed_from` |
+| Gemini CLI | `~/.gemini/tmp/<project>/chats/*.jsonl` (current, append-only) and `session-*.json` (legacy) | A message is re-appended when it changes, so the adapter holds the newest message back until a later message arrives or the file has been idle for 10 minutes. Project path from the `.project_root` marker. Fixtures were built from upstream source, not real logs |
+| OpenCode | `~/.local/share/opencode/opencode.db` | SQLite (`session`, `message`, `part` tables), opened read-only. Cursor is a row watermark per table, not a byte offset. An assistant message is counted only once it is completed (or errored, or idle for 24 h), because a stored event is never updated. Messages sometimes include cost. Older versions used per-message JSON under `storage/` (not supported) |
 | Generic JSONL | configured in settings | Field-path mapping (`$.usage.input_tokens` → `input_tokens`) for new or in-house tools |
 
 Each adapter has fixture tests: real sample logs (anonymized) go in `tests/fixtures/<harness>/<version>/`,
@@ -139,13 +139,16 @@ with golden outputs. When a harness changes its format, the work is to add a fix
 
 ```
 Scheduler tick (hourly / startup / manual / fs-notify debounce)
-  └─ acquire collector.lock
-     └─ ingest_run = start
+  └─ try collector.lock                     # busy → skip this run
+     └─ sync bundled prices, recompute rows that were added or corrected
+        ingest_run = start
         for adapter in registry (parallel per adapter, sequential per source):
-           sources = adapter.discover(roots)
-           for src in sources:
-              cursor = store.cursor(src)          # skip if size/mtime unchanged
-              batch  = adapter.read(src, cursor)
+           sources = adapter.discover(roots)     # oldest mtime first
+           for src in sources:                   # every source, every run
+              cursor = store.cursor(src)
+              batch  = adapter.read(src, cursor) # cheap when nothing changed
+              if batch is empty and cursor unchanged: continue
+              link parents / resumed sessions, rebase running totals, apply privacy level
               priced = pricing.apply(batch.events)
               store.tx {                          # one transaction per source
                  upsert sessions
@@ -154,7 +157,8 @@ Scheduler tick (hourly / startup / manual / fs-notify debounce)
                  upsert hourly_usage buckets touched
                  save cursor
               }
-        ingest_run = finish(stats, warnings)
+        mark sources that disappeared as missing
+        ingest_run = finish(stats, warnings, per-source errors)
      └─ release lock, notify UI (channel → GPUI model refresh)
 ```
 
@@ -162,6 +166,8 @@ Properties:
 - **Idempotent.** Unique `(harness, dedup_key)` means a re-run, a crash mid-run or a reset cursor never double counts.
 - **Incremental.** The byte-offset cursor means each hourly run reads only new lines. If a file is truncated or rotated (inode changed or size < offset), the source is read again from 0, and dedup absorbs the repeats. DB sources (OpenCode) use a row watermark and re-read rows updated since it.
 - **Atomic per source.** The cursor and data commit in the same transaction.
+- **Always ask the adapter.** The collector never skips a source because its size or mtime is unchanged. OpenCode writes new rows to its `-wal` file without touching the DB file, and the Gemini adapter releases a held-back message on a later read of an unchanged file. Adapters detect "nothing new" themselves.
+- **Fault isolation.** Adapters run on their own threads and send batches to a single writer. An error or panic in one source is recorded in `ingest_run` and never aborts the run.
 - **Missed hours.** The tick only asks "what is new since the cursor", so a laptop that sleeps for 10 hours catches up on the next tick without losing anything.
 - **Backfill.** On first run, the full history is ingested the same way.
 
@@ -171,19 +177,23 @@ Harnesses handle resume in two ways, and the pipeline supports both:
 | Harness behaviour | What happens |
 |---|---|
 | Appends to the **same file** | The cursor reads only the new lines. Events attach to the existing `session` row and `ended_at` moves forward |
-| Starts a **new file and copies the old conversation** | Copied lines keep their original IDs and are dropped by dedup. Only new calls count. The new file gets a new `session` row, linked to the original with `resumed_from_session_id` |
+| Starts a **new file and copies the old conversation** (Claude Code) | Copied lines keep their original IDs and are dropped by dedup. Only new calls count. The new file gets a new `session` row, linked to the original with `resumed_from_session_id`. Its `started_at` is its first new event, not the copied history's |
+| Starts a **new file that points into the old one** without copying (Codex 0.155+ `history_base`) | The adapter reads per-response usage, so nothing needs rebasing. A resume keeps the thread id and maps to the same session; a fork gets its own session linked to the original |
 
 Rules:
 - `dedup_key` is built only from IDs that come from the provider or the harness, never from the session ID or file path. Otherwise copied history would be counted again.
-- A resumed session is linked to the session that already holds the first copied message ID. The UI shows the chain and a combined total.
+- A resumed session is linked to the original named in the log (`resumed_from_ext_id`), or else to the session that already holds the first copied message ID. Linking by copied ID only happens when the new session is first stored. The UI shows the chain and a combined total.
+- A subagent run or explicit original that has not been ingested yet gets a placeholder `session` row, filled in when its own file is read.
 - Cost goes into the hours when each event happened (`usage_event.ts`), not into the session's start date. Resuming a March session today adds cost to today.
-- Harnesses that log running totals (Codex `token_count`): deltas start from the last known total of the linked original session. If the counter goes down, it is treated as a reset, so the full old total is never counted as new usage.
+- Adapters prefer per-call usage when the log has it (all current adapters do). For a harness that only logs running totals, the adapter emits deltas within each file and a `baseline_hint`; the collector rebases the first delta of a resumed file against the original session's saved total (`session.cumulative_json`). If the counter goes down, it is treated as a reset, so the full old total is never counted as new usage. See `crates/tbt-core/CONTRACTS.md`.
 - Session duration: `active_seconds` adds up the time between events and leaves out gaps longer than 30 minutes. A session resumed after weeks doesn't look weeks long. The wall-clock span (`started_at` → `ended_at`) is kept as well.
 - If the original log file was already deleted by the harness, its data is still in the DB. The resumed part becomes a new session, linked to it if a copied message ID matches.
 
 ### Scheduler
-- In the app: a GPUI background task loops `Timer::after(until_next_hour)` and aligns to `:00`, plus a startup run.
-- Headless: `tbt-daemon --once` launched by a systemd user timer (`OnCalendar=hourly`) / launchd `StartInterval=3600` / Windows Task Scheduler. `tbt-daemon` can also run as a long-lived loop.
+- Ticks are on a UTC grid (`next_tick(now, interval)`): hourly means UTC `:00`. Sleeping happens in chunks of at most 30 s against the wall clock, so a suspended laptop notices the missed tick when it wakes.
+- In the app: a GPUI background task loops until the next tick, plus a startup run.
+- Headless: `tbt-daemon --once` launched by a systemd user timer (`OnCalendar=hourly`) / launchd `StartInterval=3600` / Windows Task Scheduler. `tbt-daemon` can also run as a long-lived loop. It logs to `$DATA_DIR/logs/` (daily rotation) and exits 0 when the lock is busy.
+- Settings live in `~/.config/tokenburntrack/config.toml` (`privacy`, `sync_interval_minutes`, `data_dir`, `raw_json_retention_days`, `[[generic_jsonl]]` adapters). The data dir is `--data-dir`, else `TBT_DATA_DIR`, else the config, else the platform default.
 
 ---
 

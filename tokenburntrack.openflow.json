@@ -9,7 +9,7 @@
     {
       "id": "page-1",
       "name": "Page 1",
-      "diagramKind": "erd",
+      "diagramKind": "sequence",
       "layers": [
         {
           "id": "default",
@@ -1293,598 +1293,6 @@
           "extensions": {}
         },
         {
-          "id": "dsl-1h1t40j",
-          "kind": "frame",
-          "parentId": null,
-          "layerId": "default",
-          "zIndex": 0,
-          "transform": {
-            "translation": {
-              "x": 3499.012093023256,
-              "y": 55.9999999999999
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 3189,
-            "height": 1244
-          },
-          "content": {
-            "label": "TokenBurnTrack — Hourly Ingest"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "seqAutonumber": true,
-              "family": "sequence",
-              "version": 1,
-              "source": "%% ofk 1\nsequence\ntitle: TokenBurnTrack — Hourly Ingest\nautonumber\nparticipant Scheduler\nparticipant Collector\nparticipant Adapter\nparticipant Logs [db]\nparticipant Pricing\nparticipant SQLite [db]\nparticipant UI [browser]\nScheduler -> Collector : tick (hourly :00 / startup / manual)\nCollector -> Collector : acquire collector.lock\nCollector -> SQLite : insert ingest_run\nloop each enabled harness {\n  Collector -> Adapter : discover(roots)\n  Adapter -> Logs : list sources (log files / harness DB)\n  Adapter --> Collector : sources\n  loop each source with size/mtime changed {\n    Collector -> SQLite : load cursor\n    Collector -> Adapter : read(src, cursor)\n    Adapter -> Logs : read past cursor (byte offset / row watermark)\n    Adapter --> Collector : sessions + events + next_cursor\n    Collector -> Pricing : price(events)\n    Pricing --> Collector : cost_micros per event\n    Collector -> SQLite : BEGIN; upsert session; insert events ON CONFLICT DO NOTHING; update hourly_usage; save cursor; COMMIT\n  }\n}\nCollector -> SQLite : finish ingest_run (stats, warnings)\nCollector -> Collector : release lock\nCollector ->> UI : IngestFinished\nUI -> SQLite : re-query visible pages",
-              "hash": "e22wxk",
-              "title": "TokenBurnTrack — Hourly Ingest",
-              "autoIcons": true
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "loop-1",
-          "kind": "annotation",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 0,
-          "transform": {
-            "translation": {
-              "x": 16,
-              "y": 299
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 3117,
-            "height": 606
-          },
-          "content": {
-            "seqFragmentId": "loop-1",
-            "label": "LOOP",
-            "subLabel": "each enabled harness",
-            "seqGuard": {
-              "x": 134,
-              "width": 232
-            },
-            "color": "blue",
-            "seqMessageOrder": 3
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "loop-1",
-              "line": 15,
-              "seqBranch": true,
-              "seqFragmentType": "loop",
-              "seqFragmentBranch": 0,
-              "seqFragmentParent": null,
-              "seqFragmentStart": 3,
-              "seqFragmentEnd": 12,
-              "seqFragmentEndLine": 28
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "loop-2",
-          "kind": "annotation",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 0,
-          "transform": {
-            "translation": {
-              "x": 16,
-              "y": 474
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 3117,
-            "height": 411
-          },
-          "content": {
-            "seqFragmentId": "loop-2",
-            "label": "LOOP",
-            "subLabel": "each source with size/mtime changed",
-            "seqGuard": {
-              "x": 134,
-              "width": 232
-            },
-            "color": "blue",
-            "seqMessageOrder": 6
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "loop-2",
-              "line": 19,
-              "seqBranch": true,
-              "seqFragmentType": "loop",
-              "seqFragmentBranch": 0,
-              "seqFragmentParent": "loop-1",
-              "seqFragmentStart": 6,
-              "seqFragmentEnd": 12,
-              "seqFragmentEndLine": 27
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "scheduler",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 56,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "Scheduler",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "scheduler",
-              "line": 5,
-              "seqParticipant": true,
-              "seqDeclared": true,
-              "seqFirstUseLine": 12
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "collector",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 308,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "Collector",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "collector",
-              "line": 6,
-              "seqParticipant": true,
-              "seqDeclared": true,
-              "seqFirstUseLine": 12
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "adapter",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 560,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "Adapter",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "adapter",
-              "line": 7,
-              "seqParticipant": true,
-              "seqDeclared": true,
-              "seqFirstUseLine": 16
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "logs",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 812,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "Logs",
-            "seqParticipantKind": "participant",
-            "seqStereotype": "db"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "logs",
-              "line": 8,
-              "seqParticipant": true,
-              "seqDeclared": true,
-              "seqStereotype": "db",
-              "seqFirstUseLine": 17
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "pricing",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 1064,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "Pricing",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "pricing",
-              "line": 9,
-              "seqParticipant": true,
-              "seqDeclared": true,
-              "seqFirstUseLine": 24
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "sqlite",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 1316,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "SQLite",
-            "seqParticipantKind": "participant",
-            "seqStereotype": "db"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "sqlite",
-              "line": 10,
-              "seqParticipant": true,
-              "seqDeclared": true,
-              "seqStereotype": "db",
-              "seqFirstUseLine": 14
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "ui",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 1568,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "UI",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "ui",
-              "line": 11,
-              "seqParticipant": true,
-              "seqDeclared": true,
-              "seqFirstUseLine": 31
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "upsert-session",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 1820,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "upsert session",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "upsert-session",
-              "line": 26,
-              "seqParticipant": true,
-              "seqDeclared": true
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "insert-events-on-conflict-do-nothing",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 2072,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 273,
-            "height": 1148
-          },
-          "content": {
-            "label": "insert events ON CONFLICT DO NOTHING",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "insert-events-on-conflict-do-nothing",
-              "line": 26,
-              "seqParticipant": true,
-              "seqDeclared": true
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "update-hourly-usage",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 2429,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 170,
-            "height": 1148
-          },
-          "content": {
-            "label": "update hourly_usage",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "update-hourly-usage",
-              "line": 26,
-              "seqParticipant": true,
-              "seqDeclared": true
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "save-cursor",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 2683,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "save cursor",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "save-cursor",
-              "line": 26,
-              "seqParticipant": true,
-              "seqDeclared": true
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "commit",
-          "kind": "sequence_participant",
-          "parentId": "dsl-1h1t40j",
-          "layerId": "default",
-          "zIndex": 1,
-          "transform": {
-            "translation": {
-              "x": 2935,
-              "y": 72
-            },
-            "rotationRadians": 0,
-            "scale": {
-              "x": 1,
-              "y": 1
-            }
-          },
-          "size": {
-            "width": 168,
-            "height": 1148
-          },
-          "content": {
-            "label": "COMMIT",
-            "seqParticipantKind": "participant"
-          },
-          "appearance": {},
-          "ports": [],
-          "metadata": {
-            "dsl": {
-              "id": "commit",
-              "line": 26,
-              "seqParticipant": true,
-              "seqDeclared": true
-            }
-          },
-          "extensions": {}
-        },
-        {
           "id": "dsl-5gcwyq",
           "kind": "frame",
           "parentId": null,
@@ -2345,6 +1753,746 @@
             "dsl": {
               "id": "ingest-run",
               "line": 13
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "dsl-1h1t40j",
+          "kind": "frame",
+          "parentId": null,
+          "layerId": "default",
+          "zIndex": 0,
+          "transform": {
+            "translation": {
+              "x": 3499.012093023256,
+              "y": 55.9999999999999
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 4614,
+            "height": 1379
+          },
+          "content": {
+            "label": "TokenBurnTrack — Hourly Ingest"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "seqAutonumber": true,
+              "family": "sequence",
+              "version": 1,
+              "source": "%% ofk 1\nsequence\ntitle: TokenBurnTrack — Hourly Ingest\nautonumber\nparticipant Scheduler\nparticipant Collector\nparticipant Adapter\nparticipant Logs [db]\nparticipant Pricing\nparticipant SQLite [db]\nparticipant UI [browser]\nScheduler -> Collector : tick (hourly :00 / startup / manual)\nCollector -> Collector : try collector.lock (busy → skip run)\nCollector -> SQLite : sync bundled prices; recompute added/corrected rows\nCollector -> SQLite : insert ingest_run\nloop each enabled harness (one thread per adapter) {\n  Collector -> Adapter : discover(roots)\n  Adapter -> Logs : list sources (log files / harness DB)\n  Adapter --> Collector : sources (oldest mtime first)\n  loop every source, every run {\n    Collector -> SQLite : load cursor\n    Collector -> Adapter : read(src, cursor)\n    Adapter -> Logs : read past cursor (byte offset / row watermark)\n    Adapter --> Collector : sessions + events + messages + next_cursor (unchanged → no tx)\n    Collector -> Collector : link parent / resumed session; rebase running totals; apply privacy level\n    Collector -> Pricing : price(events)\n    Pricing --> Collector : cost_micros + price_id per event\n    Collector -> SQLite : BEGIN; upsert sessions; insert events + messages ON CONFLICT DO NOTHING; update hourly_usage + session totals; save cursor; COMMIT\n  }\n}\nCollector -> SQLite : mark missing sources; finish ingest_run (stats, warnings, errors)\nCollector -> Collector : release lock\nCollector ->> UI : IngestFinished\nUI -> SQLite : re-query visible pages",
+              "hash": "8y214",
+              "title": "TokenBurnTrack — Hourly Ingest",
+              "autoIcons": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "loop-1",
+          "kind": "annotation",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 0,
+          "transform": {
+            "translation": {
+              "x": 16,
+              "y": 351
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 4542,
+            "height": 704
+          },
+          "content": {
+            "seqFragmentId": "loop-1",
+            "label": "LOOP",
+            "subLabel": "each enabled harness (one thread per adapter)",
+            "seqGuard": {
+              "x": 134,
+              "width": 232
+            },
+            "color": "blue",
+            "seqMessageOrder": 4
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "loop-1",
+              "line": 16,
+              "seqBranch": true,
+              "seqFragmentType": "loop",
+              "seqFragmentBranch": 0,
+              "seqFragmentParent": null,
+              "seqFragmentStart": 4,
+              "seqFragmentEnd": 14,
+              "seqFragmentEndLine": 30
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "loop-2",
+          "kind": "annotation",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 0,
+          "transform": {
+            "translation": {
+              "x": 16,
+              "y": 527
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 4542,
+            "height": 508
+          },
+          "content": {
+            "seqFragmentId": "loop-2",
+            "label": "LOOP",
+            "subLabel": "every source, every run",
+            "seqGuard": {
+              "x": 134,
+              "width": 232
+            },
+            "color": "blue",
+            "seqMessageOrder": 7
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "loop-2",
+              "line": 20,
+              "seqBranch": true,
+              "seqFragmentType": "loop",
+              "seqFragmentBranch": 0,
+              "seqFragmentParent": "loop-1",
+              "seqFragmentStart": 7,
+              "seqFragmentEnd": 14,
+              "seqFragmentEndLine": 29
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "scheduler",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 56,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "Scheduler",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "scheduler",
+              "line": 5,
+              "seqParticipant": true,
+              "seqDeclared": true,
+              "seqFirstUseLine": 12
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "collector",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 308,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "Collector",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "collector",
+              "line": 6,
+              "seqParticipant": true,
+              "seqDeclared": true,
+              "seqFirstUseLine": 12
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "adapter",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 560,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "Adapter",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "adapter",
+              "line": 7,
+              "seqParticipant": true,
+              "seqDeclared": true,
+              "seqFirstUseLine": 17
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "logs",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 812,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "Logs",
+            "seqParticipantKind": "participant",
+            "seqStereotype": "db"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "logs",
+              "line": 8,
+              "seqParticipant": true,
+              "seqDeclared": true,
+              "seqStereotype": "db",
+              "seqFirstUseLine": 18
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "pricing",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 1064,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "Pricing",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "pricing",
+              "line": 9,
+              "seqParticipant": true,
+              "seqDeclared": true,
+              "seqFirstUseLine": 26
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "sqlite",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 1316,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "SQLite",
+            "seqParticipantKind": "participant",
+            "seqStereotype": "db"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "sqlite",
+              "line": 10,
+              "seqParticipant": true,
+              "seqDeclared": true,
+              "seqStereotype": "db",
+              "seqFirstUseLine": 14
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "ui",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 1568,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "UI",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "ui",
+              "line": 11,
+              "seqParticipant": true,
+              "seqDeclared": true,
+              "seqFirstUseLine": 33
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "recompute-added-corrected-rows",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 1820,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 249,
+            "height": 1283
+          },
+          "content": {
+            "label": "recompute added/corrected rows",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "recompute-added-corrected-rows",
+              "line": 14,
+              "seqParticipant": true,
+              "seqDeclared": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "rebase-running-totals",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 2153,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 178,
+            "height": 1283
+          },
+          "content": {
+            "label": "rebase running totals",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "rebase-running-totals",
+              "line": 25,
+              "seqParticipant": true,
+              "seqDeclared": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "apply-privacy-level",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 2415,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "apply privacy level",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "apply-privacy-level",
+              "line": 25,
+              "seqParticipant": true,
+              "seqDeclared": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "upsert-sessions",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 2667,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "upsert sessions",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "upsert-sessions",
+              "line": 28,
+              "seqParticipant": true,
+              "seqDeclared": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "insert-events-messages-on-conflict-do-nothing",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 2919,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 345,
+            "height": 1283
+          },
+          "content": {
+            "label": "insert events + messages ON CONFLICT DO NOTHING",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "insert-events-messages-on-conflict-do-nothing",
+              "line": 28,
+              "seqParticipant": true,
+              "seqDeclared": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "update-hourly-usage-session-totals",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 3348,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 276,
+            "height": 1283
+          },
+          "content": {
+            "label": "update hourly_usage + session totals",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "update-hourly-usage-session-totals",
+              "line": 28,
+              "seqParticipant": true,
+              "seqDeclared": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "save-cursor",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 3708,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "save cursor",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "save-cursor",
+              "line": 28,
+              "seqParticipant": true,
+              "seqDeclared": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "commit",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 3960,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 168,
+            "height": 1283
+          },
+          "content": {
+            "label": "COMMIT",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "commit",
+              "line": 28,
+              "seqParticipant": true,
+              "seqDeclared": true
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "finish-ingest-run-stats-warnings-errors",
+          "kind": "sequence_participant",
+          "parentId": "dsl-1h1t40j",
+          "layerId": "default",
+          "zIndex": 1,
+          "transform": {
+            "translation": {
+              "x": 4212,
+              "y": 72
+            },
+            "rotationRadians": 0,
+            "scale": {
+              "x": 1,
+              "y": 1
+            }
+          },
+          "size": {
+            "width": 316,
+            "height": 1283
+          },
+          "content": {
+            "label": "finish ingest_run (stats, warnings, errors)",
+            "seqParticipantKind": "participant"
+          },
+          "appearance": {},
+          "ports": [],
+          "metadata": {
+            "dsl": {
+              "id": "finish-ingest-run-stats-warnings-errors",
+              "line": 31,
+              "seqParticipant": true,
+              "seqDeclared": true
             }
           },
           "extensions": {}
@@ -3030,771 +3178,6 @@
           "extensions": {}
         },
         {
-          "id": "msg-1",
-          "source": {
-            "nodeId": "scheduler",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-1-label",
-              "text": "tick (hourly : 00 / startup / manual)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -20.5
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 0,
-            "seqMessageRow": 0.09615384615384616
-          },
-          "metadata": {
-            "dsl": {
-              "line": 12,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-2",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-2-label",
-              "text": "acquire collector.lock",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "self",
-            "seqMessageOrder": 1,
-            "seqMessageRow": 1.0961538461538463
-          },
-          "metadata": {
-            "dsl": {
-              "line": 13,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-3",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "sqlite",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-3-label",
-              "text": "insert ingest_run",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 2,
-            "seqMessageRow": 2.3653846153846154
-          },
-          "metadata": {
-            "dsl": {
-              "line": 14,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-4",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "adapter",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-4-label",
-              "text": "discover(roots)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 3,
-            "seqMessageRow": 3.7115384615384617
-          },
-          "metadata": {
-            "dsl": {
-              "line": 16,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-5",
-          "source": {
-            "nodeId": "adapter",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "logs",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-5-label",
-              "text": "list sources (log files / harness DB)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -20.5
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 4,
-            "seqMessageRow": 4.730769230769231
-          },
-          "metadata": {
-            "dsl": {
-              "line": 17,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-6",
-          "source": {
-            "nodeId": "adapter",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-6-label",
-              "text": "sources",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "return",
-            "seqMessageOrder": 5,
-            "seqMessageRow": 5.730769230769231
-          },
-          "metadata": {
-            "dsl": {
-              "line": 18,
-              "seqArrow": "-->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-7",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "sqlite",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-7-label",
-              "text": "load cursor",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 6,
-            "seqMessageRow": 7.076923076923077
-          },
-          "metadata": {
-            "dsl": {
-              "line": 20,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-8",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "adapter",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-8-label",
-              "text": "read(src, cursor)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 7,
-            "seqMessageRow": 8.076923076923077
-          },
-          "metadata": {
-            "dsl": {
-              "line": 21,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-9",
-          "source": {
-            "nodeId": "adapter",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "logs",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-9-label",
-              "text": "read past cursor (byte offset / row watermark)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -28
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 8,
-            "seqMessageRow": 9.384615384615385
-          },
-          "metadata": {
-            "dsl": {
-              "line": 22,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-10",
-          "source": {
-            "nodeId": "adapter",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-10-label",
-              "text": "sessions + events + next_cursor",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -20.5
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "return",
-            "seqMessageOrder": 9,
-            "seqMessageRow": 10.403846153846153
-          },
-          "metadata": {
-            "dsl": {
-              "line": 23,
-              "seqArrow": "-->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-11",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "pricing",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-11-label",
-              "text": "price(events)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 10,
-            "seqMessageRow": 11.403846153846153
-          },
-          "metadata": {
-            "dsl": {
-              "line": 24,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-12",
-          "source": {
-            "nodeId": "pricing",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-12-label",
-              "text": "cost_micros per event",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "return",
-            "seqMessageOrder": 11,
-            "seqMessageRow": 12.403846153846153
-          },
-          "metadata": {
-            "dsl": {
-              "line": 25,
-              "seqArrow": "-->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-13",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "sqlite",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-13-label",
-              "text": "BEGIN",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 12,
-            "seqMessageRow": 13.403846153846153
-          },
-          "metadata": {
-            "dsl": {
-              "line": 26,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-14",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "sqlite",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-14-label",
-              "text": "finish ingest_run (stats, warnings)",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -20.5
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 13,
-            "seqMessageRow": 15.192307692307692
-          },
-          "metadata": {
-            "dsl": {
-              "line": 29,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-15",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-15-label",
-              "text": "release lock",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": 0
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "self",
-            "seqMessageOrder": 14,
-            "seqMessageRow": 16.192307692307693
-          },
-          "metadata": {
-            "dsl": {
-              "line": 30,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-16",
-          "source": {
-            "nodeId": "collector",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "ui",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-16-label",
-              "text": "IngestFinished",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "async",
-            "seqMessageOrder": 15,
-            "seqMessageRow": 17.46153846153846
-          },
-          "metadata": {
-            "dsl": {
-              "line": 31,
-              "seqArrow": "->>"
-            }
-          },
-          "extensions": {}
-        },
-        {
-          "id": "msg-17",
-          "source": {
-            "nodeId": "ui",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "target": {
-            "nodeId": "sqlite",
-            "portId": null,
-            "anchor": null,
-            "point": null
-          },
-          "route": {
-            "kind": "direct",
-            "ownership": "automatic"
-          },
-          "waypoints": [],
-          "labels": [
-            {
-              "id": "msg-17-label",
-              "text": "re-query visible pages",
-              "pathRatio": 0.5,
-              "offset": {
-                "x": 0,
-                "y": -13
-              },
-              "metadata": {}
-            }
-          ],
-          "appearance": {},
-          "semantics": {
-            "seqMessageKind": "sync",
-            "seqMessageOrder": 16,
-            "seqMessageRow": 18.46153846153846
-          },
-          "metadata": {
-            "dsl": {
-              "line": 32,
-              "seqArrow": "->"
-            }
-          },
-          "extensions": {}
-        },
-        {
           "id": "rel:harness->source-file:1",
           "source": {
             "nodeId": "harness",
@@ -4349,6 +3732,861 @@
             "dsl": {
               "line": 26,
               "structuredRelation": "|o--o{"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-1",
+          "source": {
+            "nodeId": "scheduler",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-1-label",
+              "text": "tick (hourly : 00 / startup / manual)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -20.5
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 0,
+            "seqMessageRow": 0.09615384615384616
+          },
+          "metadata": {
+            "dsl": {
+              "line": 12,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-2",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-2-label",
+              "text": "try collector.lock (busy → skip run)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "self",
+            "seqMessageOrder": 1,
+            "seqMessageRow": 1.0961538461538463
+          },
+          "metadata": {
+            "dsl": {
+              "line": 13,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-3",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "sqlite",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-3-label",
+              "text": "sync bundled prices",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 2,
+            "seqMessageRow": 2.3653846153846154
+          },
+          "metadata": {
+            "dsl": {
+              "line": 14,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-4",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "sqlite",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-4-label",
+              "text": "insert ingest_run",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 3,
+            "seqMessageRow": 3.3653846153846154
+          },
+          "metadata": {
+            "dsl": {
+              "line": 15,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-5",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "adapter",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-5-label",
+              "text": "discover(roots)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 4,
+            "seqMessageRow": 4.711538461538462
+          },
+          "metadata": {
+            "dsl": {
+              "line": 17,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-6",
+          "source": {
+            "nodeId": "adapter",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "logs",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-6-label",
+              "text": "list sources (log files / harness DB)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -20.5
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 5,
+            "seqMessageRow": 5.730769230769231
+          },
+          "metadata": {
+            "dsl": {
+              "line": 18,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-7",
+          "source": {
+            "nodeId": "adapter",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-7-label",
+              "text": "sources (oldest mtime first)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -20.5
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "return",
+            "seqMessageOrder": 6,
+            "seqMessageRow": 6.75
+          },
+          "metadata": {
+            "dsl": {
+              "line": 19,
+              "seqArrow": "-->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-8",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "sqlite",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-8-label",
+              "text": "load cursor",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 7,
+            "seqMessageRow": 8.096153846153847
+          },
+          "metadata": {
+            "dsl": {
+              "line": 21,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-9",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "adapter",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-9-label",
+              "text": "read(src, cursor)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 8,
+            "seqMessageRow": 9.096153846153847
+          },
+          "metadata": {
+            "dsl": {
+              "line": 22,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-10",
+          "source": {
+            "nodeId": "adapter",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "logs",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-10-label",
+              "text": "read past cursor (byte offset / row watermark)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -28
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 9,
+            "seqMessageRow": 10.403846153846153
+          },
+          "metadata": {
+            "dsl": {
+              "line": 23,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-11",
+          "source": {
+            "nodeId": "adapter",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-11-label",
+              "text": "sessions + events + messages + next_cursor (unchanged → no tx)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -35.5
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "return",
+            "seqMessageOrder": 10,
+            "seqMessageRow": 12
+          },
+          "metadata": {
+            "dsl": {
+              "line": 24,
+              "seqArrow": "-->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-12",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-12-label",
+              "text": "link parent / resumed session",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "self",
+            "seqMessageOrder": 11,
+            "seqMessageRow": 13
+          },
+          "metadata": {
+            "dsl": {
+              "line": 25,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-13",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "pricing",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-13-label",
+              "text": "price(events)",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 12,
+            "seqMessageRow": 14.26923076923077
+          },
+          "metadata": {
+            "dsl": {
+              "line": 26,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-14",
+          "source": {
+            "nodeId": "pricing",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-14-label",
+              "text": "cost_micros + price_id per event",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -20.5
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "return",
+            "seqMessageOrder": 13,
+            "seqMessageRow": 15.288461538461538
+          },
+          "metadata": {
+            "dsl": {
+              "line": 27,
+              "seqArrow": "-->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-15",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "sqlite",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-15-label",
+              "text": "BEGIN",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 14,
+            "seqMessageRow": 16.28846153846154
+          },
+          "metadata": {
+            "dsl": {
+              "line": 28,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-16",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "sqlite",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-16-label",
+              "text": "mark missing sources",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 15,
+            "seqMessageRow": 17.78846153846154
+          },
+          "metadata": {
+            "dsl": {
+              "line": 31,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-17",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-17-label",
+              "text": "release lock",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "self",
+            "seqMessageOrder": 16,
+            "seqMessageRow": 18.78846153846154
+          },
+          "metadata": {
+            "dsl": {
+              "line": 32,
+              "seqArrow": "->"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-18",
+          "source": {
+            "nodeId": "collector",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "ui",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-18-label",
+              "text": "IngestFinished",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "async",
+            "seqMessageOrder": 17,
+            "seqMessageRow": 20.057692307692307
+          },
+          "metadata": {
+            "dsl": {
+              "line": 33,
+              "seqArrow": "->>"
+            }
+          },
+          "extensions": {}
+        },
+        {
+          "id": "msg-19",
+          "source": {
+            "nodeId": "ui",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "target": {
+            "nodeId": "sqlite",
+            "portId": null,
+            "anchor": null,
+            "point": null
+          },
+          "route": {
+            "kind": "direct",
+            "ownership": "automatic"
+          },
+          "waypoints": [],
+          "labels": [
+            {
+              "id": "msg-19-label",
+              "text": "re-query visible pages",
+              "pathRatio": 0.5,
+              "offset": {
+                "x": 0,
+                "y": -13
+              },
+              "metadata": {}
+            }
+          ],
+          "appearance": {},
+          "semantics": {
+            "seqMessageKind": "sync",
+            "seqMessageOrder": 18,
+            "seqMessageRow": 21.057692307692307
+          },
+          "metadata": {
+            "dsl": {
+              "line": 34,
+              "seqArrow": "->"
             }
           },
           "extensions": {}
