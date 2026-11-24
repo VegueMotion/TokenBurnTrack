@@ -1,0 +1,46 @@
+# Example `[[generic_jsonl]]` tables for the collector config file.
+# Paths start with `$`; provider, model, session_id, project_path and git_branch
+# may also be constants (any value not starting with `$`).
+
+[[generic_jsonl]]
+id = "llm_proxy"
+display_name = "LLM proxy"
+roots = ["~/.local/share/llm-proxy/logs"]
+glob = "**/*.jsonl"
+filter = "$.usage"
+timestamp = "$.created_ms"
+timestamp_format = "unix_millis"
+session_id = "$.session"
+provider = "$.provider"
+model = "$.model"
+input_tokens = "$.usage.prompt_tokens"
+input_includes_cache_read = true
+cache_read_tokens = "$.usage.prompt_tokens_details.cached_tokens"
+output_tokens = "$.usage.completion_tokens"
+reasoning_tokens = "$.usage.completion_tokens_details.reasoning_tokens"
+reported_cost = "$.cost_usd"
+project_path = "$.metadata.cwd"
+git_branch = '$.metadata["git branch"]'
+dedup_key = "{$.id}"
+
+[[generic_jsonl]]
+id = "in_house_agent"
+display_name = "In-house agent"
+roots = ["~/.in-house-agent"]
+glob = "projects/*/s-*.jsonl"
+filter = '$.type == "usage"'
+timestamp = "$.timestamp"
+timestamp_format = "rfc3339"
+session_id = "$.sessionId"
+provider = "anthropic"
+model = "$.message.model"
+input_tokens = "$.message.usage.input_tokens"
+output_tokens = "$.message.usage.output_tokens"
+cache_write_5m_tokens = "$.message.usage.cache_creation.ephemeral_5m_input_tokens"
+cache_write_1h_tokens = "$.message.usage.cache_creation.ephemeral_1h_input_tokens"
+cache_read_tokens = "$.message.usage.cache_read_input_tokens"
+reasoning_tokens = "$.message.usage.thinking_tokens"
+reported_cost = "$.costUSD"
+project_path = "$.cwd"
+git_branch = "$.gitBranch"
+dedup_key = "{$.message.id}:{$.requestId}"

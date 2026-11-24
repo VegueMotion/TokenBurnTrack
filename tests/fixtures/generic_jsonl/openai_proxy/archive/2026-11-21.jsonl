@@ -1,0 +1,2 @@
+{"id":"chatcmpl-z1","created_ms":1795251600000,"session":"sess-old","provider":"openai","model":"gpt-5.1","usage":{"prompt_tokens":5000,"completion_tokens":900,"prompt_tokens_details":{"cached_tokens":4096},"completion_tokens_details":{"reasoning_tokens":300}},"cost_usd":1.5e-2}
+{"id":"chatcmpl-z2","created_ms":1795251720000,"session":"sess-old","provider":"openai","model":"gpt-5.1","usage":{"prompt_tokens":5200,"completion_tokens":100,"prompt_tokens_details":{"cached_tokens":5000}},"cost_usd":0.004}

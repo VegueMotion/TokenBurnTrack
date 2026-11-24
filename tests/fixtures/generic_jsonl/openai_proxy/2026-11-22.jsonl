@@ -1,0 +1,10 @@
+{"event":"startup","version":"1.4.2","created_ms":1795338000000}
+{"id":"chatcmpl-a1","created_ms":1795338000123,"session":"sess-alpha","provider":"openai","model":"gpt-5.1","usage":{"prompt_tokens":1200,"completion_tokens":300,"prompt_tokens_details":{"cached_tokens":1000},"completion_tokens_details":{"reasoning_tokens":120}},"cost_usd":0.00345,"metadata":{"cwd":"/u/user/projects/pale-fjord","git branch":"main"}}
+{"id":"chatcmpl-a2","created_ms":"1795338060500","session":"sess-alpha","provider":"openai","model":"gpt-5.1","usage":{"prompt_tokens":"800","completion_tokens":50,"prompt_tokens_details":null},"metadata":{"cwd":"/u/user/projects/pale-fjord"}}
+{"id":"chatcmpl-a1","created_ms":1795338000123,"session":"sess-alpha","provider":"openai","model":"gpt-5.1","usage":{"prompt_tokens":1200,"completion_tokens":300,"prompt_tokens_details":{"cached_tokens":1000},"completion_tokens_details":{"reasoning_tokens":120}},"cost_usd":0.00345,"metadata":{"cwd":"/u/user/projects/pale-fjord","git branch":"main"}}
+{"id":"chatcmpl-broken",
+{"id":"chatcmpl-b1","created_ms":1795338120000,"session":"sess-beta","provider":"azure","model":"gpt-5.1-mini","usage":{"prompt_tokens":400,"completion_tokens":20,"prompt_tokens_details":{"cached_tokens":0}},"cost_usd":"0.0002","metadata":{"cwd":"/u/user/projects/keen-lagoon","git branch":"branch-7f3a2c"}}
+{"id":"chatcmpl-c1","created_ms":1795338180000,"session":"sess-beta","provider":"openai","usage":{"prompt_tokens":10,"completion_tokens":5}}
+{"id":"chatcmpl-c2","created_ms":1795338240000,"session":"sess-beta","provider":"openai","model":"gpt-5.1","usage":{"prompt_tokens":10,"completion_tokens":"n/a"}}
+{"id":"chatcmpl-d1","created_ms":1795338300000,"provider":"openai","model":"gpt-5.1-mini","usage":{"prompt_tokens":2500,"completion_tokens":700,"prompt_tokens_details":{"cached_tokens":2048},"completion_tokens_details":{"reasoning_tokens":512}}}
+{"id":"chatcmpl-e1","created_ms":1795338360000,"session":"sess-beta","provider":"openai","model":"gpt-5.1","usage":{"prompt_tokens":0,"completion_tokens":0}}
