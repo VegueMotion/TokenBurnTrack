@@ -5,9 +5,12 @@ use gpui::{
     Window, div, prelude::*, px,
 };
 use gpui_component::button::{Button, ButtonVariants};
+use gpui_component::calendar::{Calendar, CalendarEvent, CalendarState, Date, Matcher};
+use gpui_component::popover::Popover;
 use gpui_component::tooltip::Tooltip;
 use gpui_component::{ActiveTheme, Disableable, Selectable, Sizable, StyledExt, h_flex, v_flex};
 use jiff::Timestamp;
+use jiff::civil::Weekday;
 use tbt_core::{HarnessId, SessionId};
 
 use crate::app_state::{AppState, AppStateEvent, DateRange};
@@ -30,6 +33,8 @@ pub struct Workspace {
     views: Vec<(Page, AnyView)>,
     detail: Option<(SessionId, AnyView)>,
     sync: Entity<CollectorBridge>,
+    calendar: Entity<CalendarState>,
+    custom_open: bool,
 }
 
 impl Workspace {
@@ -60,6 +65,28 @@ impl Workspace {
             let (app_state, data) = (app_state.clone(), data.clone());
             cx.new(|cx| CollectorBridge::new(sync, app_state, data, cx))
         };
+        let tz = app_state.read(cx).tz();
+        let calendar = cx.new(|cx| {
+            let mut c =
+                CalendarState::new(window, cx).disabled_matcher(Matcher::custom(move |d| {
+                    *d > Timestamp::now().to_zoned_datetime(tz.clone()).date()
+                }));
+            c.apply_date(Date::Range(None, None));
+            c
+        });
+        cx.subscribe_in(&calendar, window, |this, _, ev: &CalendarEvent, _, cx| {
+            let CalendarEvent::Selected(Date::Range(Some(a), Some(b))) = *ev else {
+                return;
+            };
+            this.custom_open = false;
+            this.app_state.update(cx, |s, cx| {
+                if let Some(r) = DateRange::from_days(a, b, &s.tz()) {
+                    s.change_range(r, cx);
+                }
+            });
+            cx.notify();
+        })
+        .detach();
         Workspace {
             app_state,
             data,
@@ -67,6 +94,8 @@ impl Workspace {
             views: Vec::new(),
             detail: None,
             sync,
+            calendar,
+            custom_open: false,
         }
     }
 
@@ -94,6 +123,61 @@ impl Workspace {
             .into();
         self.detail = Some((id, view));
         cx.notify();
+    }
+
+    fn set_custom_open(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if open == self.custom_open {
+            return;
+        }
+        self.custom_open = open;
+        if open {
+            let state = self.app_state.read(cx);
+            let date = match state.range.custom_days(&state.tz()) {
+                Some((a, b)) => Date::Range(Some(a), Some(b)),
+                None => Date::Range(None, None),
+            };
+            self.calendar
+                .update(cx, |c, cx| c.set_date(date, window, cx));
+        }
+        cx.notify();
+    }
+
+    fn render_custom_range(&self, state: &AppState, cx: &mut Context<Self>) -> impl IntoElement {
+        let label = match state.range.custom_days(&state.tz()) {
+            Some((a, b)) if a == b => a.strftime("%b %-d").to_string(),
+            Some((a, b)) if a.year() == b.year() => {
+                format!("{} – {}", a.strftime("%b %-d"), b.strftime("%b %-d"))
+            }
+            Some((a, b)) => format!(
+                "{} – {}",
+                a.strftime("%b %-d, %Y"),
+                b.strftime("%b %-d, %Y")
+            ),
+            None => "Custom".to_owned(),
+        };
+        let this = cx.entity().downgrade();
+        Popover::new("range-custom-popover")
+            .open(self.custom_open)
+            .on_open_change(move |open, window, cx| {
+                let open = *open;
+                this.update(cx, |w, cx| w.set_custom_open(open, window, cx))
+                    .ok();
+            })
+            .trigger(
+                Button::new("range-custom")
+                    .small()
+                    .ghost()
+                    .selected(matches!(state.range, DateRange::Custom(_)))
+                    .label(label),
+            )
+            .p_2()
+            .when(self.custom_open, |p| {
+                p.child(
+                    Calendar::new(&self.calendar)
+                        .small()
+                        .first_day_of_week(Weekday::Monday),
+                )
+            })
     }
 
     fn sync_now(&mut self, cx: &mut Context<Self>) {
@@ -216,15 +300,7 @@ impl Workspace {
                         app_state.update(cx, |s, cx| s.change_range(r, cx));
                     })
             }))
-            .child(
-                Button::new("range-custom")
-                    .small()
-                    .ghost()
-                    .disabled(true)
-                    .selected(matches!(state.range, DateRange::Custom(_)))
-                    .label("Custom")
-                    .tooltip("Custom ranges are not available yet"),
-            );
+            .child(self.render_custom_range(&state, cx));
         let mut chips = vec![
             self.chip(
                 "harness-all".into(),

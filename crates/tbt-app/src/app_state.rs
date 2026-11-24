@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 
 use gpui::{Context, EventEmitter};
+use jiff::civil::Date;
 use jiff::tz::TimeZone;
 use jiff::{SignedDuration, Timestamp, ToSpan};
 use tbt_core::{HarnessId, SessionId, TimeRange};
@@ -16,14 +17,16 @@ pub enum DateRange {
     Today,
     Last7Days,
     Last30Days,
+    Last90Days,
     Custom(TimeRange),
 }
 
 impl DateRange {
-    pub const PRESETS: [DateRange; 3] = [
+    pub const PRESETS: [DateRange; 4] = [
         DateRange::Today,
         DateRange::Last7Days,
         DateRange::Last30Days,
+        DateRange::Last90Days,
     ];
 
     pub fn label(&self) -> &'static str {
@@ -31,6 +34,7 @@ impl DateRange {
             DateRange::Today => "Today",
             DateRange::Last7Days => "7d",
             DateRange::Last30Days => "30d",
+            DateRange::Last90Days => "90d",
             DateRange::Custom(_) => "Custom",
         }
     }
@@ -41,6 +45,7 @@ impl DateRange {
             DateRange::Today => 1,
             DateRange::Last7Days => 7,
             DateRange::Last30Days => 30,
+            DateRange::Last90Days => 90,
         };
         let today = now.to_zoned_datetime(tz.clone()).start_of_day();
         let Ok(today) = today else {
@@ -53,10 +58,39 @@ impl DateRange {
         TimeRange::new(start.timestamp(), end.timestamp())
     }
 
+    pub fn from_days(first: Date, last: Date, tz: &TimeZone) -> Option<DateRange> {
+        let (first, last) = if first <= last {
+            (first, last)
+        } else {
+            (last, first)
+        };
+        let start = first.to_zoned_datetime(tz.clone()).ok()?;
+        let end = last
+            .checked_add(1.day())
+            .ok()?
+            .to_zoned_datetime(tz.clone())
+            .ok()?;
+        Some(DateRange::Custom(TimeRange::new(
+            start.timestamp(),
+            end.timestamp(),
+        )))
+    }
+
+    pub fn custom_days(&self, tz: &TimeZone) -> Option<(Date, Date)> {
+        let DateRange::Custom(r) = self else {
+            return None;
+        };
+        let first = r.start.to_zoned_datetime(tz.clone()).date();
+        let last = (r.end - SignedDuration::from_secs(1))
+            .to_zoned_datetime(tz.clone())
+            .date();
+        Some((first, last.max(first)))
+    }
+
     pub fn bucket(&self) -> BucketSize {
         match self {
             DateRange::Today => BucketSize::Hour,
-            DateRange::Last7Days | DateRange::Last30Days => BucketSize::Day,
+            DateRange::Last7Days | DateRange::Last30Days | DateRange::Last90Days => BucketSize::Day,
             DateRange::Custom(r) if r.duration() <= SignedDuration::from_hours(48) => {
                 BucketSize::Hour
             }
@@ -365,6 +399,34 @@ mod tests {
         let f = s.query_filter(now);
         assert_eq!(f.range.start, ts("2026-10-24T22:00:00Z"));
         assert_eq!(f.range.end, ts("2026-11-23T23:00:00Z"));
+
+        s.set_range(DateRange::Last90Days);
+        let f = s.query_filter(now);
+        assert_eq!(f.range.start, ts("2026-08-25T22:00:00Z"));
+        assert_eq!(f.range.end, ts("2026-11-23T23:00:00Z"));
+        assert_eq!(f.bucket, BucketSize::Day);
+    }
+
+    #[test]
+    fn custom_days_cover_whole_local_days() {
+        let tz = time_zone("Europe/Berlin");
+        let (a, b) = (
+            jiff::civil::date(2026, 11, 10),
+            jiff::civil::date(2026, 11, 3),
+        );
+        let r = DateRange::from_days(a, b, &tz).unwrap();
+        assert_eq!(
+            r,
+            DateRange::Custom(TimeRange::new(
+                ts("2026-11-02T23:00:00Z"),
+                ts("2026-11-10T23:00:00Z")
+            ))
+        );
+        assert_eq!(r.custom_days(&tz), Some((b, a)));
+        assert_eq!(r.bucket(), BucketSize::Day);
+        let one = DateRange::from_days(a, a, &tz).unwrap();
+        assert_eq!(one.custom_days(&tz), Some((a, a)));
+        assert_eq!(one.bucket(), BucketSize::Hour);
     }
 
     #[test]
