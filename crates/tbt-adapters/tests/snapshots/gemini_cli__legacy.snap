@@ -1,0 +1,61 @@
+---
+source: crates/tbt-adapters/tests/gemini_cli.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: 7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: ~
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-10-02T09:30:11Z"
+    ended_at: "2026-10-02T09:34:52.512Z"
+    has_baseline_hint: false
+event_count: 3
+totals:
+  (all):
+    calls: 3
+    input: 10091
+    output: 989
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 17152
+    reasoning: 236
+    total: 28232
+  google/gemini-2.5-flash:
+    calls: 1
+    input: 751
+    output: 154
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 8960
+    reasoning: 0
+    total: 9865
+  google/gemini-2.5-pro:
+    calls: 2
+    input: 9340
+    output: 835
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 8192
+    reasoning: 236
+    total: 18367
+events:
+  - "2026-10-02T09:30:19.87Z 1c7a5d2f-2e3b-4a4c-8d9e-8f7a6b5c4d32 gemini-2.5-pro in=8412 out=307 cw5m=0 cw1h=0 cr=0 rs=96"
+  - "2026-10-02T09:30:27.331Z 2d8b6e3a-3f4c-4b5d-9e0f-9a8b7c6d5e43 gemini-2.5-pro in=928 out=528 cw5m=0 cw1h=0 cr=8192 rs=140"
+  - "2026-10-02T09:34:52.401Z 4f0d8a5c-5b6e-4d7f-9a2b-1c0d9e8f7a65 gemini-2.5-flash in=751 out=154 cw5m=0 cw1h=0 cr=8960 rs=0"
+message_count: 8
+messages_by_kind:
+  assistant/text: 3
+  assistant/thinking: 1
+  assistant/tool_use: 1
+  tool/tool_result: 1
+  user/text: 2
+messages_linked_to_events: 5
+messages_with_preview: 8
+tools:
+  tool_result/read_file: 1
+  tool_use/read_file: 1
+warnings: []
