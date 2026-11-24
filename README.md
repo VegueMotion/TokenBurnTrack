@@ -16,7 +16,8 @@ the snapshots going while the app is closed.
 - Resumed and forked sessions are linked instead of double counted; subagent runs are
   linked to the session that started them.
 - Sessions run in a git worktree count toward the main checkout's project, also after the
-  worktree is deleted.
+  worktree is deleted if it was seen before, is a Claude Code `.claude/worktrees` worktree,
+  or git still lists it.
 - Cost per API call, from bundled prices (`assets/prices.toml`), an optional LiteLLM
   price import and your own overrides. Prices are versioned by date, so a price change
   does not rewrite old costs. Calls to models without a price count as $0;

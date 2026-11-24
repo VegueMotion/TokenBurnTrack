@@ -43,34 +43,66 @@ fn project_name(path: &str) -> Option<String> {
         .map(str::to_owned)
 }
 
-/// The one stored project named `name` that is not itself in a worktree.
-fn known_project(conn: &Connection, name: &str) -> Option<String> {
-    let mut stmt = conn
-        .prepare_cached(
-            "SELECT path FROM project
-             WHERE name = ?1 AND id != 0 AND path NOT LIKE '%/worktrees/%' LIMIT 2",
+/// Reads what the worktree resolver needs from the store.
+pub(crate) struct DbLookup<'a>(pub(crate) &'a Connection);
+
+fn strings(conn: &Connection, sql: &str, args: impl rusqlite::Params) -> Result<Vec<String>> {
+    Ok(conn
+        .prepare_cached(sql)?
+        .query_map(args, |r| r.get(0))?
+        .collect::<rusqlite::Result<_>>()?)
+}
+
+impl worktree::Lookup for DbLookup<'_> {
+    fn recorded(&mut self) -> Result<Vec<(String, String)>> {
+        Ok(self
+            .0
+            .prepare_cached("SELECT path, main FROM worktree")?
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
+            .collect::<rusqlite::Result<_>>()?)
+    }
+
+    fn named(&mut self, name: &str) -> Result<Vec<String>> {
+        strings(
+            self.0,
+            "SELECT path FROM project WHERE name = ?1 AND id != 0",
+            [name],
         )
-        .ok()?;
-    let paths: Vec<String> = stmt
-        .query_map([name], |r| r.get(0))
-        .ok()?
-        .collect::<rusqlite::Result<_>>()
-        .ok()?;
-    match paths.as_slice() {
-        [one] => Some(one.clone()),
-        _ => None,
+    }
+
+    fn projects(&mut self) -> Result<Vec<String>> {
+        strings(self.0, "SELECT path FROM project WHERE id != 0", [])
     }
 }
 
-fn main_project_path(conn: &Connection, path: &str) -> Option<String> {
-    worktree::main_checkout(path, &mut |name| known_project(conn, name))
+fn record_worktrees(conn: &Connection, learned: &[(String, String)]) -> Result<()> {
+    for (path, main) in learned {
+        conn.prepare_cached(
+            "INSERT INTO worktree(path, main) VALUES (?1, ?2)
+             ON CONFLICT(path) DO UPDATE SET main = excluded.main",
+        )?
+        .execute(params![path, main])?;
+    }
+    Ok(())
 }
 
 pub(crate) fn upsert_project(conn: &Connection, path: Option<&str>) -> Result<ProjectId> {
     let Some(path) = path.filter(|p| !p.is_empty()) else {
         return Ok(ProjectId::NONE);
     };
-    let main = main_project_path(conn, path);
+    // A stored path was resolved when it was stored, and worktree projects stored
+    // before are folded by `merge_worktree_projects`, so the filesystem is only
+    // checked for new paths.
+    let stored: Option<i64> = conn
+        .prepare_cached("SELECT id FROM project WHERE path = ?1")?
+        .query_row([path], |r| r.get(0))
+        .optional()?;
+    if let Some(id) = stored {
+        return Ok(ProjectId(id));
+    }
+    let mut resolver = worktree::Resolver::new(DbLookup(conn));
+    let main = resolver.main_checkout(path)?;
+    record_worktrees(conn, &resolver.learned)?;
     insert_project(conn, main.as_deref().unwrap_or(path))
 }
 
@@ -85,19 +117,54 @@ fn insert_project(conn: &Connection, path: &str) -> Result<ProjectId> {
     Ok(ProjectId(id))
 }
 
-/// Folds every stored project that lies in a git worktree into its main
-/// checkout's project. Returns how many projects were folded.
-pub(crate) fn merge_worktree_projects(conn: &Connection) -> Result<usize> {
+/// Stored worktree projects to fold, found without holding the write lock.
+pub(crate) struct WorktreeMerge {
+    folds: Vec<(i64, String, String)>,
+    learned: Vec<(String, String)>,
+}
+
+impl WorktreeMerge {
+    pub(crate) fn is_empty(&self) -> bool {
+        self.folds.is_empty() && self.learned.is_empty()
+    }
+}
+
+/// Resolves every stored project path. This touches the filesystem, so it runs
+/// before the write transaction.
+pub(crate) fn plan_worktree_merge(conn: &Connection) -> Result<WorktreeMerge> {
     let projects: Vec<(i64, String)> = conn
         .prepare("SELECT id, path FROM project WHERE id != 0")?
         .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
         .collect::<rusqlite::Result<_>>()?;
+    let mut resolver = worktree::Resolver::new(DbLookup(conn));
+    let mut folds = Vec::new();
+    for (id, path) in projects {
+        if let Some(main) = resolver.main_checkout(&path)? {
+            folds.push((id, path, main));
+        }
+    }
+    Ok(WorktreeMerge {
+        folds,
+        learned: resolver.learned,
+    })
+}
+
+/// Folds the planned worktree projects into their main checkout's project.
+/// Returns how many projects were folded.
+pub(crate) fn apply_worktree_merge(conn: &Connection, plan: &WorktreeMerge) -> Result<usize> {
+    record_worktrees(conn, &plan.learned)?;
     let mut merged = 0;
-    for (from, path) in projects {
-        let Some(main) = main_project_path(conn, &path) else {
+    for (from, path, main) in &plan.folds {
+        // Skip a project that changed since it was resolved.
+        let still: Option<i64> = conn
+            .prepare_cached("SELECT id FROM project WHERE id = ?1 AND path = ?2")?
+            .query_row(params![from, path], |r| r.get(0))
+            .optional()?;
+        if still.is_none() {
             continue;
-        };
-        let to = insert_project(conn, &main)?.0;
+        }
+        let from = *from;
+        let to = insert_project(conn, main)?.0;
         if to == from {
             continue;
         }

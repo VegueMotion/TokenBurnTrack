@@ -146,10 +146,17 @@ FROM usage_event
 GROUP BY 1, 2, 3;
 "#;
 
+/// Git worktrees seen while they existed, with the main checkout they belong to,
+/// so their sessions still resolve after the worktree is deleted.
+const V3: &str = r#"
+CREATE TABLE worktree (path TEXT PRIMARY KEY, main TEXT NOT NULL) WITHOUT ROWID;
+"#;
+
 pub(crate) fn migrations() -> Migrations<'static> {
     Migrations::new(vec![
         M::up(V1).foreign_key_check(),
         M::up(V2).foreign_key_check(),
+        M::up(V3).foreign_key_check(),
     ])
 }
 

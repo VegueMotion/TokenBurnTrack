@@ -23,7 +23,7 @@ fn migrates_empty_db_to_latest() {
     let version: i64 = raw
         .query_row("PRAGMA user_version", [], |r| r.get(0))
         .unwrap();
-    assert_eq!(version, 2);
+    assert_eq!(version, 3);
     assert_eq!(
         tables(&raw),
         [
@@ -39,6 +39,7 @@ fn migrates_empty_db_to_latest() {
             "session_model",
             "source_file",
             "usage_event",
+            "worktree",
         ]
     );
     let none: (i64, String) = raw
