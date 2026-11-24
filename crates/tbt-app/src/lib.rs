@@ -57,6 +57,24 @@ fn backend() -> (Arc<dyn DataSource>, SyncSource) {
     (Arc::new(StoreData::from_data_dir(dir)), sync)
 }
 
+fn report_error(msg: &str) {
+    eprintln!("{msg}");
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{MB_ICONERROR, MB_OK, MessageBoxW};
+        let wide = |s: &str| s.encode_utf16().chain([0]).collect::<Vec<u16>>();
+        let (text, title) = (wide(msg), wide("TokenBurnTrack"));
+        unsafe {
+            MessageBoxW(
+                std::ptr::null_mut(),
+                text.as_ptr(),
+                title.as_ptr(),
+                MB_ICONERROR | MB_OK,
+            );
+        }
+    }
+}
+
 pub fn run() {
     let (data, sync) = backend();
     gpui_platform::application().run(move |cx: &mut App| {
@@ -65,7 +83,7 @@ pub fn run() {
         cx.on_window_closed(|cx, _| cx.quit()).detach();
         if let Err(err) = workspace::open_main_window(data.clone(), sync.clone(), start_page(), cx)
         {
-            eprintln!("failed to open window: {err:#}");
+            report_error(&format!("failed to open window: {err:#}"));
             cx.quit();
         }
     });

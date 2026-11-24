@@ -8,6 +8,11 @@ APP=target/dist/TokenBurnTrack.app
 WORK=target/dist/work
 export MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET:-11.0}
 
+if [ -n "${NOTARY_PROFILE:-}" ] && [ -z "${CODESIGN_IDENTITY:-}" ]; then
+  echo "NOTARY_PROFILE needs CODESIGN_IDENTITY" >&2
+  exit 1
+fi
+
 rustup target add "${TARGETS[@]}"
 for t in "${TARGETS[@]}"; do
   cargo build --release --locked --target "$t" -p tbt-app -p tbt-daemon
@@ -60,4 +65,11 @@ ln -s /Applications "$WORK/Applications"
 cp -R "$APP" "$WORK/"
 rm -rf "$WORK/AppIcon.iconset" "$WORK/$ID.svg.png"
 hdiutil create -volname TokenBurnTrack -srcfolder "$WORK" -ov -format UDZO "$DMG" >/dev/null
+if [ -n "${CODESIGN_IDENTITY:-}" ]; then
+  codesign --force --timestamp --sign "$CODESIGN_IDENTITY" "$DMG"
+fi
+if [ -n "${NOTARY_PROFILE:-}" ]; then
+  xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
+  xcrun stapler staple "$DMG"
+fi
 echo "$DMG"

@@ -47,5 +47,4 @@ desktop.ini
 /build-dir/
 /repo/
 
-# Release artifacts
 /dist/

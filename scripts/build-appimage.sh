@@ -18,7 +18,7 @@ else
     -v "$ROOT":/src -w /src \
     -v tbt-appimage-cargo:/root/.cargo -v tbt-appimage-rustup:/root/.rustup \
     -e CARGO_TARGET_DIR=/src/target/appimage \
-    "$IMAGE" bash -euc '
+    "$IMAGE" bash -euo pipefail -c '
       export DEBIAN_FRONTEND=noninteractive
       apt-get update -qq
       apt-get install -y -qq --no-install-recommends ca-certificates curl gcc g++ clang cmake \
@@ -30,11 +30,18 @@ else
   BIN=target/appimage/release
 fi
 
-TOOL=$TOOLS/appimagetool-$ARCH.AppImage
+TOOL_VERSION=1.9.1
+case $ARCH in
+  x86_64) TOOL_SHA256=ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0 ;;
+  aarch64) TOOL_SHA256=f0837e7448a0c1e4e650a93bb3e85802546e60654ef287576f46c71c126a9158 ;;
+  *) echo "unsupported architecture: $ARCH" >&2; exit 1 ;;
+esac
+TOOL=$TOOLS/appimagetool-$TOOL_VERSION-$ARCH.AppImage
 if [ ! -x "$TOOL" ]; then
   mkdir -p "$TOOLS"
   curl -fL -o "$TOOL.part" \
-    "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$ARCH.AppImage"
+    "https://github.com/AppImage/appimagetool/releases/download/$TOOL_VERSION/appimagetool-$ARCH.AppImage"
+  echo "$TOOL_SHA256  $TOOL.part" | sha256sum -c --quiet
   chmod +x "$TOOL.part"
   mv "$TOOL.part" "$TOOL"
 fi
