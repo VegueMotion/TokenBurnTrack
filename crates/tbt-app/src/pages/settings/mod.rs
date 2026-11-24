@@ -27,18 +27,19 @@ use crate::ui;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Tab {
+    General,
     Prices,
     Import,
-    General,
     Adapters,
     Export,
 }
 
 impl Tab {
+    /// Display order of the tab strip; the first entry is the one the page opens on.
     const ALL: [Tab; 5] = [
+        Tab::General,
         Tab::Prices,
         Tab::Import,
-        Tab::General,
         Tab::Adapters,
         Tab::Export,
     ];
@@ -217,7 +218,7 @@ impl SettingsPage {
         let mut page = SettingsPage {
             app_state,
             data,
-            tab: Tab::Prices,
+            tab: Tab::ALL[0],
             notice: None,
             busy: false,
             prices: Loadable::Loading,
@@ -718,5 +719,15 @@ fn default_export_path(dataset: Dataset) -> String {
 impl Render for SettingsPage {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         ui::page_scroll("settings-scroll", self.render_page(cx))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Tab;
+
+    #[test]
+    fn general_tab_comes_first() {
+        assert_eq!(Tab::ALL[0], Tab::General);
     }
 }
