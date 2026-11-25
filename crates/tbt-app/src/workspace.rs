@@ -9,8 +9,8 @@ use gpui_component::calendar::{Calendar, CalendarEvent, CalendarState, Date, Mat
 use gpui_component::popover::Popover;
 use gpui_component::tooltip::Tooltip;
 use gpui_component::{
-    ActiveTheme, Disableable, Icon, InteractiveElementExt, Selectable, Sizable, StyledExt, h_flex,
-    v_flex,
+    ActiveTheme, Disableable, Icon, IconName, InteractiveElementExt, Selectable, Sizable,
+    StyledExt, h_flex, v_flex,
 };
 use jiff::Timestamp;
 use jiff::civil::Weekday;
@@ -30,6 +30,7 @@ use crate::pages::settings::SettingsPage;
 use crate::palette::{harness_color, harness_label};
 
 const REPO_URL: &str = "https://github.com/VegueMotion/TokenBurnTrack";
+const TOP_HARNESSES: usize = 3;
 
 pub struct Workspace {
     app_state: Entity<AppState>,
@@ -143,6 +144,10 @@ impl Workspace {
             custom_open: false,
             title_drag: false,
         }
+    }
+
+    pub fn app_state(&self) -> &Entity<AppState> {
+        &self.app_state
     }
 
     fn view(&mut self, page: Page, window: &mut Window, cx: &mut Context<Self>) -> AnyView {
@@ -412,8 +417,10 @@ impl Workspace {
             t.secondary_active,
         );
         let state = self.app_state.clone();
+        let selector = id.to_string();
         h_flex()
             .id(id)
+            .debug_selector(move || selector)
             .gap_1p5()
             .items_center()
             .px_2p5()
@@ -437,6 +444,67 @@ impl Workspace {
             .on_click(move |_, _, cx| {
                 state.update(cx, |s, cx| s.change_harness(harness.as_ref(), cx));
             })
+    }
+
+    fn render_harness_menu(&self, state: &AppState, cx: &mut Context<Self>) -> impl IntoElement {
+        let t = cx.theme();
+        let (fg, muted, hover) = (t.foreground, t.muted_foreground, t.secondary_hover);
+        let hidden = state
+            .harnesses
+            .iter()
+            .skip(TOP_HARNESSES)
+            .filter(|h| state.is_selected(&h.id))
+            .count();
+        let label = if hidden > 0 {
+            format!("More · {hidden}")
+        } else {
+            "More".to_owned()
+        };
+        let rows = state.harnesses.iter().map(|h| {
+            let selected = state.is_selected(&h.id);
+            let color = harness_color(&h.id);
+            let id = h.id.clone();
+            let app_state = self.app_state.clone();
+            let selector = format!("harness-menu-{}", h.id);
+            h_flex()
+                .id(SharedString::from(selector.clone()))
+                .debug_selector(move || selector)
+                .gap_2()
+                .items_center()
+                .px_2()
+                .py_1()
+                .rounded_md()
+                .text_xs()
+                .cursor_pointer()
+                .text_color(if selected { fg } else { muted })
+                .hover(move |s| s.bg(hover).text_color(fg))
+                .child(div().size(px(8.)).rounded_full().bg(if selected {
+                    color
+                } else {
+                    color.opacity(0.45)
+                }))
+                .child(div().flex_1().child(harness_label(&h.id)))
+                .child(
+                    div()
+                        .w(px(14.))
+                        .when(selected, |d| d.child(Icon::new(IconName::Check).size_3p5())),
+                )
+                .on_click(move |_, _, cx| {
+                    app_state.update(cx, |s, cx| s.change_harness(Some(&id), cx));
+                })
+        });
+        Popover::new("harness-menu-popover")
+            .trigger(
+                Button::new("harness-menu")
+                    .debug_selector(|| "harness-menu".into())
+                    .small()
+                    .outline()
+                    .selected(hidden > 0)
+                    .dropdown_caret(true)
+                    .label(label),
+            )
+            .p_1()
+            .child(v_flex().min_w(px(180.)).gap_0p5().children(rows))
     }
 
     fn render_top_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -470,7 +538,7 @@ impl Workspace {
             )
             .into_any_element(),
         ];
-        for h in &state.harnesses {
+        for h in state.harnesses.iter().take(TOP_HARNESSES) {
             chips.push(
                 self.chip(
                     format!("harness-{}", h.id).into(),
@@ -482,6 +550,9 @@ impl Workspace {
                 )
                 .into_any_element(),
             );
+        }
+        if state.harnesses.len() > TOP_HARNESSES {
+            chips.push(self.render_harness_menu(&state, cx).into_any_element());
         }
         let filters_apply = self.page.uses_filters();
         h_flex()
