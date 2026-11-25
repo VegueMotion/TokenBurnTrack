@@ -17,7 +17,17 @@ const HARNESS: HarnessId = HarnessId::GOOSE;
 
 const DB_FILE: &str = "sessions.db";
 const UNKNOWN_MODEL: &str = "unknown";
-const LOCAL_PROVIDERS: [&str; 2] = ["ollama", "local"];
+const LOCAL_PROVIDERS: [&str; 9] = [
+    "ollama",
+    "local",
+    "lmstudio",
+    "llama_swap",
+    "lemonade",
+    "omlx",
+    "atomic_chat",
+    "lynkr",
+    "llmman",
+];
 const TRACKED_CLI_PROVIDERS: [&str; 7] = [
     "claude-code",
     "claude-acp",
@@ -304,6 +314,9 @@ impl Reader<'_> {
                 continue;
             }
             let prev = state.totals.get(&s.id).copied().unwrap_or_default();
+            if prev.is_zero() && s.accumulated.is_zero() {
+                continue;
+            }
             next.totals.insert(s.id.clone(), prev);
             let delta = s.accumulated.minus(&prev);
             if !delta.is_zero() {
@@ -618,6 +631,7 @@ mod tests {
     #[test]
     fn local_providers_keep_their_name() {
         assert_eq!(provider_for("ollama", "qwen3-coder"), "ollama");
+        assert_eq!(provider_for("lmstudio", "gpt-oss-20b"), "lmstudio");
         assert_eq!(provider_for("databricks", "claude-sonnet-4-5"), "anthropic");
         assert_eq!(provider_for("openrouter", "z-ai/glm-4.6"), "openrouter");
     }

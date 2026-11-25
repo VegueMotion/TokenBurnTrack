@@ -89,8 +89,8 @@ provider reported it, and skips sessions run through the Claude Code, Codex, Gem
 Copilot or pi providers, which those harnesses already count. Sessions from before the
 ledger (Goose before schema version 15) only have a running total, so each of their usage
 rows covers the calls since the previous read and is timed at the session's last update.
-Models served by Ollama or Goose's built-in local inference keep that provider, so they
-have no price.
+Models served by Goose's local providers (Ollama, LM Studio, llama-swap, built-in local
+inference and the like) keep that provider, so they have no price.
 
 ## Privacy
 
