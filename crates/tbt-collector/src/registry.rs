@@ -21,6 +21,7 @@ pub fn builtin_adapters(config: &CollectorConfig) -> Vec<Arc<dyn HarnessAdapter>
         Arc::new(tbt_adapters::AntigravityAdapter::new()),
         Arc::new(tbt_adapters::LmStudioAdapter::new()),
         Arc::new(tbt_adapters::PiAdapter::new()),
+        Arc::new(tbt_adapters::ZedAdapter::new()),
     ];
     adapters.extend(generic_adapters(config));
     adapters

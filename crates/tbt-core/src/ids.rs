@@ -18,6 +18,7 @@ impl HarnessId {
     pub const LMSTUDIO: HarnessId = HarnessId(Cow::Borrowed("lmstudio"));
     pub const OPENCODE: HarnessId = HarnessId(Cow::Borrowed("opencode"));
     pub const PI: HarnessId = HarnessId(Cow::Borrowed("pi"));
+    pub const ZED: HarnessId = HarnessId(Cow::Borrowed("zed"));
 
     pub fn new(id: impl Into<String>) -> Self {
         HarnessId(Cow::Owned(id.into()))

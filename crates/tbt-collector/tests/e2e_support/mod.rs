@@ -29,6 +29,7 @@ pub const BUILTIN_SETS: &[(HarnessId, &str)] = &[
     (HarnessId::ANTIGRAVITY, "antigravity/1.1.17"),
     (HarnessId::LMSTUDIO, "lmstudio/0.4.20/conversations"),
     (HarnessId::PI, "pi/v3"),
+    (HarnessId::ZED, "zed/1.29.2/threads"),
 ];
 
 pub const GENERIC_SETS: &[(&str, &str)] = &[
@@ -49,10 +50,11 @@ pub const GOLDEN: &[(&str, i64)] = &[
     ("lmstudio", 4),
     ("opencode", 33),
     ("pi", 6),
+    ("zed", 4),
 ];
 
-pub const GOLDEN_TOTAL: u64 = 670;
-pub const SOURCES: u64 = 41;
+pub const GOLDEN_TOTAL: u64 = 674;
+pub const SOURCES: u64 = 42;
 
 pub const KNOWN_WARNINGS: &[(&str, &str, u64, &str)] = &[
     (

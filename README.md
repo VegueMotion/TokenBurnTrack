@@ -58,6 +58,7 @@ options are in [docs/install.md](docs/install.md). Settings are in
 | GitHub Copilot CLI | `~/.copilot/session-state/<session-id>/events.jsonl` | `COPILOT_HOME` |
 | Antigravity | `~/.gemini/{antigravity,antigravity-insiders,antigravity-cli}/conversations/*.db` (app, Insiders and CLI; opened read-only) | `GEMINI_CLI_HOME` |
 | LM Studio | `~/.lmstudio/conversations/**/*.conversation.json` (the chat window; not requests to its local server) | `~/.lmstudio-home-pointer` |
+| Zed Agent | `~/.local/share/zed/threads/threads.db` (Zed's own agent; opened read-only; Zed Flatpak `~/.var/app/dev.zed.Zed/data/zed/threads`, macOS `~/Library/Application Support/Zed/threads`, Windows `%LOCALAPPDATA%\Zed\threads`) | `XDG_DATA_HOME` |
 | Generic JSONL | any JSONL log you describe in `config.toml` | `[[generic_jsonl]]` |
 
 Source files are only ever read. Roots can be changed per harness on the Harnesses page.
@@ -75,7 +76,13 @@ from other open-source usage trackers, not from Google or from real logs. Model 
 from the model picker label (`Gemini 3.6 Flash (High)` → `gemini-3.6-flash`), or from the
 response model when it extends that name (`gemini-3.1-pro-preview`), so the thinking level
 is not priced separately. Messages are not read. LM Studio models run locally, so its usage
-is counted but has no price unless you add one for the `lmstudio` provider.
+is counted but has no price unless you add one for the `lmstudio` provider. The Zed Agent
+parser was built from Zed's source, not real threads. Zed keeps only a running token total
+per thread, so each usage row covers the calls since the previous read, is timed at the
+thread's last update and is charged to the model the thread had selected then. Threads run
+through external agents (Claude Code, Codex, Gemini CLI) are not in Zed's database; they are
+counted by those harnesses. Models served by LM Studio, Ollama or llama.cpp keep that
+provider, so they have no price.
 
 ## Privacy
 

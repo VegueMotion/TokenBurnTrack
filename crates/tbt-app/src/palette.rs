@@ -38,6 +38,7 @@ pub fn harness_label(id: &HarnessId) -> String {
         "antigravity" => "Antigravity".to_owned(),
         "lmstudio" => "LM Studio".to_owned(),
         "pi" => "pi".to_owned(),
+        "zed" => "Zed Agent".to_owned(),
         other => other.to_owned(),
     }
 }
