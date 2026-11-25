@@ -9,8 +9,8 @@ use gpui_component::calendar::{Calendar, CalendarEvent, CalendarState, Date, Mat
 use gpui_component::popover::Popover;
 use gpui_component::tooltip::Tooltip;
 use gpui_component::{
-    ActiveTheme, Disableable, Icon, IconName, InteractiveElementExt, Selectable, Sizable,
-    StyledExt, h_flex, v_flex,
+    ActiveTheme, Disableable, Icon, InteractiveElementExt, Selectable, Sizable, StyledExt, h_flex,
+    v_flex,
 };
 use jiff::Timestamp;
 use jiff::civil::Weekday;
@@ -390,7 +390,7 @@ impl Workspace {
                     .text_color(muted)
                     .hover(move |s| s.bg(accent).text_color(fg))
                     .on_click(|_, _, cx| cx.open_url(REPO_URL))
-                    .child(Icon::new(IconName::ExternalLink).size_3p5())
+                    .child(Icon::empty().path(crate::assets::GITLAB_ICON).size_3p5())
                     .child("GitLab"),
             )
     }
