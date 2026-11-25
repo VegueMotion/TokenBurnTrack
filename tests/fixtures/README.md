@@ -304,7 +304,7 @@ Format notes:
 Synthetic: no real threads were available. `zed/gen_db.py` writes the database with the
 table and index DDL of the `threads.db` that Zed 1.29.2 (Flatpak) created on the harvest
 machine, and thread blobs shaped like Zed's `DbThread` (`crates/agent/src/db.rs`, version
-`0.3.0`).
+`0.3.0`). The generator needs Python 3.14+ (`compression.zstd`).
 
 | Thread | Scenario |
 |---|---|

@@ -197,7 +197,17 @@ fn growth_of_a_thread_is_read_as_a_delta() {
     );
     let third = read(&adapter, &db, &second.next_cursor);
     assert!(third.events.is_empty());
-    assert_ne!(third.next_cursor, second.next_cursor);
+    assert_eq!(third.next_cursor, second.next_cursor);
+
+    save(
+        &db,
+        LOCAL,
+        "2026-11-24T10:05:00+00:00",
+        &thread_json(2100, 1700, "claude-opus-4-5"),
+    );
+    let fourth = read(&adapter, &db, &third.next_cursor);
+    assert_eq!(dedup_keys(&fourth), [format!("{LOCAL}:3800")]);
+    assert_eq!(tokens(&fourth, 0), (600, 0, 0, 0));
 }
 
 #[test]

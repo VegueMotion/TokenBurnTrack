@@ -180,14 +180,7 @@ impl ZedAdapter {
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 struct State {
-    threads: BTreeMap<String, Seen>,
-}
-
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-#[serde(default)]
-struct Seen {
-    updated_at: String,
-    usage: Usage,
+    threads: BTreeMap<String, Usage>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
@@ -252,22 +245,16 @@ impl Reader<'_> {
         if !table_exists(self.conn, "threads")? {
             return Ok(state.clone());
         }
-        let listed: Vec<(String, String)> = self
-            .conn
-            .prepare("SELECT id, updated_at FROM threads ORDER BY updated_at, id")?
-            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
-            .collect::<rusqlite::Result<_>>()?;
         let sql = self.row_sql()?;
+        let conn = self.conn;
+        let mut stmt = conn.prepare(&sql)?;
+        let mut rows = stmt.query([])?;
         let mut next = State::default();
-        for (id, updated_at) in listed {
-            let seen = match state.threads.get(&id) {
-                Some(seen) if seen.updated_at == updated_at => seen.clone(),
-                prev => match self.row(&sql, &id)? {
-                    Some(row) => self.thread(row, prev.map(|s| s.usage).unwrap_or_default()),
-                    None => continue,
-                },
-            };
-            next.threads.insert(id, seen);
+        while let Some(r) = rows.next()? {
+            let row = row(r)?;
+            let prev = state.threads.get(&row.id).copied().unwrap_or_default();
+            let id = row.id.clone();
+            next.threads.insert(id, self.thread(row, prev));
         }
         Ok(next)
     }
@@ -283,7 +270,7 @@ impl Reader<'_> {
         };
         Ok(format!(
             "SELECT id, {}, {}, {}, summary, updated_at, {}, data_type, data
-             FROM threads WHERE id = ?1",
+             FROM threads ORDER BY updated_at, id",
             col("parent_id")?,
             col("folder_paths")?,
             col("folder_paths_order")?,
@@ -291,55 +278,25 @@ impl Reader<'_> {
         ))
     }
 
-    fn row(&self, sql: &str, id: &str) -> rusqlite::Result<Option<Row>> {
-        let mut stmt = self.conn.prepare_cached(sql)?;
-        let mut rows = stmt.query([id])?;
-        let Some(r) = rows.next()? else {
-            return Ok(None);
-        };
-        Ok(Some(Row {
-            id: r.get(0)?,
-            parent_id: r.get(1)?,
-            folder_paths: r.get(2)?,
-            folder_paths_order: r.get(3)?,
-            summary: r.get(4)?,
-            updated_at: r.get(5)?,
-            created_at: r.get(6)?,
-            data_type: r.get(7)?,
-            data: r
-                .get_ref(8)?
-                .as_bytes_or_null()?
-                .unwrap_or_default()
-                .to_vec(),
-        }))
-    }
-
-    fn thread(&mut self, row: Row, prev: Usage) -> Seen {
-        let unchanged = Seen {
-            updated_at: row.updated_at.clone(),
-            usage: prev,
-        };
+    fn thread(&mut self, row: Row, prev: Usage) -> Usage {
         let data = match decode(&row.data_type, &row.data) {
             Ok(data) => data,
             Err(e) => {
                 self.warn(format!("thread {}: {e}; skipped", row.id));
-                return unchanged;
+                return prev;
             }
         };
         let usage = data.cumulative_token_usage;
         let delta = usage.counts().delta_since(&prev.counts());
         if delta.is_zero() {
-            return Seen {
-                updated_at: row.updated_at,
-                usage,
-            };
+            return usage;
         }
         let Ok(ts) = row.updated_at.parse::<Timestamp>() else {
             self.warn(format!(
                 "thread {}: invalid `updated_at` {:?}; skipped",
                 row.id, row.updated_at
             ));
-            return unchanged;
+            return prev;
         };
         let (provider, model) = match &data.model {
             Some(m) if !m.model.trim().is_empty() => {
@@ -387,12 +344,26 @@ impl Reader<'_> {
         session.started_at = row.created_at.and_then(|c| c.parse().ok());
         session.parent_ext_id = row.parent_id.filter(|p| !p.is_empty());
         self.batch.sessions.push(session);
-
-        Seen {
-            updated_at: row.updated_at,
-            usage,
-        }
+        usage
     }
+}
+
+fn row(r: &rusqlite::Row<'_>) -> rusqlite::Result<Row> {
+    Ok(Row {
+        id: r.get(0)?,
+        parent_id: r.get(1)?,
+        folder_paths: r.get(2)?,
+        folder_paths_order: r.get(3)?,
+        summary: r.get(4)?,
+        updated_at: r.get(5)?,
+        created_at: r.get(6)?,
+        data_type: r.get(7)?,
+        data: r
+            .get_ref(8)?
+            .as_bytes_or_null()?
+            .unwrap_or_default()
+            .to_vec(),
+    })
 }
 
 fn decode(data_type: &str, data: &[u8]) -> std::result::Result<ThreadData, String> {
