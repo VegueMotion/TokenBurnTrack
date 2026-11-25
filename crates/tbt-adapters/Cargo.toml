@@ -17,6 +17,7 @@ default = [
     "lmstudio",
     "gemini_cli",
     "grok_build",
+    "pi",
     "generic_jsonl",
 ]
 claude_code = []
@@ -28,6 +29,7 @@ antigravity = ["dep:rusqlite"]
 lmstudio = []
 gemini_cli = []
 grok_build = []
+pi = []
 generic_jsonl = []
 
 [dependencies]

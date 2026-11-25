@@ -306,3 +306,7 @@ Format notes:
   26 sources, 2 ingest runs. Source paths were rewritten to `/sandbox/...`. Used by
   `crates/tbt-store/tests/migration.rs` and the collector's end-to-end test to check that
   older databases open and continue with the current code.
+
+## pi (`pi/`)
+
+Synthetic, built from upstream docs and source. See `pi/README.md`.

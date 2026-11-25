@@ -28,6 +28,7 @@ pub const BUILTIN_SETS: &[(HarnessId, &str)] = &[
     (HarnessId::GROK_BUILD, "grok_build/1.0.45"),
     (HarnessId::ANTIGRAVITY, "antigravity/1.1.17"),
     (HarnessId::LMSTUDIO, "lmstudio/0.4.20/conversations"),
+    (HarnessId::PI, "pi/v3"),
 ];
 
 pub const GENERIC_SETS: &[(&str, &str)] = &[
@@ -47,10 +48,11 @@ pub const GOLDEN: &[(&str, i64)] = &[
     (LLM_PROXY, 6),
     ("lmstudio", 4),
     ("opencode", 33),
+    ("pi", 6),
 ];
 
-pub const GOLDEN_TOTAL: u64 = 664;
-pub const SOURCES: u64 = 38;
+pub const GOLDEN_TOTAL: u64 = 670;
+pub const SOURCES: u64 = 41;
 
 pub const KNOWN_WARNINGS: &[(&str, &str, u64, &str)] = &[
     (
@@ -58,6 +60,12 @@ pub const KNOWN_WARNINGS: &[(&str, &str, u64, &str)] = &[
         "usage.json",
         0,
         "turns[1] has no valid `endedAt`: \"\"",
+    ),
+    (
+        "pi",
+        "2026-11-20T09-00-00-000Z_3f1c2a9e-5b7d-4e21-9c0a-1d2e3f4a5b01.jsonl",
+        11,
+        "invalid JSON: EOF while parsing a string at line 1 column 63",
     ),
     (
         IN_HOUSE,

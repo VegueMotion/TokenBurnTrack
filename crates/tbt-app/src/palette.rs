@@ -37,6 +37,7 @@ pub fn harness_label(id: &HarnessId) -> String {
         "grok_build" => "Grok Build".to_owned(),
         "antigravity" => "Antigravity".to_owned(),
         "lmstudio" => "LM Studio".to_owned(),
+        "pi" => "pi".to_owned(),
         other => other.to_owned(),
     }
 }
