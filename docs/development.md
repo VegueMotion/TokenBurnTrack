@@ -43,7 +43,7 @@ those systems.
 | Package | Command | Needs |
 |---|---|---|
 | AppImage | `scripts/build-appimage.sh` | podman; builds in `ubuntu:22.04` (glibc 2.35) so the result runs on older distributions. `--host` builds with the local toolchain instead. Wayland only |
-| Windows zip | `powershell scripts\build-windows.ps1` | rustup, Visual Studio Build Tools (C++ workload) and the Windows SDK |
+| Windows exe | `powershell scripts\build-windows.ps1`; writes `TokenBurnTrack-<version>-windows-x64.exe` and `tbt-daemon-<version>-windows-x64.exe` | rustup, Visual Studio Build Tools (C++ workload) and the Windows SDK |
 | macOS dmg | `scripts/build-macos.sh` | rustup and Xcode; produces a universal `TokenBurnTrack.app`, ad-hoc signed unless `CODESIGN_IDENTITY` is set. Set `NOTARY_PROFILE` to an `xcrun notarytool store-credentials` profile to also notarize and staple the dmg; without it, Gatekeeper blocks the dmg on other Macs |
 
 Pushing a `v*` tag runs `.forgejo/workflows/release.yml`, which builds the Flatpak
