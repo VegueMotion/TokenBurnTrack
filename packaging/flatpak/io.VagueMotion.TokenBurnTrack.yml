@@ -13,6 +13,8 @@ finish-args:
   - --filesystem=~/.copilot/session-state:ro
   - --filesystem=~/.gemini:ro
   - --filesystem=~/.grok:ro
+  - --filesystem=~/.lmstudio/conversations:ro
+  - --filesystem=~/.lmstudio-home-pointer:ro
   - --filesystem=xdg-data/opencode
   - --filesystem=xdg-config/Cursor/User:ro
   - --filesystem=xdg-config/tokenburntrack:create

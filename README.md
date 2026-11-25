@@ -56,6 +56,7 @@ options are in [docs/install.md](docs/install.md). Settings are in
 | Cursor | `~/.config/Cursor/User/globalStorage/state.vscdb` (opened read-only; macOS `~/Library/Application Support/Cursor`, Windows `%APPDATA%\Cursor`) | `XDG_CONFIG_HOME` |
 | GitHub Copilot CLI | `~/.copilot/session-state/<session-id>/events.jsonl` | `COPILOT_HOME` |
 | Antigravity | `~/.gemini/{antigravity,antigravity-insiders,antigravity-cli}/conversations/*.db` (app, Insiders and CLI; opened read-only) | `GEMINI_CLI_HOME` |
+| LM Studio | `~/.lmstudio/conversations/**/*.conversation.json` (the chat window; not requests to its local server) | `~/.lmstudio-home-pointer` |
 | Generic JSONL | any JSONL log you describe in `config.toml` | `[[generic_jsonl]]` |
 
 Source files are only ever read. Roots can be changed per harness on the Harnesses page.
@@ -72,7 +73,8 @@ Antigravity keeps token counts in undocumented protobuf blobs, and the field lay
 from other open-source usage trackers, not from Google or from real logs. Model names come
 from the model picker label (`Gemini 3.6 Flash (High)` → `gemini-3.6-flash`), or from the
 response model when it extends that name (`gemini-3.1-pro-preview`), so the thinking level
-is not priced separately. Messages are not read.
+is not priced separately. Messages are not read. LM Studio models run locally, so its usage
+is counted but has no price unless you add one for the `lmstudio` provider.
 
 ## Privacy
 

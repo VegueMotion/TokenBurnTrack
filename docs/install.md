@@ -108,7 +108,7 @@ flatpak-builder --user --install --force-clean build-dir packaging/flatpak/io.Va
 flatpak run io.VagueMotion.TokenBurnTrack
 ```
 
-The sandbox can read `~/.claude`, `~/.codex`, `~/.copilot/session-state`, `~/.gemini` and `~/.grok`, and can read and write
+The sandbox can read `~/.claude`, `~/.codex`, `~/.copilot/session-state`, `~/.gemini`, `~/.grok` and `~/.lmstudio/conversations`, and can read and write
 `~/.local/share/opencode` (SQLite needs to create the `-shm` file of a database in WAL
 mode). Config and data stay in the usual host locations (`~/.config/tokenburntrack`,
 `~/.local/share/tokenburntrack`), so the Flatpak and a host-installed `tbt-daemon` share

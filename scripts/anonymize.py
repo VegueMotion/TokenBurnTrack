@@ -52,6 +52,7 @@ KEEP_KEYS = {
     "multi_agent_version", "multi_agent_mode", "tool", "tool_name", "namespace", "plan_type",
     "limit_id", "codex_error_info", "trigger", "via", "priority", "vcs", "icon_color", "strategy",
     "betas", "shell", "platform", "media_type", "promptCacheRequested",
+    "identifier", "indexedModelIdentifier", "senderName", "stepIdentifier", "stopReason",
 }
 MODEL_REF_KEYS = {"id", "providerID", "variant", "name"}
 ENUMISH_KEYS = {"summary", "reason", "access"}

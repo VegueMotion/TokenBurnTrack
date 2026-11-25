@@ -47,6 +47,11 @@ const FIXTURE_SETS: &[FixtureSet] = &[
         split_jsonl: false,
     },
     FixtureSet {
+        adapter: lmstudio,
+        root: "lmstudio/0.4.20/conversations",
+        split_jsonl: false,
+    },
+    FixtureSet {
         adapter: cursor,
         root: "cursor/3.31.15/User/globalStorage",
         split_jsonl: false,
@@ -67,6 +72,10 @@ fn copilot_cli() -> Arc<dyn HarnessAdapter> {
 
 fn antigravity() -> Arc<dyn HarnessAdapter> {
     Arc::new(tbt_adapters::AntigravityAdapter::new())
+}
+
+fn lmstudio() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::LmStudioAdapter::new())
 }
 
 fn cursor() -> Arc<dyn HarnessAdapter> {
@@ -251,6 +260,7 @@ fn reference_matches_golden_counts() {
             ("copilot_cli", 6),
             ("cursor", 3),
             ("gemini_cli", 12),
+            ("lmstudio", 4),
             ("opencode", 33),
         ]
         .into_iter()
