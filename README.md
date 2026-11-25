@@ -24,32 +24,62 @@
 
 ## 🚀 Quick start
 
-Download a build from the [latest release](https://github.com/VegueMotion/TokenBurnTrack/releases/latest):
+Download from the [latest release](https://github.com/VegueMotion/TokenBurnTrack/releases/latest):
 
-| Platform | File |
-|---|---|
-| Linux | `TokenBurnTrack-<version>-x86_64.flatpak` or `TokenBurnTrack-<version>-x86_64.AppImage` |
-| macOS | `TokenBurnTrack-<version>-macos-universal.dmg` |
-| Windows | `TokenBurnTrack-<version>-windows-x64.exe` |
+| Platform | App | Daemon |
+|---|---|---|
+| Windows | `TokenBurnTrack-<version>-windows-x64.exe` | `tbt-daemon-<version>-windows-x64.exe` |
+| macOS | `TokenBurnTrack-<version>-macos-universal.dmg` | inside the app |
+| Linux | `TokenBurnTrack-<version>-x86_64.flatpak` (preferred) or `.AppImage` | Flatpak: a setting; AppImage: `tbt-daemon-<version>-linux-x86_64` |
 
-Install the Flatpak with `flatpak install --user <file>`, or `chmod +x` the AppImage and
-run it. On macOS drag the app to Applications; on Windows run the `.exe`. The app syncs on
-startup, every hour and on *Sync now*.
+The app syncs on startup, every hour and on *Sync now*, but only while it is open. The
+daemon (`tbt-daemon`) is a small collector without a window that runs once an hour in
+the background, so usage is still recorded when the app is closed, before some agents
+delete their old logs. It is optional. Run it with `uninstall` to remove it.
 
-**The daemon.** The app only collects while it is open. `tbt-daemon` is a small
-collector without a window. It runs in the background once an hour and reads new
-usage from the agents' logs into the same database. Install it if you close the app
-often, because some agents delete their old logs.
+### Windows
 
-- Flatpak: turn on *Settings → General → Collect while closed*.
-- AppImage and Windows: download `tbt-daemon-<version>-linux-x86_64` or
-  `tbt-daemon-<version>-windows-x64.exe`, put it somewhere it will stay (the schedule
-  points at that path), and run it with `install`. On Linux, `chmod +x` it first.
-- macOS: run `/Applications/TokenBurnTrack.app/Contents/MacOS/tbt-daemon install`.
+Run `TokenBurnTrack-<version>-windows-x64.exe`.
 
-Run it again with `uninstall` to remove it (Flatpak: turn the setting off).
+Daemon: put `tbt-daemon-<version>-windows-x64.exe` somewhere it will stay (the
+schedule points at that path) and run it with `install`.
 
-To build from source instead (Linux needs a Wayland session):
+### macOS
+
+Open the `.dmg` and drag TokenBurnTrack to Applications.
+
+Daemon:
+
+```sh
+/Applications/TokenBurnTrack.app/Contents/MacOS/tbt-daemon install
+```
+
+### Linux
+
+**Flatpak (preferred)**
+
+```sh
+flatpak install --user TokenBurnTrack-<version>-x86_64.flatpak
+flatpak run io.VagueMotion.TokenBurnTrack
+```
+
+Daemon: turn on *Settings → General → Collect while closed*.
+
+**AppImage**
+
+```sh
+chmod +x TokenBurnTrack-<version>-x86_64.AppImage
+./TokenBurnTrack-<version>-x86_64.AppImage
+```
+
+Daemon:
+
+```sh
+install -Dm755 tbt-daemon-<version>-linux-x86_64 ~/.local/bin/tbt-daemon
+~/.local/bin/tbt-daemon install
+```
+
+**From source** (needs a Wayland session)
 
 ```sh
 scripts/cargo build --release
