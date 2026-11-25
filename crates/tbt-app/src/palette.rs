@@ -35,6 +35,7 @@ pub fn harness_label(id: &HarnessId) -> String {
         "cursor" => "Cursor".to_owned(),
         "copilot_cli" => "Copilot CLI".to_owned(),
         "grok_build" => "Grok Build".to_owned(),
+        "antigravity" => "Antigravity".to_owned(),
         other => other.to_owned(),
     }
 }

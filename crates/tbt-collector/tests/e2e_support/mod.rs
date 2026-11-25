@@ -26,6 +26,7 @@ pub const BUILTIN_SETS: &[(HarnessId, &str)] = &[
     (HarnessId::CURSOR, "cursor/3.31.15/User/globalStorage"),
     (HarnessId::COPILOT_CLI, "copilot_cli/1.0.4/session-state"),
     (HarnessId::GROK_BUILD, "grok_build/1.0.45"),
+    (HarnessId::ANTIGRAVITY, "antigravity/1.1.17"),
 ];
 
 pub const GENERIC_SETS: &[(&str, &str)] = &[
@@ -34,6 +35,7 @@ pub const GENERIC_SETS: &[(&str, &str)] = &[
 ];
 
 pub const GOLDEN: &[(&str, i64)] = &[
+    ("antigravity", 5),
     ("claude_code", 204),
     ("codex", 381),
     ("copilot_cli", 6),
@@ -45,8 +47,8 @@ pub const GOLDEN: &[(&str, i64)] = &[
     ("opencode", 33),
 ];
 
-pub const GOLDEN_TOTAL: u64 = 655;
-pub const SOURCES: u64 = 33;
+pub const GOLDEN_TOTAL: u64 = 660;
+pub const SOURCES: u64 = 35;
 
 pub const KNOWN_WARNINGS: &[(&str, &str, u64, &str)] = &[
     (

@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct HarnessId(Cow<'static, str>);
 
 impl HarnessId {
+    pub const ANTIGRAVITY: HarnessId = HarnessId(Cow::Borrowed("antigravity"));
     pub const CLAUDE_CODE: HarnessId = HarnessId(Cow::Borrowed("claude_code"));
     pub const CODEX: HarnessId = HarnessId(Cow::Borrowed("codex"));
     pub const COPILOT_CLI: HarnessId = HarnessId(Cow::Borrowed("copilot_cli"));

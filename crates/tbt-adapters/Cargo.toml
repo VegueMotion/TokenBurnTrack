@@ -13,6 +13,7 @@ default = [
     "opencode",
     "cursor",
     "copilot_cli",
+    "antigravity",
     "gemini_cli",
     "grok_build",
     "generic_jsonl",
@@ -22,6 +23,7 @@ codex = []
 opencode = ["dep:rusqlite"]
 cursor = ["dep:rusqlite"]
 copilot_cli = []
+antigravity = ["dep:rusqlite"]
 gemini_cli = []
 grok_build = []
 generic_jsonl = []

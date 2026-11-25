@@ -42,6 +42,11 @@ const FIXTURE_SETS: &[FixtureSet] = &[
         split_jsonl: true,
     },
     FixtureSet {
+        adapter: antigravity,
+        root: "antigravity/1.1.17",
+        split_jsonl: false,
+    },
+    FixtureSet {
         adapter: cursor,
         root: "cursor/3.31.15/User/globalStorage",
         split_jsonl: false,
@@ -58,6 +63,10 @@ fn opencode() -> Arc<dyn HarnessAdapter> {
 
 fn copilot_cli() -> Arc<dyn HarnessAdapter> {
     Arc::new(tbt_adapters::CopilotCliAdapter::new())
+}
+
+fn antigravity() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::AntigravityAdapter::new())
 }
 
 fn cursor() -> Arc<dyn HarnessAdapter> {
@@ -236,6 +245,7 @@ fn reference_matches_golden_counts() {
     assert_eq!(
         per_harness,
         [
+            ("antigravity", 5),
             ("claude_code", claude_golden_total()),
             ("codex", 381),
             ("copilot_cli", 6),

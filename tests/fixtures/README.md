@@ -2,7 +2,7 @@
 
 Real harness logs from one machine (harvested 2026-11-23), anonymized with
 `scripts/anonymize.py`. Gemini CLI fixtures are synthetic (see `gemini_cli/README.md`,
-confidence: low), and so are the GitHub Copilot CLI ones (see below). The Cursor fixture is synthetic too:
+confidence: low), and so are the GitHub Copilot CLI and Antigravity ones (see below). The Cursor fixture is synthetic too:
 `cursor/3.31.15/User/globalStorage/state.vscdb` is built from `cursor/fixture.sql`
 (`sqlite3 state.vscdb < fixture.sql`) with the table layout of a real Cursor 3.31.15
 database, and holds 2 chats and 3 calls with token counts.
@@ -236,6 +236,39 @@ Format notes:
 ## Grok Build (`grok_build/`)
 
 Synthetic, built from upstream source. See `grok_build/README.md`.
+
+## Antigravity (`antigravity/1.1.17/{antigravity,antigravity-cli}/conversations/<id>.db`)
+
+**confidence: low.** Synthetic: Antigravity is not installed on the harvest machine. The
+layout follows the Antigravity parsers in `junhoyeo/tokscale`
+(`crates/tokscale-core/src/sessions/antigravity_cli.rs`, `main`, read 2026-11-25) and the
+`miiiiiiich/agent-walker` notes (`docs/agy.md`). Ids, token numbers and the version number
+are invented. The databases are built from `app.sql` and `cli.sql`
+(`sqlite3 <id>.db < app.sql`), which `gen_sql.py` writes (`python3 gen_sql.py <dir>`).
+
+| Conversation | Scenario |
+|---|---|
+| `5c1e9a7b-…` (app) | 2 Gemini 3.6 Flash calls with their own timestamps (one with cache reads), a Claude call timed from its `steps` row by response id (cache write), and an all-zero failed call |
+| `8e2d4c6b-…` (CLI) | 2 calls with only a response model, no label: one timed from its `steps` row by generation index, one from the conversation's created-at |
+
+Format notes:
+
+- Location: `~/.gemini/antigravity/conversations/` (app), `~/.gemini/antigravity-insiders/…`
+  (Insiders) and `~/.gemini/antigravity-cli/…` (CLI); one SQLite database per conversation,
+  named `<conversation-id>.db`. `.pb` files next to them are not read.
+- `gen_metadata(idx, data, size)`: one row per model call, `idx` from 0. `data` is protobuf:
+  `#1` chat model message with `#19` response model (an internal name like
+  `gemini-3-flash-a`), `#21` picker label (`Gemini 3.6 Flash (High)`) and `#4` usage:
+  `#1` model enum, `#2` uncached input, `#3` output (`#9 + #10`), `#4` cache write, `#5`
+  cache read, `#9` thinking output, `#10` text output, `#11` response id. `#9.#4` is a
+  `{#1 seconds, #2 nanos}` timestamp in older builds.
+- `steps(idx, step_type, metadata)`: `step_type` 15 is a model response; `metadata.#1` is
+  its timestamp, `#9.#11` the response id and `#20.#3` the generation index.
+- `trajectory_metadata_blob(id, data)`: `data.#1.#1` the workspace `file://` URI, `data.#2`
+  the created-at timestamp.
+- The adapter uses the response id as the dedup key, so a call stored by both the app and
+  the CLI counts once. A row with zero usage that is less than a day old is held back in
+  case it is still being written.
 
 ## Database snapshots (`db/`)
 
