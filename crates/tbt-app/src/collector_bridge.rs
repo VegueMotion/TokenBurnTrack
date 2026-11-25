@@ -170,14 +170,17 @@ pub fn daemon_finished(busy_at: Timestamp, runs: &[IngestRunSummary]) -> bool {
 }
 
 pub fn harness_options(status: &[HarnessStatus]) -> Vec<HarnessOption> {
-    status
+    let mut options: Vec<HarnessOption> = status
         .iter()
         .filter(|h| h.config.enabled)
         .map(|h| HarnessOption {
             id: h.config.id.clone(),
             name: h.config.display_name.clone(),
+            events: h.events,
         })
-        .collect()
+        .collect();
+    options.sort_by_key(|h| std::cmp::Reverse(h.events));
+    options
 }
 
 #[derive(Debug, Clone)]
