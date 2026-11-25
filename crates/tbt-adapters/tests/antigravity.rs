@@ -66,7 +66,9 @@ fn generation(label: &str, input: u64, output: u64, response_id: &str, ts: i64) 
     field_bytes(4, &stamp, &mut meta);
     let mut data = Vec::new();
     field_bytes(1, &chat, &mut data);
-    field_bytes(9, &meta, &mut data);
+    if ts > 0 {
+        field_bytes(9, &meta, &mut data);
+    }
     data
 }
 
@@ -237,6 +239,26 @@ fn fresh_empty_generation_is_held_until_its_tokens_arrive() {
         second.next_cursor.as_json(),
         &serde_json::json!({"next_idx": 6})
     );
+}
+
+#[test]
+fn empty_generation_in_a_resumed_old_conversation_is_held() {
+    let (_dir, db) = copy_to_temp(&app_db());
+    insert(&db, 4, &generation("Gemini 3.6 Flash (High)", 0, 0, "", 0));
+    let adapter = AntigravityAdapter::new();
+    let first = read(&adapter, &db, &Cursor::empty());
+    assert_eq!(
+        first.next_cursor.as_json(),
+        &serde_json::json!({"next_idx": 4})
+    );
+    update(
+        &db,
+        4,
+        &generation("Gemini 3.6 Flash (High)", 12, 4, "resp_resumed", 0),
+    );
+    let second = read(&adapter, &db, &first.next_cursor);
+    assert_eq!(dedup_keys(&second), ["resp_resumed"]);
+    assert_eq!(second.events[0].ts, Timestamp::from_second(T0).unwrap());
 }
 
 #[test]

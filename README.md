@@ -70,8 +70,9 @@ shutdown, so each usage row covers the calls since the previous total, and only 
 read, not Copilot in VS Code or other editors. The Antigravity parser is the least certain:
 Antigravity keeps token counts in undocumented protobuf blobs, and the field layout comes
 from other open-source usage trackers, not from Google or from real logs. Model names come
-from the model picker label (`Gemini 3.6 Flash (High)` → `gemini-3.6-flash`), so the
-thinking level is not priced separately. Messages are not read.
+from the model picker label (`Gemini 3.6 Flash (High)` → `gemini-3.6-flash`), or from the
+response model when it extends that name (`gemini-3.1-pro-preview`), so the thinking level
+is not priced separately. Messages are not read.
 
 ## Privacy
 

@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::ffi::OsString;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use rusqlite::{Connection, params};
@@ -219,14 +219,11 @@ impl Generation {
         let output = if total_output > 0 {
             total_output
         } else {
-            thinking + response
+            thinking.saturating_add(response)
         };
         let label = non_empty(proto::string(chat, 21));
         let response_model = non_empty(proto::string(chat, 19));
-        let model = label
-            .as_deref()
-            .and_then(model_from_label)
-            .or_else(|| response_model.clone());
+        let model = pick_model(label.as_deref(), response_model.as_deref());
         let response_id = non_empty(proto::string(usage, 11));
         let ts = proto::bytes(data, 9)
             .and_then(|m| proto::bytes(m, 4))
@@ -379,12 +376,7 @@ impl Reader<'_> {
         Ok(self.steps.get_or_insert_default())
     }
 
-    fn timestamp(
-        &mut self,
-        idx: i64,
-        g: &Generation,
-        trajectory: &Trajectory,
-    ) -> rusqlite::Result<Option<Timestamp>> {
+    fn row_time(&mut self, idx: i64, g: &Generation) -> rusqlite::Result<Option<Timestamp>> {
         if g.ts.is_some() {
             return Ok(g.ts);
         }
@@ -395,7 +387,7 @@ impl Reader<'_> {
             .and_then(|id| steps.by_response.get(id))
             .or_else(|| u64::try_from(idx).ok().and_then(|i| steps.by_index.get(&i)))
             .copied();
-        Ok(from_steps.or(trajectory.created_at))
+        Ok(from_steps)
     }
 
     fn is_fresh(&self, ts: Option<Timestamp>) -> bool {
@@ -412,17 +404,11 @@ impl Reader<'_> {
         data: Option<&[u8]>,
         trajectory: &Trajectory,
     ) -> rusqlite::Result<Step> {
-        let Some(data) = data else {
-            return Ok(Step::Done);
-        };
-        let g = Generation::parse(data);
-        let ts = self.timestamp(idx, &g, trajectory)?;
+        let g = Generation::parse(data.unwrap_or_default());
+        let row_time = self.row_time(idx, &g)?;
         if g.counts.is_zero() {
-            return Ok(if self.is_fresh(ts) {
-                Step::Held
-            } else {
-                Step::Done
-            });
+            let fresh = self.is_fresh(row_time.or_else(|| last_write(self.src)));
+            return Ok(if fresh { Step::Held } else { Step::Done });
         }
         let Some(response_id) = g.response_id.clone() else {
             self.warn(format!(
@@ -436,7 +422,10 @@ impl Reader<'_> {
             ));
             return Ok(Step::Done);
         };
-        let Some(ts) = ts.or_else(|| file_mtime(self.src)) else {
+        let Some(ts) = row_time
+            .or(trajectory.created_at)
+            .or_else(|| file_mtime(&self.src.path))
+        else {
             self.warn(format!("generation {idx}: no valid timestamp; skipped"));
             return Ok(Step::Done);
         };
@@ -464,9 +453,21 @@ impl Reader<'_> {
     }
 }
 
-fn file_mtime(src: &SourceRef) -> Option<Timestamp> {
-    let modified = std::fs::metadata(&src.path).ok()?.modified().ok()?;
+fn file_mtime(path: &Path) -> Option<Timestamp> {
+    let modified = std::fs::metadata(path).ok()?.modified().ok()?;
     Timestamp::try_from(modified).ok()
+}
+
+fn last_write(src: &SourceRef) -> Option<Timestamp> {
+    file_mtime(&src.path).max(file_mtime(&wal_path(&src.path)))
+}
+
+fn pick_model(label: Option<&str>, response_model: Option<&str>) -> Option<String> {
+    match (label.and_then(model_from_label), response_model) {
+        (Some(from_label), Some(r)) if r.starts_with(&from_label) => Some(r.to_owned()),
+        (Some(from_label), _) => Some(from_label),
+        (None, r) => r.map(str::to_owned),
+    }
 }
 
 pub fn model_from_label(label: &str) -> Option<String> {
@@ -539,5 +540,25 @@ mod tests {
             Some("gpt-oss-120b")
         );
         assert_eq!(model_from_label("  "), None);
+    }
+
+    #[test]
+    fn response_model_wins_when_it_extends_the_label() {
+        assert_eq!(
+            pick_model(
+                Some("Gemini 3.1 Pro (High)"),
+                Some("gemini-3.1-pro-preview")
+            )
+            .as_deref(),
+            Some("gemini-3.1-pro-preview")
+        );
+        assert_eq!(
+            pick_model(Some("Gemini 3.6 Flash (High)"), Some("gemini-3-flash-a")).as_deref(),
+            Some("gemini-3.6-flash")
+        );
+        assert_eq!(
+            pick_model(None, Some("gemini-3-flash-a")).as_deref(),
+            Some("gemini-3-flash-a")
+        );
     }
 }
