@@ -112,7 +112,9 @@ The sandbox can read `~/.claude`, `~/.codex`, `~/.copilot/session-state`, `~/.ge
 `~/.local/share/opencode` (SQLite needs to create the `-shm` file of a database in WAL
 mode). Config and data stay in the usual host locations (`~/.config/tokenburntrack`,
 `~/.local/share/tokenburntrack`), so the Flatpak and a host-installed `tbt-daemon` share
-one database and one collector lock.
+one database and one collector lock. If `~/.lmstudio-home-pointer` points LM Studio somewhere
+else, grant that folder too: `flatpak override --user --filesystem=<path>/conversations:ro
+io.VagueMotion.TokenBurnTrack`.
 
 Roots outside those directories (custom roots, `[[generic_jsonl]]` paths, a
 `CLAUDE_CONFIG_DIR` elsewhere) are not visible until you grant them. The Harnesses page

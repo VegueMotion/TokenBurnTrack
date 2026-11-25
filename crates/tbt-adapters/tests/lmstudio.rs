@@ -171,6 +171,63 @@ fn unchanged_file_is_skipped_and_a_rewrite_is_read_again() {
     assert_eq!(third.events[2].input_tokens, 300);
 }
 
+fn rewrite(path: &std::path::Path, edit: impl FnOnce(&mut serde_json::Value)) {
+    let mut conv: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    edit(&mut conv);
+    std::fs::write(path, serde_json::to_string_pretty(&conv).unwrap()).unwrap();
+}
+
+#[test]
+fn answer_still_generating_gets_its_messages_once_finished() {
+    let (_dir, path) = copy_to_temp(&conversation(SYNTHETIC));
+    rewrite(&path, |c| {
+        c["messages"][3]["versions"][0]["steps"][0]["content"][1]["text"] = "partial".into();
+    });
+    let adapter = LmStudioAdapter::new();
+    let first = read_file(&adapter, &path);
+    assert!(
+        first
+            .messages
+            .iter()
+            .all(|m| m.preview.as_deref() != Some("partial"))
+    );
+    assert_eq!(first.messages.len(), 4);
+
+    rewrite(&path, |c| {
+        let step = &mut c["messages"][3]["versions"][0]["steps"][0];
+        step["content"][1]["text"] = "partial and finished".into();
+        step["genInfo"]["stats"] =
+            serde_json::json!({"promptTokensCount": 300, "predictedTokensCount": 90});
+    });
+    let second = read_file(&adapter, &path);
+    let last = second.messages.last().unwrap();
+    assert_eq!(last.preview.as_deref(), Some("partial and finished"));
+    assert!(last.event_dedup_key.is_some());
+}
+
+#[test]
+fn a_new_question_in_place_of_a_deleted_one_gets_a_new_key() {
+    let (_dir, path) = copy_to_temp(&conversation(SYNTHETIC));
+    let adapter = LmStudioAdapter::new();
+    let before = read_file(&adapter, &path);
+    rewrite(&path, |c| {
+        c["messages"][2]["versions"][0]["content"][0]["text"] = "a different question".into();
+    });
+    let after = read_file(&adapter, &path);
+    let user_key = |b: &tbt_core::ReadBatch| {
+        b.messages
+            .iter()
+            .filter(|m| m.role == MessageRole::User)
+            .nth(1)
+            .unwrap()
+            .key
+            .clone()
+    };
+    assert_ne!(user_key(&before), user_key(&after));
+    assert!(user_key(&after).starts_with("user-2-"));
+}
+
 #[test]
 fn invalid_json_is_a_warning() {
     let dir = tempfile::tempdir().unwrap();

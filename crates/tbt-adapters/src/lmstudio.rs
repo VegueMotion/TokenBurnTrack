@@ -262,7 +262,7 @@ impl<'a> Reader<'a> {
     fn read(mut self, conv: &Conversation) -> ReadBatch {
         for (i, message) in conv.messages.iter().enumerate() {
             match message.selected().map(|v| v.role.as_str()) {
-                Some("assistant") => self.assistant(message),
+                Some("assistant") => self.assistant(message, i + 1 == conv.messages.len()),
                 Some("user") => {
                     let ts = conv.messages[i + 1..]
                         .iter()
@@ -295,9 +295,14 @@ impl<'a> Reader<'a> {
         let Some(ts) = ts else {
             return;
         };
+        let text: String = version
+            .content
+            .iter()
+            .filter_map(|c| c.text.as_deref())
+            .collect();
         self.messages.push(MessageRecord {
             session_ext_id: self.session_id.clone(),
-            key: format!("user-{index}-{}", message.currently_selected),
+            key: format!("user-{index}-{:016x}", fnv1a(text.as_bytes())),
             ts,
             role: MessageRole::User,
             kind: Some(MessageKind::Text),
@@ -307,9 +312,13 @@ impl<'a> Reader<'a> {
         });
     }
 
-    fn assistant(&mut self, message: &Message) {
+    fn assistant(&mut self, message: &Message, is_last: bool) {
         for (vi, version) in message.versions.iter().enumerate() {
-            let selected = vi == message.currently_selected;
+            let finished = version
+                .steps
+                .iter()
+                .any(|s| s.gen_info.as_ref().is_some_and(|g| g.stats.is_some()));
+            let selected = vi == message.currently_selected && (finished || !is_last);
             let sender = version
                 .sender_info
                 .as_ref()
@@ -437,6 +446,12 @@ fn joined_text<'c>(content: impl Iterator<Item = &'c Content>) -> Option<String>
         .filter(|t| !t.is_empty())
         .collect();
     (!text.is_empty()).then(|| truncate_preview(&text.join("\n"), PREVIEW_MAX_CHARS))
+}
+
+fn fnv1a(bytes: &[u8]) -> u64 {
+    bytes.iter().fold(0xcbf2_9ce4_8422_2325, |h, b| {
+        (h ^ u64::from(*b)).wrapping_mul(0x0100_0000_01b3)
+    })
 }
 
 fn millis(ms: Option<i64>) -> Option<Timestamp> {
