@@ -9,8 +9,8 @@ use gpui_component::calendar::{Calendar, CalendarEvent, CalendarState, Date, Mat
 use gpui_component::popover::Popover;
 use gpui_component::tooltip::Tooltip;
 use gpui_component::{
-    ActiveTheme, Disableable, Icon, InteractiveElementExt, Selectable, Sizable, StyledExt, h_flex,
-    v_flex,
+    ActiveTheme, Disableable, Icon, IconName, InteractiveElementExt, Selectable, Sizable,
+    StyledExt, h_flex, v_flex,
 };
 use jiff::Timestamp;
 use jiff::civil::Weekday;
@@ -28,6 +28,8 @@ use crate::pages::session_detail::SessionDetailPage;
 use crate::pages::sessions::SessionsPage;
 use crate::pages::settings::SettingsPage;
 use crate::palette::{harness_color, harness_label};
+
+const REPO_URL: &str = "https://gitlab.com/vaguemotion/tokenburntrack";
 
 pub struct Workspace {
     app_state: Entity<AppState>,
@@ -373,6 +375,24 @@ impl Workspace {
                     .child(Icon::new(page.icon()).size_4())
                     .child(page.label())
             }))
+            .child(div().flex_1())
+            .child(
+                h_flex()
+                    .id("gitlab-link")
+                    .debug_selector(|| "gitlab-link".into())
+                    .gap_2()
+                    .items_center()
+                    .px_3()
+                    .py_1p5()
+                    .rounded_md()
+                    .text_xs()
+                    .cursor_pointer()
+                    .text_color(muted)
+                    .hover(move |s| s.bg(accent).text_color(fg))
+                    .on_click(|_, _, cx| cx.open_url(REPO_URL))
+                    .child(Icon::new(IconName::ExternalLink).size_3p5())
+                    .child("GitLab"),
+            )
     }
 
     fn chip(
