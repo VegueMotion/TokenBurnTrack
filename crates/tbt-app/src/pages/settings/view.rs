@@ -10,6 +10,7 @@ use gpui_component::{ActiveTheme, Disableable, Selectable, Sizable, StyledExt, h
 use jiff::tz::TimeZone;
 use tbt_core::{ModelPrice, PriceSource};
 
+use super::about;
 use super::general::{PRIVACY_OPTIONS, SYNC_MAX_MINUTES, SYNC_MIN_MINUTES};
 use super::price_form::{PriceForm, SaveKind, can_close, format_timestamp};
 use super::prices::{self, MAX_ROWS, is_closed};
@@ -66,6 +67,7 @@ impl SettingsPage {
             Tab::General => self.render_general(cx),
             Tab::Adapters => self.render_generic(cx),
             Tab::Export => self.render_export(cx),
+            Tab::About => self.render_about(cx),
         };
         v_flex()
             .gap_4()
@@ -80,7 +82,9 @@ impl SettingsPage {
         h_flex()
             .gap_1()
             .children(Tab::ALL.into_iter().map(|tab| {
-                Button::new(SharedString::from(format!("settings-tab-{}", tab.label())))
+                let id = format!("settings-tab-{}", tab.label());
+                Button::new(SharedString::from(id.clone()))
+                    .debug_selector(move || id)
                     .small()
                     .ghost()
                     .selected(self.tab == tab)
@@ -985,6 +989,50 @@ impl SettingsPage {
                         cx,
                     )),
             )
+            .into_any_element()
+    }
+
+    fn render_about(&self, cx: &mut Context<Self>) -> AnyElement {
+        let db = self.data.db_path();
+        let rows = about::rows(db.as_deref(), self.config.path.as_deref());
+        let link = |id: &'static str, text: &'static str, url: &'static str| {
+            Button::new(id)
+                .debug_selector(|| id.into())
+                .small()
+                .outline()
+                .label(text)
+                .tooltip(url)
+                .on_click(move |_, _, cx| cx.open_url(url))
+        };
+        ui::card(about::APP_NAME, cx)
+            .child(ui::muted_text(
+                "Tracks the token usage and cost of AI coding agents from their local logs. \
+                 Everything stays on this machine.",
+                cx,
+            ))
+            .child(
+                v_flex()
+                    .gap_1()
+                    .children(rows.into_iter().map(|(name, text)| {
+                        h_flex()
+                            .gap_3()
+                            .text_sm()
+                            .child(div().w(px(110.)).child(label(name, cx)))
+                            .child(text)
+                    })),
+            )
+            .child(
+                h_flex()
+                    .gap_2()
+                    .child(link("about-source", "Source code", about::REPO_URL))
+                    .child(link("about-issues", "Report an issue", about::ISSUES_URL))
+                    .child(link("about-license", "License text", about::LICENSE_URL)),
+            )
+            .child(ui::muted_text(
+                "This program is free software under the GNU General Public License, version 3 \
+                 or later. It comes with ABSOLUTELY NO WARRANTY.",
+                cx,
+            ))
             .into_any_element()
     }
 }
