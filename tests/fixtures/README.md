@@ -333,6 +333,42 @@ Format notes:
 - The adapter keeps each thread's last total in its cursor and emits the growth since then,
   keyed `<thread id>:<running total>`.
 
+## Goose (`goose/1.61.0/sessions/sessions.db`)
+
+Synthetic: no real sessions were available. `goose/gen_db.py` writes the database with
+the `sessions`, `messages`, `usage_ledger` and `schema_version` DDL of Goose 1.61.0
+(`crates/goose/src/session/session_manager.rs`, schema version 18).
+
+| Session | Scenario |
+|---|---|
+| `20261120_1` | `anthropic` / `claude-sonnet-4-5`, two ledger rows with cache reads and writes, the second a compaction |
+| `20261120_2` | subagent of the first (`parent_session_id`), `ollama` / `qwen3-coder:30b`, no cost |
+| `20261018_3` | from before the ledger: running totals only, no ledger rows |
+| `20261021_1` | upgraded: a `carried_forward` ledger row (no model) for the older usage, then a normal row |
+| `20261122_2` | `claude-code` provider, skipped because Claude Code logs it itself |
+| `20261123_1` | `openrouter` / `z-ai/glm-4.6`, `provider_reported` cost |
+| `20261124_1` | new session with no usage and no provider |
+
+Format notes:
+
+- Location: `<data dir>/sessions/sessions.db`, where the data dir is
+  `$GOOSE_PATH_ROOT/data`, else `$XDG_DATA_HOME/goose` (`~/.local/share/goose`, also on
+  macOS) or `%APPDATA%\Block\goose\data`. WAL journal mode.
+- `usage_ledger(id, session_id, created_timestamp, model, input_tokens, output_tokens,
+  total_tokens, cache_read_tokens, cache_write_tokens, cost, cost_source, is_compaction)`
+  has one row per provider call since schema version 15. `created_timestamp` is Unix
+  seconds, `model` is the model the provider answered with, `input_tokens` includes the
+  cache reads and writes, `cost_source` is `estimated` (Goose's price table),
+  `provider_reported` or `carried_forward`.
+- `sessions` keeps running `accumulated_*` totals, `provider_name`, `model_config_json`
+  (`model_name`), `working_dir`, `name` and `parent_session_id`. Times are SQLite
+  `CURRENT_TIMESTAMP` text in UTC. The first call recorded for a session that predates the
+  ledger first inserts a `carried_forward` row with the totals not yet in the ledger.
+- The adapter reads ledger rows after the last id in its cursor, keyed `ledger:<id>`. For
+  sessions without ledger rows it keeps the last running total in its cursor and emits the
+  growth, keyed `<session id>:total:<running total>`; once such a session gets ledger
+  rows, the already counted total is taken off its `carried_forward` row.
+
 ## Database snapshots (`db/`)
 
 - `db/wave2/tbt.db`: a TokenBurnTrack database written by the Wave 2 code (`wave2-done` tag,

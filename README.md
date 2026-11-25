@@ -59,6 +59,7 @@ options are in [docs/install.md](docs/install.md). Settings are in
 | Antigravity | `~/.gemini/{antigravity,antigravity-insiders,antigravity-cli}/conversations/*.db` (app, Insiders and CLI; opened read-only) | `GEMINI_CLI_HOME` |
 | LM Studio | `~/.lmstudio/conversations/**/*.conversation.json` (the chat window; not requests to its local server) | `~/.lmstudio-home-pointer` |
 | Zed Agent | `~/.local/share/zed/threads/threads.db` (Zed's own agent; opened read-only; Zed Flatpak `~/.var/app/dev.zed.Zed/data/zed/threads`, macOS `~/Library/Application Support/Zed/threads`, Windows `%LOCALAPPDATA%\Zed\threads`) | `XDG_DATA_HOME` |
+| Goose | `~/.local/share/goose/sessions/sessions.db` (opened read-only; Windows `%APPDATA%\Block\goose\data\sessions`) | `GOOSE_PATH_ROOT`, `XDG_DATA_HOME` |
 | Generic JSONL | any JSONL log you describe in `config.toml` | `[[generic_jsonl]]` |
 
 Source files are only ever read. Roots can be changed per harness on the Harnesses page.
@@ -82,7 +83,14 @@ per thread, so each usage row covers the calls since the previous read, is timed
 thread's last update and is charged to the model the thread had selected then. Threads run
 through external agents (Claude Code, Codex, Gemini CLI) are not in Zed's database; they are
 counted by those harnesses. Models served by LM Studio, Ollama or llama.cpp keep that
-provider, so they have no price.
+provider, so they have no price. The Goose parser was built from Goose's source, not real
+sessions. It reads Goose's per-call usage ledger, keeps Goose's own cost only when the
+provider reported it, and skips sessions run through the Claude Code, Codex, Gemini CLI,
+Copilot or pi providers, which those harnesses already count. Sessions from before the
+ledger (Goose before schema version 15) only have a running total, so each of their usage
+rows covers the calls since the previous read and is timed at the session's last update.
+Models served by Goose's local providers (Ollama, LM Studio, llama-swap, built-in local
+inference and the like) keep that provider, so they have no price.
 
 ## Privacy
 

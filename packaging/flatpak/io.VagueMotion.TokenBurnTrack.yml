@@ -19,6 +19,7 @@ finish-args:
   - --filesystem=xdg-data/zed/threads:ro
   - --filesystem=~/.var/app/dev.zed.Zed/data/zed/threads:ro
   - --filesystem=xdg-data/opencode
+  - --filesystem=xdg-data/goose/sessions
   - --filesystem=xdg-config/Cursor/User:ro
   - --filesystem=xdg-config/tokenburntrack:create
   - --filesystem=xdg-data/tokenburntrack:create
