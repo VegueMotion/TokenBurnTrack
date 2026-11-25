@@ -53,9 +53,7 @@ privileged containers, so set `container.privileged: true` in that runner's conf
 Windows and macOS packages are not built there; build them with the scripts above and
 attach them by hand.
 
-On a GitLab mirror, pushing a `v*` tag runs `.gitlab-ci.yml` instead, which builds all
-four packages on GitLab.com hosted runners and attaches them to the tag's GitLab release
-through the project's generic package registry. The macOS job needs the
-`saas-macos-medium-m1` runner, which GitLab offers only on Premium and Ultimate; the
-macOS dmg is ad-hoc signed there. The release job waits for all four builds, so without
-that runner the macOS job stays pending and no release is made.
+On GitHub, pushing a `v*` tag runs `.github/workflows/release.yml` instead, which builds
+all four packages on GitHub-hosted runners and attaches them to the tag's GitHub release
+(a prerelease if the tag contains `-`). The macOS dmg is ad-hoc signed there. Forgejo
+ignores `.github/workflows` while `.forgejo/workflows` exists.
