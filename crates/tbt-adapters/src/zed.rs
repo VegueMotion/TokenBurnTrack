@@ -165,15 +165,17 @@ impl ZedAdapter {
         let conn = open_read_only(&src.path, immutable)?;
         conn.busy_timeout(self.busy_timeout)?;
         let tx = conn.unchecked_transaction()?;
+        let rows = read_rows(&tx)?;
+        tx.rollback()?;
+        let Some(rows) = rows else {
+            return Ok((ReadBatch::default(), state.clone()));
+        };
         let mut reader = Reader {
             src,
-            conn: &tx,
             batch: ReadBatch::default(),
         };
-        let state = reader.read(state)?;
-        let batch = reader.batch;
-        tx.rollback()?;
-        Ok((batch, state))
+        let state = reader.read(state, rows);
+        Ok((reader.batch, state))
     }
 }
 
@@ -232,7 +234,6 @@ struct Row {
 
 struct Reader<'a> {
     src: &'a SourceRef,
-    conn: &'a Connection,
     batch: ReadBatch,
 }
 
@@ -241,41 +242,14 @@ impl Reader<'_> {
         self.batch.warnings.push(warning(self.src, message));
     }
 
-    fn read(&mut self, state: &State) -> rusqlite::Result<State> {
-        if !table_exists(self.conn, "threads")? {
-            return Ok(state.clone());
-        }
-        let sql = self.row_sql()?;
-        let conn = self.conn;
-        let mut stmt = conn.prepare(&sql)?;
-        let mut rows = stmt.query([])?;
+    fn read(&mut self, state: &State, rows: Vec<Row>) -> State {
         let mut next = State::default();
-        while let Some(r) = rows.next()? {
-            let row = row(r)?;
+        for row in rows {
             let prev = state.threads.get(&row.id).copied().unwrap_or_default();
             let id = row.id.clone();
             next.threads.insert(id, self.thread(row, prev));
         }
-        Ok(next)
-    }
-
-    fn row_sql(&self) -> rusqlite::Result<String> {
-        let col = |c: &'static str| -> rusqlite::Result<&'static str> {
-            let has: bool = self.conn.query_row(
-                "SELECT EXISTS (SELECT 1 FROM pragma_table_info('threads') WHERE name = ?1)",
-                [c],
-                |r| r.get(0),
-            )?;
-            Ok(if has { c } else { "NULL" })
-        };
-        Ok(format!(
-            "SELECT id, {}, {}, {}, summary, updated_at, {}, data_type, data
-             FROM threads ORDER BY updated_at, id",
-            col("parent_id")?,
-            col("folder_paths")?,
-            col("folder_paths_order")?,
-            col("created_at")?,
-        ))
+        next
     }
 
     fn thread(&mut self, row: Row, prev: Usage) -> Usage {
@@ -346,6 +320,32 @@ impl Reader<'_> {
         self.batch.sessions.push(session);
         usage
     }
+}
+
+fn read_rows(conn: &Connection) -> rusqlite::Result<Option<Vec<Row>>> {
+    if !table_exists(conn, "threads")? {
+        return Ok(None);
+    }
+    let col = |c: &'static str| -> rusqlite::Result<&'static str> {
+        let has: bool = conn.query_row(
+            "SELECT EXISTS (SELECT 1 FROM pragma_table_info('threads') WHERE name = ?1)",
+            [c],
+            |r| r.get(0),
+        )?;
+        Ok(if has { c } else { "NULL" })
+    };
+    let sql = format!(
+        "SELECT id, {}, {}, {}, summary, updated_at, {}, data_type, data
+         FROM threads ORDER BY updated_at, id",
+        col("parent_id")?,
+        col("folder_paths")?,
+        col("folder_paths_order")?,
+        col("created_at")?,
+    );
+    conn.prepare(&sql)?
+        .query_map([], row)?
+        .collect::<rusqlite::Result<_>>()
+        .map(Some)
 }
 
 fn row(r: &rusqlite::Row<'_>) -> rusqlite::Result<Row> {
