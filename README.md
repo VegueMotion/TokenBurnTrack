@@ -44,53 +44,28 @@ options are in [docs/install.md](docs/install.md). Settings are in
   or a Windows scheduled task, and shares a lock with the app so only one ingests at a
   time.
 
-## Supported harnesses
+## 🔌 Supported harnesses
 
-| Harness | Reads | Override |
+| Harness | State | Info |
 |---|---|---|
-| Claude Code | `~/.claude/projects/**/*.jsonl` (sessions and subagent runs) | `CLAUDE_CONFIG_DIR` |
-| Codex CLI | `~/.codex/sessions/YYYY/MM/DD/*.jsonl` | `CODEX_HOME` |
-| Gemini CLI | `~/.gemini/tmp/<project>/chats/*.jsonl` and legacy `session-*.json` (macOS also `~/.cache/.gemini/tmp`) | `GEMINI_CLI_HOME` |
-| Grok Build | `~/.grok/sessions/<cwd>/<session>/usage.json` (subagent sessions are skipped; their usage is already in the parent) | `GROK_HOME` |
-| pi | `~/.pi/agent/sessions/--<cwd>--/*.jsonl` (turns a fork copied from its parent are skipped) | `PI_CODING_AGENT_DIR`, `PI_CODING_AGENT_SESSION_DIR` |
-| OpenCode | `~/.local/share/opencode/opencode.db` (opened read-only) | `XDG_DATA_HOME` |
-| Cursor | `~/.config/Cursor/User/globalStorage/state.vscdb` (opened read-only; macOS `~/Library/Application Support/Cursor`, Windows `%APPDATA%\Cursor`) | `XDG_CONFIG_HOME` |
-| GitHub Copilot CLI | `~/.copilot/session-state/<session-id>/events.jsonl` | `COPILOT_HOME` |
-| Antigravity | `~/.gemini/{antigravity,antigravity-insiders,antigravity-cli}/conversations/*.db` (app, Insiders and CLI; opened read-only) | `GEMINI_CLI_HOME` |
-| LM Studio | `~/.lmstudio/conversations/**/*.conversation.json` (the chat window; not requests to its local server) | `~/.lmstudio-home-pointer` |
-| Zed Agent | `~/.local/share/zed/threads/threads.db` (Zed's own agent; opened read-only; Zed Flatpak `~/.var/app/dev.zed.Zed/data/zed/threads`, macOS `~/Library/Application Support/Zed/threads`, Windows `%LOCALAPPDATA%\Zed\threads`) | `XDG_DATA_HOME` |
-| Goose | `~/.local/share/goose/sessions/sessions.db` (opened read-only; Windows `%APPDATA%\Block\goose\data\sessions`) | `GOOSE_PATH_ROOT`, `XDG_DATA_HOME` |
-| Generic JSONL | any JSONL log you describe in `config.toml` | `[[generic_jsonl]]` |
+| Claude Code | ✅ | Passive reader `~/.claude/projects/**/*.jsonl` |
+| Codex CLI | ✅ | Passive reader `~/.codex/sessions/**/*.jsonl` |
+| OpenCode | ✅ | Passive reader `~/.local/share/opencode/opencode.db` |
+| LM Studio | ✅ | Passive reader `~/.lmstudio/conversations/**/*.conversation.json` |
+| Gemini CLI | 🧪 | Passive reader `~/.gemini/tmp/<project>/chats/*.jsonl` |
+| Grok Build | 🧪 | Passive reader `~/.grok/sessions/**/usage.json` |
+| pi | 🧪 | Passive reader `~/.pi/agent/sessions/**/*.jsonl` |
+| Cursor | 🧪 | Passive reader `~/.config/Cursor/User/globalStorage/state.vscdb` |
+| GitHub Copilot CLI | 🧪 | Passive reader `~/.copilot/session-state/*/events.jsonl` |
+| Antigravity | 🧪 | Passive reader `~/.gemini/antigravity*/conversations/*.db` |
+| Zed Agent | 🧪 | Passive reader `~/.local/share/zed/threads/threads.db` |
+| Goose | 🧪 | Passive reader `~/.local/share/goose/sessions/sessions.db` |
+| Generic JSONL | ⚙️ | Passive reader for any JSONL log described in `config.toml` |
 
-Source files are only ever read. Roots can be changed per harness on the Harnesses page.
-The Gemini CLI and Grok Build parsers were built from upstream source rather than real
-logs, so treat their numbers with more caution. The same goes for Cursor, whose chat
-database format is not documented: it reads the agent and chat panel's per-message
-`tokenCount`, which Cursor does not fill in for every model, and it does not read the
-`cursor-agent` CLI. The GitHub
-Copilot CLI parser was also built from the published event schema, not real logs. Copilot
-does not write per-call usage to disk, only per-model running totals at checkpoints and at
-shutdown, so each usage row covers the calls since the previous total, and only the CLI is
-read, not Copilot in VS Code or other editors. The Antigravity parser is the least certain:
-Antigravity keeps token counts in undocumented protobuf blobs, and the field layout comes
-from other open-source usage trackers, not from Google or from real logs. Model names come
-from the model picker label (`Gemini 3.6 Flash (High)` → `gemini-3.6-flash`), or from the
-response model when it extends that name (`gemini-3.1-pro-preview`), so the thinking level
-is not priced separately. Messages are not read. LM Studio models run locally, so its usage
-is counted but has no price unless you add one for the `lmstudio` provider. The Zed Agent
-parser was built from Zed's source, not real threads. Zed keeps only a running token total
-per thread, so each usage row covers the calls since the previous read, is timed at the
-thread's last update and is charged to the model the thread had selected then. Threads run
-through external agents (Claude Code, Codex, Gemini CLI) are not in Zed's database; they are
-counted by those harnesses. Models served by LM Studio, Ollama or llama.cpp keep that
-provider, so they have no price. The Goose parser was built from Goose's source, not real
-sessions. It reads Goose's per-call usage ledger, keeps Goose's own cost only when the
-provider reported it, and skips sessions run through the Claude Code, Codex, Gemini CLI,
-Copilot or pi providers, which those harnesses already count. Sessions from before the
-ledger (Goose before schema version 15) only have a running total, so each of their usage
-rows covers the calls since the previous read and is timed at the session's last update.
-Models served by Goose's local providers (Ollama, LM Studio, llama-swap, built-in local
-inference and the like) keep that provider, so they have no price.
+✅ tested on real logs · 🧪 built from upstream source or schema, no real logs yet ·
+⚙️ format defined by you.
+Paths per platform, overrides and per-harness caveats are in
+[docs/harnesses.md](docs/harnesses.md).
 
 ## Privacy
 
