@@ -52,7 +52,6 @@ options are in [docs/install.md](docs/install.md). Settings are in
 | Codex CLI | ✅ | Passive reader `~/.codex/sessions/**/*.jsonl` |
 | OpenCode | ✅ | Passive reader `~/.local/share/opencode/opencode.db` |
 | LM Studio | ✅ | Passive reader `~/.lmstudio/conversations/**/*.conversation.json` |
-| Generic JSONL | ✅ | Passive reader for any JSONL log described in `config.toml` |
 | Gemini CLI | 🧪 | Passive reader `~/.gemini/tmp/<project>/chats/*.jsonl` |
 | Grok Build | 🧪 | Passive reader `~/.grok/sessions/**/usage.json` |
 | pi | 🧪 | Passive reader `~/.pi/agent/sessions/**/*.jsonl` |
@@ -61,8 +60,10 @@ options are in [docs/install.md](docs/install.md). Settings are in
 | Antigravity | 🧪 | Passive reader `~/.gemini/antigravity*/conversations/*.db` |
 | Zed Agent | 🧪 | Passive reader `~/.local/share/zed/threads/threads.db` |
 | Goose | 🧪 | Passive reader `~/.local/share/goose/sessions/sessions.db` |
+| Generic JSONL | ⚙️ | Passive reader for any JSONL log described in `config.toml` |
 
-✅ tested on real logs · 🧪 built from upstream source or schema, no real logs yet.
+✅ tested on real logs · 🧪 built from upstream source or schema, no real logs yet ·
+⚙️ format defined by you.
 Paths per platform, overrides and per-harness caveats are in
 [docs/harnesses.md](docs/harnesses.md).
 

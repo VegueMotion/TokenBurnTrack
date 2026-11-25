@@ -23,7 +23,8 @@ Source files are only ever read. Roots can be changed per harness on the Harness
 **Gemini CLI, Grok Build.** Built from upstream source rather than real logs, so treat
 their numbers with more caution.
 
-**Cursor.** The chat database format is not documented. It reads the agent and chat
+**Cursor.** Treat its numbers with more caution too: the chat database format is not
+documented. It reads the agent and chat
 panel's per-message `tokenCount`, which Cursor does not fill in for every model, and it
 does not read the `cursor-agent` CLI.
 
