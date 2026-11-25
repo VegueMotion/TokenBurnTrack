@@ -1,23 +1,24 @@
 # Harnesses
 
-Source files are only ever read. Roots can be changed per harness on the Harnesses page.
+Source files are only ever read. Changing where a harness is read from is covered in
+[configuration.md](configuration.md#harness-locations).
 
-| Harness | Reads | Override |
-|---|---|---|
-| Claude Code | `~/.claude/projects/**/*.jsonl` (sessions and subagent runs) | `CLAUDE_CONFIG_DIR` |
-| Codex CLI | `~/.codex/sessions/YYYY/MM/DD/*.jsonl` | `CODEX_HOME` |
-| Gemini CLI | `~/.gemini/tmp/<project>/chats/*.jsonl` and legacy `session-*.json` (macOS also `~/.cache/.gemini/tmp`) | `GEMINI_CLI_HOME` |
-| Grok Build | `~/.grok/sessions/<cwd>/<session>/usage.json` (subagent sessions are skipped; their usage is already in the parent) | `GROK_HOME` |
-| pi | `~/.pi/agent/sessions/--<cwd>--/*.jsonl` (turns a fork copied from its parent are skipped) | `PI_CODING_AGENT_DIR`, `PI_CODING_AGENT_SESSION_DIR` |
-| OpenCode | `~/.local/share/opencode/opencode.db` (opened read-only) | `XDG_DATA_HOME` |
-| Cursor | `~/.config/Cursor/User/globalStorage/state.vscdb` (opened read-only; macOS `~/Library/Application Support/Cursor`, Windows `%APPDATA%\Cursor`) | `XDG_CONFIG_HOME` |
-| GitHub Copilot CLI | `~/.copilot/session-state/<session-id>/events.jsonl` | `COPILOT_HOME` |
-| Antigravity | `~/.gemini/{antigravity,antigravity-insiders,antigravity-cli}/conversations/*.db` (app, Insiders and CLI; opened read-only) | `GEMINI_CLI_HOME` |
-| LM Studio | `~/.lmstudio/conversations/**/*.conversation.json` (the chat window; not requests to its local server) | `~/.lmstudio-home-pointer` |
-| Zed Agent | `~/.local/share/zed/threads/threads.db` (Zed's own agent; opened read-only; Zed Flatpak `~/.var/app/dev.zed.Zed/data/zed/threads`, macOS `~/Library/Application Support/Zed/threads`, Windows `%LOCALAPPDATA%\Zed\threads`) | `XDG_DATA_HOME` |
-| Goose | `~/.local/share/goose/sessions/sessions.db` (opened read-only; Windows `%APPDATA%\Block\goose\data\sessions`) | `GOOSE_PATH_ROOT`, `XDG_DATA_HOME` |
-| DeepSeek Harness | `~/.dsh/sessions/<project>/<session>/session.v4.jsonl.zstd` (the newest log generation per session; plain `.jsonl` logs too) | `DSH_HOME` |
-| Generic JSONL | any JSONL log you describe in `config.toml` (see [configuration.md](configuration.md)) | `[[generic_jsonl]]` |
+| Harness | Reads |
+|---|---|
+| Claude Code | `~/.claude/projects/**/*.jsonl` (sessions and subagent runs) |
+| Codex CLI | `~/.codex/sessions/YYYY/MM/DD/*.jsonl` |
+| Gemini CLI | `~/.gemini/tmp/<project>/chats/*.jsonl` and legacy `session-*.json` (macOS also `~/.cache/.gemini/tmp`) |
+| Grok Build | `~/.grok/sessions/<cwd>/<session>/usage.json` (subagent sessions are skipped; their usage is already in the parent) |
+| pi | `~/.pi/agent/sessions/--<cwd>--/*.jsonl` (turns a fork copied from its parent are skipped) |
+| OpenCode | `~/.local/share/opencode/opencode.db` (opened read-only) |
+| Cursor | `~/.config/Cursor/User/globalStorage/state.vscdb` (opened read-only; macOS `~/Library/Application Support/Cursor`, Windows `%APPDATA%\Cursor`) |
+| GitHub Copilot CLI | `~/.copilot/session-state/<session-id>/events.jsonl` |
+| Antigravity | `~/.gemini/{antigravity,antigravity-insiders,antigravity-cli}/conversations/*.db` (app, Insiders and CLI; opened read-only) |
+| LM Studio | `~/.lmstudio/conversations/**/*.conversation.json` (the chat window; not requests to its local server) |
+| Zed Agent | `~/.local/share/zed/threads/threads.db` (Zed's own agent; opened read-only; Zed Flatpak `~/.var/app/dev.zed.Zed/data/zed/threads`, macOS `~/Library/Application Support/Zed/threads`, Windows `%LOCALAPPDATA%\Zed\threads`) |
+| Goose | `~/.local/share/goose/sessions/sessions.db` (opened read-only; Windows `%APPDATA%\Block\goose\data\sessions`) |
+| DeepSeek Harness | `~/.dsh/sessions/<project>/<session>/session.v4.jsonl.zstd` (the newest log generation per session; plain `.jsonl` logs too) |
+| Generic JSONL | any JSONL log you describe in `config.toml` (see [configuration.md](configuration.md)) |
 
 ## Notes per harness
 

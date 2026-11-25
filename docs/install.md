@@ -68,8 +68,8 @@ sandboxed: the file system is read-only except the data directory
 `NoNewPrivileges`. If you later change `data_dir` in the config, run `install` again,
 or the service cannot write to the new directory.
 
-User services do not see variables exported by your shell. If you set
-`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `GEMINI_CLI_HOME`, `GROK_HOME`, `PI_CODING_AGENT_DIR`, `PI_CODING_AGENT_SESSION_DIR` or `TBT_DATA_DIR`, add them with
+User services do not see variables exported by your shell. If you set `TBT_DATA_DIR` or
+one of the [harness variables](configuration.md#harness-locations), add them with
 `systemctl --user edit tbt-daemon.service` (`[Service]` + `Environment=NAME=value`).
 
 ```sh

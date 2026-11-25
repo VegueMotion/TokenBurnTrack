@@ -65,8 +65,9 @@ options are in [docs/install.md](docs/install.md). Settings are in
 
 ✅ tested on real logs · 🧪 built from upstream source or schema, no real logs yet ·
 ⚙️ format defined by you.
-Paths per platform, overrides and per-harness caveats are in
-[docs/harnesses.md](docs/harnesses.md).
+Paths per platform and per-harness caveats are in [docs/harnesses.md](docs/harnesses.md),
+and how to read a harness from another location in
+[docs/configuration.md](docs/configuration.md#harness-locations).
 
 ## Privacy
 
