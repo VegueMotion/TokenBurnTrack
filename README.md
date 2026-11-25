@@ -53,7 +53,8 @@ options are in [docs/install.md](docs/install.md). Settings are in
   versioned by date so a price change does not rewrite old costs. When a harness logs
   its own cost, both values are kept.
 - **Dashboards.** KPIs, hourly/daily cost, tokens by type, top models and projects, a
-  weekday × hour heatmap, a sessions table with session detail, and CSV/JSON export.
+  daily activity heatmap of the last year, a sessions table with session detail, and
+  CSV/JSON export.
 - **Background collector.** `tbt-daemon` runs from a systemd user timer, a launchd agent
   or a Windows scheduled task, and shares a lock with the app so only one ingests at a
   time.

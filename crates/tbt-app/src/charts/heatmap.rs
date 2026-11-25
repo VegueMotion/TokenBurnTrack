@@ -7,22 +7,38 @@ use gpui::{
 };
 use gpui_component::button::{Button, ButtonVariants};
 use gpui_component::{ActiveTheme, Selectable, Sizable, h_flex, v_flex};
-use tbt_store::HeatCell;
+use jiff::ToSpan;
+use jiff::civil::Date;
+use jiff::tz::TimeZone;
+use tbt_core::TimeRange;
+use tbt_store::CostBucket;
 
 use super::format::{fmt_count, fmt_usd, micros_to_usd};
 use super::paint::{
     Align, ChartTheme, Hover, LABEL_SIZE, bounds_size, insert_hitbox, paint_text, paint_tooltip,
     rect_bounds,
 };
-use super::scale::{BandScale, Margins, Rect};
+use super::scale::Rect;
 use crate::palette::heat_color;
 
-pub const WEEKDAYS: [&str; 7] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const HOURS: usize = 24;
+const WEEKDAYS: [&str; 7] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const MONTHS: [&str; 12] = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+const WEEKS: i64 = 53;
 const OUTLIER_MIN_CELLS: usize = 8;
 const OUTLIER_QUANTILE: f64 = 0.95;
 const OUTLIER_RATIO: f64 = 2.0;
 const LEGEND_STEPS: usize = 5;
+
+const LEFT: f32 = 32.0;
+const RIGHT: f32 = 4.0;
+const TOP: f32 = 18.0;
+const MIN_STEP: f32 = 11.0;
+const MAX_STEP: f32 = 18.0;
+const GAP: f32 = 3.0;
+const MONTH_LABEL_WIDTH: f32 = 28.0;
+pub const HEATMAP_HEIGHT: f32 = TOP + 7.0 * MAX_STEP;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum HeatMetric {
@@ -98,75 +114,116 @@ pub fn intensity(v: f64, max: f64) -> f32 {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct HeatmapChart {
-    pub cost: [[f64; HOURS]; 7],
-    pub calls: [[u64; HOURS]; 7],
+    pub first: Date,
+    pub cost: Vec<f64>,
+    pub calls: Vec<u64>,
     pub time_zone: String,
 }
 
 impl HeatmapChart {
-    pub fn from_cells(cells: &[HeatCell], time_zone: impl Into<String>) -> HeatmapChart {
+    pub fn days_ending(last: Date) -> (Date, usize) {
+        let start = last.checked_sub((WEEKS * 7 - 7).days()).unwrap_or(last);
+        let first = start
+            .checked_sub(i64::from(start.weekday().to_monday_zero_offset()).days())
+            .unwrap_or(start);
+        let len = days_between(first, last).map_or(1, |d| d + 1);
+        (first, len)
+    }
+
+    pub fn range_ending(last: Date, tz: &TimeZone) -> Option<TimeRange> {
+        let (first, _) = Self::days_ending(last);
+        let start = first.to_zoned_datetime(tz.clone()).ok()?;
+        let end = last
+            .checked_add(1.day())
+            .ok()?
+            .to_zoned_datetime(tz.clone())
+            .ok()?;
+        Some(TimeRange::new(start.timestamp(), end.timestamp()))
+    }
+
+    pub fn from_buckets(
+        buckets: &[CostBucket],
+        last: Date,
+        tz: &TimeZone,
+        time_zone: impl Into<String>,
+    ) -> HeatmapChart {
+        let (first, len) = Self::days_ending(last);
         let mut chart = HeatmapChart {
-            cost: [[0.0; HOURS]; 7],
-            calls: [[0; HOURS]; 7],
+            first,
+            cost: vec![0.0; len],
+            calls: vec![0; len],
             time_zone: time_zone.into(),
         };
-        for c in cells {
-            let (r, h) = (c.weekday as usize, c.hour as usize);
-            if r < 7 && h < HOURS {
-                chart.cost[r][h] += micros_to_usd(c.cost);
-                chart.calls[r][h] += c.events;
+        for b in buckets {
+            let date = b.start.to_zoned_datetime(tz.clone()).date();
+            if let Some(i) = days_between(first, date).filter(|i| *i < len) {
+                chart.cost[i] += micros_to_usd(b.cost);
+                chart.calls[i] += b.events;
             }
         }
         chart
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.calls.iter().flatten().all(|c| *c == 0)
-            && self.cost.iter().flatten().all(|c| *c <= 0.0)
+    pub fn weeks(&self) -> usize {
+        self.calls.len().div_ceil(7)
     }
 
-    pub fn value(&self, metric: HeatMetric, weekday: usize, hour: usize) -> f64 {
-        if weekday >= 7 || hour >= HOURS {
-            return 0.0;
-        }
+    pub fn day_index(&self, weekday: usize, week: usize) -> Option<usize> {
+        let i = week * 7 + weekday;
+        (weekday < 7 && i < self.calls.len()).then_some(i)
+    }
+
+    pub fn date(&self, index: usize) -> Option<Date> {
+        self.first
+            .checked_add(i64::try_from(index).ok()?.days())
+            .ok()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.calls.iter().all(|c| *c == 0) && self.cost.iter().all(|c| *c <= 0.0)
+    }
+
+    pub fn value(&self, metric: HeatMetric, index: usize) -> f64 {
         match metric {
-            HeatMetric::Cost => self.cost[weekday][hour],
-            HeatMetric::Calls => self.calls[weekday][hour] as f64,
+            HeatMetric::Cost => self.cost.get(index).copied().unwrap_or(0.0),
+            HeatMetric::Calls => self.calls.get(index).copied().unwrap_or(0) as f64,
         }
     }
 
     pub fn scale(&self, metric: HeatMetric) -> HeatScale {
-        HeatScale::of(
-            (0..7)
-                .flat_map(|r| (0..HOURS).map(move |h| (r, h)))
-                .map(|(r, h)| self.value(metric, r, h)),
-        )
+        HeatScale::of((0..self.calls.len()).map(|i| self.value(metric, i)))
     }
 
-    pub fn tooltip(&self, weekday: usize, hour: usize) -> String {
-        let calls = self
-            .calls
-            .get(weekday)
-            .and_then(|r| r.get(hour))
-            .copied()
-            .unwrap_or(0);
+    pub fn tooltip(&self, index: usize) -> String {
+        let calls = self.calls.get(index).copied().unwrap_or(0);
+        let day = self.date(index).map_or_else(
+            || "?".to_owned(),
+            |d| d.strftime("%a %b %-d, %Y").to_string(),
+        );
         format!(
-            "{} {:02}:00–{:02}:00 · {} · {} {}",
-            WEEKDAYS.get(weekday).copied().unwrap_or("?"),
-            hour,
-            hour + 1,
-            fmt_usd(self.value(HeatMetric::Cost, weekday, hour)),
+            "{day} · {} · {} {}",
+            fmt_usd(self.value(HeatMetric::Cost, index)),
             fmt_count(calls),
             if calls == 1 { "call" } else { "calls" }
         )
     }
 
-    pub fn hour_label_stride(cell_step: f32, label_width: f32) -> usize {
-        if cell_step <= 0.0 {
-            return HOURS;
+    pub fn month_labels(&self, first_week: usize) -> Vec<(usize, &'static str)> {
+        let mut out: Vec<(usize, &'static str)> = Vec::new();
+        let mut prev = None;
+        for week in first_week..self.weeks() {
+            let Some(month) = self.date(week * 7).map(|d| d.month()) else {
+                continue;
+            };
+            if prev != Some(month) {
+                out.push((week, MONTHS[(month - 1) as usize]));
+            }
+            prev = Some(month);
         }
-        let groups = (label_width / (3.0 * cell_step)).ceil().max(1.0) as usize;
-        (3 * groups).min(HOURS)
+        if out.len() >= 2 && out[1].0 - out[0].0 < 3 {
+            out.remove(0);
+        }
+        out
     }
 
     pub fn view(
@@ -180,13 +237,13 @@ impl HeatmapChart {
         let muted = t.muted_foreground;
         if self.is_empty() {
             return div()
-                .h(px(220.))
+                .h(px(HEATMAP_HEIGHT))
                 .flex()
                 .items_center()
                 .justify_center()
                 .text_sm()
                 .text_color(muted)
-                .child("No activity in this range")
+                .child("No activity in this period")
                 .into_any_element();
         }
         let current = metric.get();
@@ -215,14 +272,14 @@ impl HeatmapChart {
                             .flex_1()
                             .text_xs()
                             .text_color(muted)
-                            .child(format!("Local time · {}", self.time_zone)),
+                            .child(format!("One square per day · {}", self.time_zone)),
                     )
                     .child(toggle),
             )
             .child(
                 heatmap_chart(self.clone(), current, hover, theme)
                     .w_full()
-                    .h(px(200.)),
+                    .h(px(HEATMAP_HEIGHT)),
             )
             .child(self.legend(current, theme, muted))
             .into_any_element()
@@ -251,42 +308,60 @@ impl HeatmapChart {
     }
 }
 
+fn days_between(from: Date, to: Date) -> Option<usize> {
+    let days = from.until(to).ok()?.get_days();
+    usize::try_from(days).ok()
+}
+
 fn empty_color(theme: &ChartTheme) -> Hsla {
     theme.grid.opacity(0.5)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct HeatLayout {
-    pub plot: Rect,
-    pub rows: BandScale,
-    pub cols: BandScale,
+    pub step: f32,
+    pub first_week: usize,
+    pub weeks: usize,
 }
 
-const MARGINS: Margins = Margins {
-    left: 40.0,
-    right: 8.0,
-    top: 4.0,
-    bottom: 22.0,
-};
-
 impl HeatLayout {
-    pub fn new(width: f32, height: f32, rows: usize, cols: usize) -> Self {
-        let plot = MARGINS.plot(width, height);
+    pub fn new(width: f32, total_weeks: usize) -> Self {
+        let avail = (width - LEFT - RIGHT).max(0.0);
+        let fit = (avail / MIN_STEP).floor() as usize;
+        let weeks = fit.clamp(1, total_weeks.max(1));
+        let step = (avail / weeks as f32).min(MAX_STEP);
         HeatLayout {
-            plot,
-            rows: BandScale::new(rows, plot.y, plot.bottom(), 0.1),
-            cols: BandScale::new(cols, plot.x, plot.right(), 0.1),
+            step,
+            first_week: total_weeks.saturating_sub(weeks),
+            weeks,
+        }
+    }
+
+    pub fn column_x(&self, week: usize) -> f32 {
+        LEFT + (week - self.first_week) as f32 * self.step
+    }
+
+    pub fn row_center(&self, weekday: usize) -> f32 {
+        TOP + (weekday as f32 + 0.5) * self.step - GAP / 2.0
+    }
+
+    pub fn cell(&self, weekday: usize, week: usize) -> Rect {
+        let size = (self.step - GAP).max(1.0);
+        Rect {
+            x: self.column_x(week),
+            y: TOP + weekday as f32 * self.step,
+            w: size,
+            h: size,
         }
     }
 
     pub fn cell_at(&self, x: f32, y: f32) -> Option<(usize, usize)> {
-        Some((self.rows.index_at(y)?, self.cols.index_at(x)?))
-    }
-
-    pub fn cell(&self, row: usize, col: usize) -> Rect {
-        let (x, w) = self.cols.band(col);
-        let (y, h) = self.rows.band(row);
-        Rect { x, y, w, h }
+        if x < LEFT || y < TOP || self.step <= 0.0 {
+            return None;
+        }
+        let col = ((x - LEFT) / self.step) as usize;
+        let row = ((y - TOP) / self.step) as usize;
+        (col < self.weeks && row < 7).then_some((row, self.first_week + col))
     }
 }
 
@@ -317,28 +392,36 @@ fn paint(
 ) {
     let origin = bounds.origin;
     let (w, h) = bounds_size(bounds);
-    let layout = HeatLayout::new(w, h, WEEKDAYS.len(), HOURS);
+    let layout = HeatLayout::new(w, chart.weeks());
     let scale = chart.scale(metric);
-    let hovered = hover.get().filter(|(r, c)| *r < 7 && *c < HOURS);
+    let hovered = hover
+        .get()
+        .and_then(|(r, c)| Some(((r, c), chart.day_index(r, c)?)));
 
-    for (r, day) in WEEKDAYS.iter().enumerate() {
-        for c in 0..HOURS {
-            let v = chart.value(metric, r, c);
+    for week in layout.first_week..chart.weeks() {
+        for weekday in 0..7 {
+            let Some(i) = chart.day_index(weekday, week) else {
+                continue;
+            };
+            let v = chart.value(metric, i);
             let color = if v > 0.0 {
                 heat_color(scale.intensity(v))
             } else {
                 empty_color(theme)
             };
-            let mut q = fill(rect_bounds(origin, layout.cell(r, c)), color).corner_radii(px(2.));
-            if hovered == Some((r, c)) {
+            let mut q =
+                fill(rect_bounds(origin, layout.cell(weekday, week)), color).corner_radii(px(2.));
+            if hovered.is_some_and(|(rc, _)| rc == (weekday, week)) {
                 q = q.border_widths(px(1.5)).border_color(theme.foreground);
             }
             window.paint_quad(q);
         }
+    }
+    for weekday in [0, 2, 4] {
         paint_text(
-            *day,
+            WEEKDAYS[weekday],
             origin,
-            (layout.plot.x - 8.0, layout.rows.center(r)),
+            (LEFT - 6.0, layout.row_center(weekday)),
             Align::Right,
             theme.muted,
             LABEL_SIZE,
@@ -346,13 +429,17 @@ fn paint(
             cx,
         );
     }
-    let stride = HeatmapChart::hour_label_stride(layout.cols.step(), 34.0);
-    for c in (0..HOURS).step_by(stride) {
-        let (x, _) = layout.cols.band(c);
+    let mut last_x = f32::NEG_INFINITY;
+    for (week, month) in chart.month_labels(layout.first_week) {
+        let x = layout.column_x(week);
+        if x - last_x < MONTH_LABEL_WIDTH {
+            continue;
+        }
+        last_x = x;
         paint_text(
-            format!("{c:02}:00"),
+            month,
             origin,
-            (x, layout.plot.bottom() + 11.0),
+            (x, TOP / 2.0 - 1.0),
             Align::Left,
             theme.muted,
             LABEL_SIZE,
@@ -361,13 +448,13 @@ fn paint(
         );
     }
 
-    if let Some((r, c)) = hovered {
+    if let Some(((r, c), i)) = hovered {
         let cell = layout.cell(r, c);
         paint_tooltip(
             origin,
             (w, h),
             (cell.right(), cell.y + cell.h / 2.0),
-            &chart.tooltip(r, c),
+            &chart.tooltip(i),
             &[],
             theme,
             window,
@@ -381,53 +468,124 @@ fn paint(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use jiff::civil::date;
     use tbt_core::Micros;
+    use tbt_store::TokenSums;
 
-    fn cell(weekday: u8, hour: u8, usd_cents: i64, events: u64) -> HeatCell {
-        HeatCell {
-            weekday,
-            hour,
+    fn bucket(day: Date, usd_cents: i64, events: u64) -> CostBucket {
+        CostBucket {
+            start: day.to_zoned_datetime(TimeZone::UTC).unwrap().timestamp(),
+            key: "claude_code".to_owned(),
             cost: Micros(usd_cents * 10_000),
+            tokens: TokenSums::default(),
             events,
         }
     }
 
     #[test]
-    fn cell_hit_testing() {
-        let l = HeatLayout::new(40.0 + 240.0 + 8.0, 4.0 + 70.0 + 22.0, 7, 24);
-        assert_eq!(l.cols.step(), 10.0);
-        assert_eq!(l.rows.step(), 10.0);
-        assert_eq!(l.cell_at(40.0, 4.0), Some((0, 0)));
-        assert_eq!(l.cell_at(49.999, 13.999), Some((0, 0)));
-        assert_eq!(l.cell_at(50.0, 14.0), Some((1, 1)));
-        assert_eq!(l.cell_at(279.9, 73.9), Some((6, 23)));
-        assert_eq!(l.cell_at(280.0, 20.0), None);
-        assert_eq!(l.cell_at(39.9, 20.0), None);
-        assert_eq!(l.cell_at(100.0, 74.0), None);
+    fn year_starts_on_a_monday_and_ends_on_the_last_day() {
+        let last = date(2026, 11, 25);
+        let (first, len) = HeatmapChart::days_ending(last);
+        assert_eq!(first, date(2025, 11, 24));
+        assert_eq!(first.weekday(), jiff::civil::Weekday::Monday);
+        assert_eq!(len, 367);
+        let chart = HeatmapChart::from_buckets(&[], last, &TimeZone::UTC, "UTC");
+        assert_eq!(chart.weeks(), 53);
+        assert_eq!(chart.date(len - 1), Some(last));
+        assert_eq!(chart.day_index(2, 52), Some(366));
+        assert_eq!(chart.day_index(3, 52), None);
+        assert_eq!(chart.day_index(7, 0), None);
+
+        let sunday = date(2026, 11, 29);
+        let (first, len) = HeatmapChart::days_ending(sunday);
+        assert_eq!(first, date(2025, 11, 24));
+        assert_eq!(len, 53 * 7);
     }
 
     #[test]
-    fn cells_map_monday_first_and_ignore_out_of_range() {
-        let chart = HeatmapChart::from_cells(
+    fn range_covers_every_shown_day() {
+        let last = date(2026, 11, 25);
+        let r = HeatmapChart::range_ending(last, &TimeZone::UTC).unwrap();
+        assert_eq!(r.start.to_string(), "2025-11-24T00:00:00Z");
+        assert_eq!(r.end.to_string(), "2026-11-26T00:00:00Z");
+    }
+
+    #[test]
+    fn buckets_sum_into_their_day() {
+        let last = date(2026, 11, 25);
+        let chart = HeatmapChart::from_buckets(
             &[
-                cell(0, 0, 100, 2),
-                cell(1, 14, 123, 12),
-                cell(6, 23, 50, 1),
-                cell(1, 14, 7, 3),
-                cell(7, 3, 999, 9),
-                cell(2, 24, 999, 9),
+                bucket(date(2025, 11, 24), 100, 2),
+                bucket(date(2026, 11, 24), 123, 12),
+                bucket(date(2026, 11, 24), 7, 3),
+                bucket(date(2025, 11, 23), 999, 9),
+                bucket(date(2026, 11, 26), 999, 9),
             ],
-            "Europe/Berlin",
+            last,
+            &TimeZone::UTC,
+            "UTC",
         );
-        assert_eq!(chart.cost[0][0], 1.0);
-        assert!((chart.cost[1][14] - 1.30).abs() < 1e-9);
-        assert_eq!(chart.calls[1][14], 15);
-        assert_eq!(chart.calls[6][23], 1);
-        assert_eq!(chart.calls.iter().flatten().sum::<u64>(), 18);
-        assert_eq!(chart.value(HeatMetric::Calls, 6, 23), 1.0);
-        assert_eq!(chart.value(HeatMetric::Cost, 7, 0), 0.0);
+        assert_eq!(chart.cost[0], 1.0);
+        assert!((chart.cost[365] - 1.30).abs() < 1e-9);
+        assert_eq!(chart.calls[365], 15);
+        assert_eq!(chart.calls.iter().sum::<u64>(), 17);
+        assert_eq!(chart.value(HeatMetric::Calls, 365), 15.0);
+        assert_eq!(chart.value(HeatMetric::Cost, 9999), 0.0);
         assert!(!chart.is_empty());
-        assert!(HeatmapChart::from_cells(&[], "UTC").is_empty());
+        assert!(HeatmapChart::from_buckets(&[], last, &TimeZone::UTC, "UTC").is_empty());
+    }
+
+    #[test]
+    fn days_follow_the_local_time_zone() {
+        let tz = TimeZone::get("America/New_York").unwrap();
+        let late = CostBucket {
+            start: "2026-11-25T03:00:00Z".parse().unwrap(),
+            ..bucket(date(2026, 11, 25), 50, 1)
+        };
+        let chart =
+            HeatmapChart::from_buckets(&[late], date(2026, 11, 25), &tz, "America/New_York");
+        assert_eq!(chart.calls[365], 1);
+    }
+
+    #[test]
+    fn square_cells_and_hit_testing() {
+        let l = HeatLayout::new(LEFT + 53.0 * 18.0 + RIGHT, 53);
+        assert_eq!(l.step, 18.0);
+        assert_eq!((l.first_week, l.weeks), (0, 53));
+        let c = l.cell(0, 0);
+        assert_eq!(c.w, c.h);
+        assert_eq!(l.cell_at(LEFT, TOP), Some((0, 0)));
+        assert_eq!(l.cell_at(LEFT + 18.0, TOP + 18.0), Some((1, 1)));
+        assert_eq!(
+            l.cell_at(LEFT + 53.0 * 18.0 - 0.1, TOP + 7.0 * 18.0 - 0.1),
+            Some((6, 52))
+        );
+        assert_eq!(l.cell_at(LEFT + 53.0 * 18.0, TOP), None);
+        assert_eq!(l.cell_at(LEFT - 0.1, TOP), None);
+        assert_eq!(l.cell_at(LEFT, TOP + 7.0 * 18.0), None);
+
+        let wide = HeatLayout::new(3000.0, 53);
+        assert_eq!(wide.step, MAX_STEP);
+    }
+
+    #[test]
+    fn narrow_layout_keeps_the_latest_weeks() {
+        let l = HeatLayout::new(LEFT + 20.0 * MIN_STEP + RIGHT, 53);
+        assert_eq!(l.weeks, 20);
+        assert_eq!(l.first_week, 33);
+        assert_eq!(l.cell_at(LEFT, TOP), Some((0, 33)));
+        assert_eq!(l.column_x(33), LEFT);
+    }
+
+    #[test]
+    fn month_labels_mark_each_new_month() {
+        let chart = HeatmapChart::from_buckets(&[], date(2026, 11, 25), &TimeZone::UTC, "UTC");
+        let labels = chart.month_labels(0);
+        assert_eq!(labels.first(), Some(&(1, "Dec")));
+        assert_eq!(labels.last().map(|l| l.1), Some("Nov"));
+        assert_eq!(labels.len(), 12);
+        let tail = chart.month_labels(50);
+        assert_eq!(tail, vec![(50, "Nov")]);
     }
 
     #[test]
@@ -478,18 +636,16 @@ mod tests {
 
     #[test]
     fn tooltip_text() {
-        let chart = HeatmapChart::from_cells(&[cell(1, 14, 123, 12), cell(6, 23, 0, 1)], "UTC");
-        assert_eq!(chart.tooltip(1, 14), "Tue 14:00–15:00 · $1.23 · 12 calls");
-        assert_eq!(chart.tooltip(6, 23), "Sun 23:00–24:00 · $0.00 · 1 call");
-        assert_eq!(chart.tooltip(0, 0), "Mon 00:00–01:00 · $0.00 · 0 calls");
-    }
-
-    #[test]
-    fn hour_labels_every_three_hours_or_more() {
-        assert_eq!(HeatmapChart::hour_label_stride(20.0, 34.0), 3);
-        assert_eq!(HeatmapChart::hour_label_stride(12.0, 34.0), 3);
-        assert_eq!(HeatmapChart::hour_label_stride(8.0, 34.0), 6);
-        assert_eq!(HeatmapChart::hour_label_stride(0.0, 34.0), 24);
+        let last = date(2026, 11, 25);
+        let chart = HeatmapChart::from_buckets(
+            &[bucket(date(2026, 11, 24), 123, 12), bucket(last, 0, 1)],
+            last,
+            &TimeZone::UTC,
+            "UTC",
+        );
+        assert_eq!(chart.tooltip(365), "Tue Nov 24, 2026 · $1.23 · 12 calls");
+        assert_eq!(chart.tooltip(366), "Wed Nov 25, 2026 · $0.00 · 1 call");
+        assert_eq!(chart.tooltip(0), "Mon Nov 24, 2025 · $0.00 · 0 calls");
     }
 
     #[test]
