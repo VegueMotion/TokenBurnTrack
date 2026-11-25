@@ -71,6 +71,12 @@ pub mod grok_build;
 #[cfg(feature = "grok_build")]
 pub use grok_build::GrokBuildAdapter;
 
+#[cfg(feature = "pi")]
+pub mod pi;
+
+#[cfg(feature = "pi")]
+pub use pi::PiAdapter;
+
 #[cfg(feature = "generic_jsonl")]
 pub mod generic_jsonl;
 

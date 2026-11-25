@@ -770,8 +770,9 @@ fn wave2_database_continues_with_current_code_and_matches_a_fresh_backfill() {
         + golden()["copilot_cli"]
         + golden()["grok_build"]
         + golden()["antigravity"]
-        + golden()["lmstudio"];
-    let new_sources = 3 + 4 + 2 + 3;
+        + golden()["lmstudio"]
+        + golden()["pi"];
+    let new_sources = 3 + 4 + 2 + 3 + 3;
     assert_eq!(
         w.env.count("SELECT count(*) FROM usage_event"),
         GOLDEN_TOTAL as i64 - added_since

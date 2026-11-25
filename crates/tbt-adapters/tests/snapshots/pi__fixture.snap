@@ -1,0 +1,96 @@
+---
+source: crates/tbt-adapters/tests/pi.rs
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: c4d5e6f7-0a1b-4c2d-9e3f-4a5b6c7d8e03
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /home/user/projects/ipsum
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-11-22T18:00:00Z"
+    ended_at: "2026-11-22T18:04:00Z"
+    has_baseline_hint: false
+  - ext_id: 3f1c2a9e-5b7d-4e21-9c0a-1d2e3f4a5b01
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /home/user/projects/lorem
+    title: Consectetur adipiscing
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-11-20T09:00:00Z"
+    ended_at: "2026-11-20T09:05:00Z"
+    has_baseline_hint: false
+  - ext_id: 7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c02
+    parent_ext_id: ~
+    resumed_from_ext_id: 3f1c2a9e-5b7d-4e21-9c0a-1d2e3f4a5b01
+    project_path: /home/user/projects/lorem
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-11-21T14:30:00Z"
+    ended_at: "2026-11-21T14:30:18Z"
+    has_baseline_hint: false
+event_count: 6
+totals:
+  (all):
+    calls: 6
+    input: 17055
+    output: 2481
+    cache_write_5m: 12096
+    cache_write_1h: 2500
+    cache_read: 16200
+    reasoning: 376
+    total: 50332
+  anthropic/claude-haiku-4-5:
+    calls: 1
+    input: 10
+    output: 1
+    cache_write_5m: 4096
+    cache_write_1h: 0
+    cache_read: 0
+    reasoning: 0
+    total: 4107
+  anthropic/claude-sonnet-4-5:
+    calls: 3
+    input: 13045
+    output: 1850
+    cache_write_5m: 8000
+    cache_write_1h: 2500
+    cache_read: 8000
+    reasoning: 120
+    total: 33395
+  openai/gpt-5.5:
+    calls: 1
+    input: 900
+    output: 410
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 8200
+    reasoning: 256
+    total: 9510
+  openrouter/moonshotai/kimi-k2:
+    calls: 1
+    input: 3100
+    output: 220
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 0
+    reasoning: 0
+    total: 3320
+events:
+  - "2026-11-22T18:00:09Z c3000003:1795370409000 moonshotai/kimi-k2 in=3100 out=220 cw5m=0 cw1h=0 cr=0 rs=0 cost=0.0024"
+  - "2026-11-22T18:04:00Z c3000004:1795370640000 claude-haiku-4-5 in=10 out=1 cw5m=4096 cw1h=0 cr=0 rs=0 cost=0.0051"
+  - "2026-11-20T09:00:12Z a1000004:1795165212000 claude-sonnet-4-5 in=1200 out=340 cw5m=8000 cw1h=0 cr=0 rs=120 cost=0.0387"
+  - "2026-11-20T09:00:20Z a1000006:1795165220000 claude-sonnet-4-5 in=45 out=610 cw5m=0 cw1h=2500 cr=8000 rs=0 cost=0.0285"
+  - "2026-11-20T09:05:00Z a100000b:1795165500000 claude-sonnet-4-5 in=11800 out=900 cw5m=0 cw1h=0 cr=0 rs=0 cost=0.0489"
+  - "2026-11-21T14:30:18Z b2000002:1795271418000 gpt-5.5 in=900 out=410 cw5m=0 cw1h=0 cr=8200 rs=256 cost=0.0212"
+message_count: 0
+messages_by_kind: {}
+messages_linked_to_events: 0
+messages_with_preview: 0
+tools: {}
+warnings:
+  - "line 11 @2671: invalid JSON: EOF while parsing a string at line 1 column 63"

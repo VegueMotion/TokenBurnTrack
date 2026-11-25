@@ -15,6 +15,7 @@ finish-args:
   - --filesystem=~/.grok:ro
   - --filesystem=~/.lmstudio/conversations:ro
   - --filesystem=~/.lmstudio-home-pointer:ro
+  - --filesystem=~/.pi/agent/sessions:ro
   - --filesystem=xdg-data/opencode
   - --filesystem=xdg-config/Cursor/User:ro
   - --filesystem=xdg-config/tokenburntrack:create
