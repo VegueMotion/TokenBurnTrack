@@ -6,10 +6,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue"></a>
-  <img alt="Rust 1.100+" src="https://img.shields.io/badge/rust-1.100%2B-orange?logo=rust">
   <img alt="Linux, macOS, Windows" src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey">
-  <img alt="13 harnesses" src="https://img.shields.io/badge/harnesses-13-brightgreen">
-  <img alt="Local only" src="https://img.shields.io/badge/data-stays%20local-success">
 </p>
 
 <p align="center">
