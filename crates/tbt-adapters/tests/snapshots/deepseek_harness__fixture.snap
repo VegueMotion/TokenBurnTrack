@@ -1,0 +1,119 @@
+---
+source: crates/tbt-adapters/tests/deepseek_harness.rs
+assertion_line: 50
+expression: "Projection::of(&batch)"
+---
+sessions:
+  - ext_id: ds-migrated
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /home/user/projects/ipsum
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-10-21T09:00:00Z"
+    ended_at: "2026-10-21T09:00:11Z"
+    has_baseline_hint: false
+  - ext_id: ds-fork
+    parent_ext_id: ~
+    resumed_from_ext_id: ds-main
+    project_path: /home/user/projects/lorem
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-11-20T10:00:00Z"
+    ended_at: "2026-11-20T10:00:12Z"
+    has_baseline_hint: false
+  - ext_id: ds-main
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: /home/user/projects/lorem
+    title: Fix the flaky lorem test
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-11-20T09:00:00Z"
+    ended_at: "2026-11-20T09:01:34Z"
+    has_baseline_hint: false
+  - ext_id: ds-sub
+    parent_ext_id: ds-main
+    resumed_from_ext_id: ~
+    project_path: /home/user/projects/lorem
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-11-20T09:00:00Z"
+    ended_at: "2026-11-20T09:00:31Z"
+    has_baseline_hint: false
+  - ext_id: ds-plain
+    parent_ext_id: ~
+    resumed_from_ext_id: ~
+    project_path: ~
+    title: ~
+    git_branch: ~
+    harness_version: ~
+    started_at: "2026-11-20T11:00:00Z"
+    ended_at: "2026-11-20T11:00:10Z"
+    has_baseline_hint: false
+event_count: 9
+totals:
+  (all):
+    calls: 9
+    input: 20337
+    output: 1941
+    cache_write_5m: 4000
+    cache_write_1h: 0
+    cache_read: 40960
+    reasoning: 580
+    total: 67238
+  anthropic/claude-sonnet-5-5:
+    calls: 1
+    input: 12
+    output: 300
+    cache_write_5m: 4000
+    cache_write_1h: 0
+    cache_read: 0
+    reasoning: 0
+    total: 4312
+  deepseek/deepseek-v4-flash:
+    calls: 6
+    input: 18509
+    output: 1352
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 33408
+    reasoning: 508
+    total: 53269
+  deepseek/deepseek-v4-pro:
+    calls: 1
+    input: 1316
+    output: 249
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 7552
+    reasoning: 72
+    total: 9117
+  moonshotai/kimi-k2.6:
+    calls: 1
+    input: 500
+    output: 40
+    cache_write_5m: 0
+    cache_write_1h: 0
+    cache_read: 0
+    reasoning: 0
+    total: 540
+events:
+  - "2026-10-21T09:00:09Z ds-migrated:1:1 deepseek-v4-flash in=981 out=695 cw5m=0 cw1h=0 cr=7680 rs=329"
+  - "2026-11-20T10:00:10Z ds-fork:2:1 kimi-k2.6 in=500 out=40 cw5m=0 cw1h=0 cr=0 rs=0"
+  - "2026-11-20T09:00:10Z ds-main:1:1 deepseek-v4-flash in=8082 out=235 cw5m=0 cw1h=0 cr=384 rs=75"
+  - "2026-11-20T09:00:15Z ds-main:1:2:attempt:1 deepseek-v4-flash in=150 out=12 cw5m=0 cw1h=0 cr=8320 rs=0"
+  - "2026-11-20T09:00:19Z ds-main:1:2 deepseek-v4-flash in=199 out=84 cw5m=0 cw1h=0 cr=9216 rs=81"
+  - "2026-11-20T09:01:29Z ds-main:2:1 deepseek-v4-pro in=1316 out=249 cw5m=0 cw1h=0 cr=7552 rs=72"
+  - "2026-11-20T09:01:31Z ds-main:compaction:cmp-1 deepseek-v4-flash in=9000 out=300 cw5m=0 cw1h=0 cr=0 rs=0"
+  - "2026-11-20T09:00:29Z ds-sub:1:1 deepseek-v4-flash in=97 out=26 cw5m=0 cw1h=0 cr=7808 rs=23"
+  - "2026-11-20T11:00:09Z ds-plain:1:1 claude-sonnet-5-5 in=12 out=300 cw5m=4000 cw1h=0 cr=0 rs=0"
+message_count: 0
+messages_by_kind: {}
+messages_linked_to_events: 0
+messages_with_preview: 0
+tools: {}
+warnings: []

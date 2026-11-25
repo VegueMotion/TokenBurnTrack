@@ -79,6 +79,12 @@ pub mod goose;
 #[cfg(feature = "goose")]
 pub use goose::GooseAdapter;
 
+#[cfg(feature = "deepseek_harness")]
+pub mod deepseek_harness;
+
+#[cfg(feature = "deepseek_harness")]
+pub use deepseek_harness::DeepSeekHarnessAdapter;
+
 #[cfg(feature = "gemini_cli")]
 pub mod gemini_cli;
 

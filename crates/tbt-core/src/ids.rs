@@ -13,6 +13,7 @@ impl HarnessId {
     pub const CODEX: HarnessId = HarnessId(Cow::Borrowed("codex"));
     pub const COPILOT_CLI: HarnessId = HarnessId(Cow::Borrowed("copilot_cli"));
     pub const CURSOR: HarnessId = HarnessId(Cow::Borrowed("cursor"));
+    pub const DEEPSEEK_HARNESS: HarnessId = HarnessId(Cow::Borrowed("deepseek_harness"));
     pub const GOOSE: HarnessId = HarnessId(Cow::Borrowed("goose"));
     pub const GEMINI_CLI: HarnessId = HarnessId(Cow::Borrowed("gemini_cli"));
     pub const GROK_BUILD: HarnessId = HarnessId(Cow::Borrowed("grok_build"));

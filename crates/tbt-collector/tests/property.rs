@@ -62,6 +62,11 @@ const FIXTURE_SETS: &[FixtureSet] = &[
         split_jsonl: false,
     },
     FixtureSet {
+        adapter: deepseek_harness,
+        root: "deepseek_harness/v4/sessions",
+        split_jsonl: false,
+    },
+    FixtureSet {
         adapter: cursor,
         root: "cursor/3.31.15/User/globalStorage",
         split_jsonl: false,
@@ -94,6 +99,10 @@ fn zed() -> Arc<dyn HarnessAdapter> {
 
 fn goose() -> Arc<dyn HarnessAdapter> {
     Arc::new(tbt_adapters::GooseAdapter::new())
+}
+
+fn deepseek_harness() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::DeepSeekHarnessAdapter::new())
 }
 
 fn cursor() -> Arc<dyn HarnessAdapter> {
@@ -277,6 +286,7 @@ fn reference_matches_golden_counts() {
             ("codex", 381),
             ("copilot_cli", 6),
             ("cursor", 3),
+            ("deepseek_harness", 9),
             ("gemini_cli", 12),
             ("goose", 7),
             ("lmstudio", 4),

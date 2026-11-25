@@ -17,6 +17,7 @@ default = [
     "lmstudio",
     "zed",
     "goose",
+    "deepseek_harness",
     "gemini_cli",
     "grok_build",
     "pi",
@@ -31,6 +32,7 @@ antigravity = ["dep:rusqlite"]
 lmstudio = []
 zed = ["dep:rusqlite", "dep:ruzstd"]
 goose = ["dep:rusqlite"]
+deepseek_harness = ["dep:ruzstd"]
 gemini_cli = []
 grok_build = []
 pi = []

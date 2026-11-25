@@ -60,6 +60,7 @@ options are in [docs/install.md](docs/install.md). Settings are in
 | Antigravity | 🧪 | Passive reader `~/.gemini/antigravity*/conversations/*.db` |
 | Zed Agent | 🧪 | Passive reader `~/.local/share/zed/threads/threads.db` |
 | Goose | 🧪 | Passive reader `~/.local/share/goose/sessions/sessions.db` |
+| DeepSeek Harness | 🧪 | Passive reader `~/.dsh/sessions/**/session.v*.jsonl.zstd` |
 | Generic JSONL | ⚙️ | Passive reader for any JSONL log described in `config.toml` |
 
 ✅ tested on real logs · 🧪 built from upstream source or schema, no real logs yet ·

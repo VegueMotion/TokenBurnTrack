@@ -5,14 +5,15 @@ use std::time::{Duration, SystemTime};
 
 use tbt_collector::{CollectorLock, LockAttempt};
 
-const SOURCES: u64 = 36;
-const EVENTS: i64 = 669;
+const SOURCES: u64 = 41;
+const EVENTS: i64 = 678;
 const GOLDEN: &[(&str, i64)] = &[
     ("antigravity", 5),
     ("claude_code", 204),
     ("codex", 381),
     ("copilot_cli", 6),
     ("cursor", 3),
+    ("deepseek_harness", 9),
     ("gemini_cli", 12),
     ("goose", 7),
     ("in_house_agent", 4),
@@ -91,6 +92,10 @@ impl Sandbox {
         copy_tree(
             &f.join("goose/1.61.0/sessions"),
             &sb.path("home/.local/share/goose/sessions"),
+        );
+        copy_tree(
+            &f.join("deepseek_harness/v4/sessions"),
+            &sb.path("home/.dsh/sessions"),
         );
         copy_tree(
             &f.join("copilot_cli/1.0.4/session-state"),
