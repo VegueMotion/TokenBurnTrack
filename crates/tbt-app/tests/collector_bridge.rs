@@ -169,6 +169,7 @@ fn config_saved_while_running_applies_to_the_next_run() {
             HarnessId::OPENCODE,
             HarnessId::GEMINI_CLI,
             HarnessId::LMSTUDIO,
+            HarnessId::ZED,
         ] {
             store.register_harness(&id, id.as_str()).unwrap();
             store.set_harness_enabled(&id, false).unwrap();

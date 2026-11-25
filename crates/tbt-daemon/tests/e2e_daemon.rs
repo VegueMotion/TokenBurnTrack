@@ -5,8 +5,8 @@ use std::time::{Duration, SystemTime};
 
 use tbt_collector::{CollectorLock, LockAttempt};
 
-const SOURCES: u64 = 34;
-const EVENTS: i64 = 658;
+const SOURCES: u64 = 35;
+const EVENTS: i64 = 662;
 const GOLDEN: &[(&str, i64)] = &[
     ("antigravity", 5),
     ("claude_code", 204),
@@ -18,6 +18,7 @@ const GOLDEN: &[(&str, i64)] = &[
     ("llm_proxy", 6),
     ("lmstudio", 4),
     ("opencode", 33),
+    ("zed", 4),
 ];
 
 fn fixtures() -> PathBuf {
@@ -81,6 +82,10 @@ impl Sandbox {
         copy_tree(
             &f.join("lmstudio/0.4.20/conversations"),
             &sb.path("home/.lmstudio/conversations"),
+        );
+        copy_tree(
+            &f.join("zed/1.29.2/threads"),
+            &sb.path("home/.local/share/zed/threads"),
         );
         copy_tree(
             &f.join("copilot_cli/1.0.4/session-state"),

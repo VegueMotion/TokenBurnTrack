@@ -1,6 +1,11 @@
 pub mod discover;
 
-#[cfg(any(feature = "opencode", feature = "cursor", feature = "antigravity"))]
+#[cfg(any(
+    feature = "opencode",
+    feature = "cursor",
+    feature = "antigravity",
+    feature = "zed"
+))]
 mod sqlite;
 
 #[cfg(any(feature = "cursor", feature = "antigravity"))]
@@ -34,7 +39,8 @@ pub use cursor::CursorAdapter;
     feature = "cursor",
     feature = "copilot_cli",
     feature = "grok_build",
-    feature = "antigravity"
+    feature = "antigravity",
+    feature = "zed"
 ))]
 mod models;
 
@@ -58,6 +64,12 @@ pub mod lmstudio;
 
 #[cfg(feature = "lmstudio")]
 pub use lmstudio::LmStudioAdapter;
+
+#[cfg(feature = "zed")]
+pub mod zed;
+
+#[cfg(feature = "zed")]
+pub use zed::ZedAdapter;
 
 #[cfg(feature = "gemini_cli")]
 pub mod gemini_cli;

@@ -299,6 +299,40 @@ Format notes:
   messages are kept for the selected version only. The anonymizer keeps `identifier`,
   `indexedModelIdentifier`, `senderName`, `stepIdentifier` and `stopReason`.
 
+## Zed Agent (`zed/1.29.2/threads/threads.db`)
+
+Synthetic: no real threads were available. `zed/gen_db.py` writes the database with the
+table and index DDL of the `threads.db` that Zed 1.29.2 (Flatpak) created on the harvest
+machine, and thread blobs shaped like Zed's `DbThread` (`crates/agent/src/db.rs`, version
+`0.3.0`).
+
+| Thread | Scenario |
+|---|---|
+| `4f6c1d2a-…` | `zed.dev` / `claude-sonnet-4-5`, cache writes and reads, one folder |
+| `7a8b9c0d-…` | subagent of the first (`parent_id`), `anthropic` / `claude-haiku-4-5` |
+| `b1c2d3e4-…` | `lmstudio` / `deepseek-r1-distill-qwen-7b`, two folders with the second first in `folder_paths_order` |
+| `c9d8e7f6-…` | `data_type = 'json'` (uncompressed), `openai` / `gpt-5`, no folders |
+| `d0e1f2a3-…` | new thread with no usage and no model |
+
+Format notes:
+
+- Location: `<data dir>/threads/threads.db`, where the data dir is `$XDG_DATA_HOME/zed`
+  (Flatpak: `~/.var/app/dev.zed.Zed/data/zed`), `~/Library/Application Support/Zed` or
+  `%LOCALAPPDATA%\Zed`. Rollback journal, not WAL. Only Zed's own agent writes here;
+  external (ACP) agents keep their own logs.
+- Table `threads(id, summary, updated_at, data_type, data, parent_id, worktree_branch,
+  folder_paths, folder_paths_order, created_at)`; the last five columns were added later
+  with `ALTER TABLE`. Times are RFC 3339. `folder_paths` is newline-separated and sorted;
+  `folder_paths_order` is the comma-separated user order of each sorted path.
+- `data` is the thread as JSON, zstd-compressed when `data_type = 'zstd'`. Usage is
+  `cumulative_token_usage{input_tokens, output_tokens, cache_creation_input_tokens,
+  cache_read_input_tokens}` (zero fields left out; input excludes cached tokens), a running
+  total that truncating the thread does not reduce. `request_token_usage` maps each user
+  message id to the last request of that turn only, so it is not summed. `model{provider,
+  model}` is the selected model, not per request.
+- The adapter keeps each thread's last total in its cursor and emits the growth since then,
+  keyed `<thread id>:<running total>`.
+
 ## Database snapshots (`db/`)
 
 - `db/wave2/tbt.db`: a TokenBurnTrack database written by the Wave 2 code (`wave2-done` tag,

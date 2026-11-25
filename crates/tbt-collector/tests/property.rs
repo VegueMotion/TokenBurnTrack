@@ -52,6 +52,11 @@ const FIXTURE_SETS: &[FixtureSet] = &[
         split_jsonl: false,
     },
     FixtureSet {
+        adapter: zed,
+        root: "zed/1.29.2/threads",
+        split_jsonl: false,
+    },
+    FixtureSet {
         adapter: cursor,
         root: "cursor/3.31.15/User/globalStorage",
         split_jsonl: false,
@@ -76,6 +81,10 @@ fn antigravity() -> Arc<dyn HarnessAdapter> {
 
 fn lmstudio() -> Arc<dyn HarnessAdapter> {
     Arc::new(tbt_adapters::LmStudioAdapter::new())
+}
+
+fn zed() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::ZedAdapter::new())
 }
 
 fn cursor() -> Arc<dyn HarnessAdapter> {
@@ -262,6 +271,7 @@ fn reference_matches_golden_counts() {
             ("gemini_cli", 12),
             ("lmstudio", 4),
             ("opencode", 33),
+            ("zed", 4),
         ]
         .into_iter()
         .collect()
