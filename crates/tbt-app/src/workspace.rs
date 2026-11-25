@@ -282,7 +282,7 @@ impl Workspace {
             return None;
         }
         let t = cx.theme();
-        let (fg, hover, danger) = (t.foreground, t.secondary_hover, t.danger);
+        let (fg, hover, danger, border) = (t.foreground, t.secondary_hover, t.danger, t.border);
         let supported = window.window_controls();
         let controls = WindowControl::ALL.into_iter().filter(move |c| match c {
             WindowControl::Minimize => supported.minimize,
@@ -296,7 +296,9 @@ impl Workspace {
             .flex_none()
             .h(px(TITLE_BAR_HEIGHT))
             .items_center()
-            .justify_end();
+            .justify_end()
+            .border_b_1()
+            .border_color(border);
         Some(
             self.draggable(bar, cx)
                 .child(h_flex().h_full().pr_1().children(controls.map(|c| {
@@ -328,7 +330,7 @@ impl Workspace {
 
     fn render_brand(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
         let t = cx.theme();
-        let (fg, muted, border) = (t.sidebar_foreground, t.muted_foreground, t.sidebar_border);
+        let (fg, muted) = (t.sidebar_foreground, t.muted_foreground);
         let height = if Self::client_decorated(window) {
             TITLE_BAR_HEIGHT + TOP_BAR_HEIGHT
         } else {
@@ -341,9 +343,7 @@ impl Workspace {
             .h(px(height))
             .px_5()
             .gap_2()
-            .items_center()
-            .border_b_1()
-            .border_color(border);
+            .items_center();
         let brand = if Self::client_decorated(window) {
             self.draggable(brand, cx)
         } else {
