@@ -24,19 +24,42 @@
 
 ## 🚀 Quick start
 
-Build from source (Rust toolchain is installed by rustup; Linux needs a Wayland session):
+Download a build from the [latest release](https://github.com/VegueMotion/TokenBurnTrack/releases/latest):
+
+| Platform | File |
+|---|---|
+| Linux | `TokenBurnTrack-<version>-x86_64.flatpak` or `TokenBurnTrack-<version>-x86_64.AppImage` |
+| macOS | `TokenBurnTrack-<version>-macos-universal.dmg` |
+| Windows | `TokenBurnTrack-<version>-windows-x64.exe` |
+
+Install the Flatpak with `flatpak install --user <file>`, or `chmod +x` the AppImage and
+run it. On macOS drag the app to Applications; on Windows run the `.exe`. The app syncs on
+startup, every hour and on *Sync now*.
+
+**The daemon.** The app only collects while it is open. `tbt-daemon` is a small
+collector without a window. It runs in the background once an hour and reads new
+usage from the agents' logs into the same database. Install it if you close the app
+often, because some agents delete their old logs.
+
+- Flatpak: turn on *Settings → General → Collect while closed*.
+- AppImage and Windows: download `tbt-daemon-<version>-linux-x86_64` or
+  `tbt-daemon-<version>-windows-x64.exe`, put it somewhere it will stay (the schedule
+  points at that path), and run it with `install`. On Linux, `chmod +x` it first.
+- macOS: run `/Applications/TokenBurnTrack.app/Contents/MacOS/tbt-daemon install`.
+
+Run it again with `uninstall` to remove it (Flatpak: turn the setting off).
+
+To build from source instead (Linux needs a Wayland session):
 
 ```sh
 scripts/cargo build --release
 install -Dm755 target/release/tbt-app ~/.local/bin/tbt-app
 install -Dm755 target/release/tbt-daemon ~/.local/bin/tbt-daemon
-~/.local/bin/tbt-daemon install --app ~/.local/bin/tbt-app   # hourly collection while the app is closed
+~/.local/bin/tbt-daemon install --app ~/.local/bin/tbt-app
 ```
 
-Then start `tbt-app`. It syncs on startup, every hour and on *Sync now*.
-
-Flatpak, AppImage, macOS and Windows packages, system dependencies and the daemon
-options are in [docs/install.md](docs/install.md). Settings are in
+System dependencies, what `install` writes and the daemon options are in
+[docs/install.md](docs/install.md). Settings are in
 [docs/configuration.md](docs/configuration.md), and tests and release builds in
 [docs/development.md](docs/development.md).
 
