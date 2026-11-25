@@ -39,6 +39,8 @@ pub fn harness_label(id: &HarnessId) -> String {
         "lmstudio" => "LM Studio".to_owned(),
         "pi" => "pi".to_owned(),
         "zed" => "Zed Agent".to_owned(),
+        "goose" => "Goose".to_owned(),
+        "deepseek_harness" => "DeepSeek Harness".to_owned(),
         other => other.to_owned(),
     }
 }

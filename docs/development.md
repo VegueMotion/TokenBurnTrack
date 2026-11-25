@@ -43,7 +43,7 @@ those systems.
 | Package | Command | Needs |
 |---|---|---|
 | AppImage | `scripts/build-appimage.sh` | podman; builds in `ubuntu:22.04` (glibc 2.35) so the result runs on older distributions. `--host` builds with the local toolchain instead. Wayland only |
-| Windows zip | `powershell scripts\build-windows.ps1` | rustup, Visual Studio Build Tools (C++ workload) and the Windows SDK |
+| Windows exe | `powershell scripts\build-windows.ps1`; writes `TokenBurnTrack-<version>-windows-x64.exe` and `tbt-daemon-<version>-windows-x64.exe` | rustup, Visual Studio Build Tools (C++ workload) and the Windows SDK |
 | macOS dmg | `scripts/build-macos.sh` | rustup and Xcode; produces a universal `TokenBurnTrack.app`, ad-hoc signed unless `CODESIGN_IDENTITY` is set. Set `NOTARY_PROFILE` to an `xcrun notarytool store-credentials` profile to also notarize and staple the dmg; without it, Gatekeeper blocks the dmg on other Macs |
 
 Pushing a `v*` tag runs `.forgejo/workflows/release.yml`, which builds the Flatpak
@@ -53,9 +53,7 @@ privileged containers, so set `container.privileged: true` in that runner's conf
 Windows and macOS packages are not built there; build them with the scripts above and
 attach them by hand.
 
-On a GitLab mirror, pushing a `v*` tag runs `.gitlab-ci.yml` instead, which builds all
-four packages on GitLab.com hosted runners and attaches them to the tag's GitLab release
-through the project's generic package registry. The macOS job needs the
-`saas-macos-medium-m1` runner, which GitLab offers only on Premium and Ultimate; the
-macOS dmg is ad-hoc signed there. The release job waits for all four builds, so without
-that runner the macOS job stays pending and no release is made.
+On GitHub, pushing a `v*` tag runs `.github/workflows/release.yml` instead, which builds
+all four packages on GitHub-hosted runners and attaches them to the tag's GitHub release
+(a prerelease if the tag contains `-`). The macOS dmg is ad-hoc signed there. Forgejo
+ignores `.github/workflows` while `.forgejo/workflows` exists.

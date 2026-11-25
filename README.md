@@ -1,14 +1,28 @@
-# TokenBurnTrack
+<p align="center">
+  <img src="packaging/icons/io.VagueMotion.TokenBurnTrack.svg" alt="TokenBurnTrack icon" width="128">
+</p>
 
-A local desktop app that tracks the token usage and cost of AI coding agents. It copies
-usage records from the agents' own log files into a SQLite database on your machine,
-prices every API call, and shows dashboards for cost, tokens, sessions, models and
-projects. Your history survives after the agents delete or rotate their logs.
+<h1 align="center">TokenBurnTrack</h1>
 
-![Dashboard](docs/images/dashboard.png)
-![Sessions](docs/images/sessions.png)
+<p align="center">
+  <a href="LICENSE"><img alt="License: GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue"></a>
+  <img alt="Linux, macOS, Windows" src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey">
+</p>
 
-## Quick start
+<p align="center">
+  <img src="docs/images/dashboard.png" alt="TokenBurnTrack dashboard" width="900">
+</p>
+
+<p align="center">
+  See what your AI coding agents cost: token usage and spend from their own logs, kept in a
+  local database and shown in one desktop app.
+</p>
+
+> [!NOTE]
+> Your usage data never leaves your machine. TokenBurnTrack only reads the agents' log
+> files, and keeps your history after the agents delete or rotate them.
+
+## 🚀 Quick start
 
 Build from source (Rust toolchain is installed by rustup; Linux needs a Wayland session):
 
@@ -26,7 +40,7 @@ options are in [docs/install.md](docs/install.md). Settings are in
 [docs/configuration.md](docs/configuration.md), and tests and release builds in
 [docs/development.md](docs/development.md).
 
-## Features
+## ✨ Features
 
 - **Incremental, idempotent collection.** Each run reads only what is new, a re-run
   never counts anything twice, and a machine that slept catches up on the next run.
@@ -39,52 +53,38 @@ options are in [docs/install.md](docs/install.md). Settings are in
   versioned by date so a price change does not rewrite old costs. When a harness logs
   its own cost, both values are kept.
 - **Dashboards.** KPIs, hourly/daily cost, tokens by type, top models and projects, a
-  weekday × hour heatmap, a sessions table with session detail, and CSV/JSON export.
+  daily activity heatmap of the last year, a sessions table with session detail, and
+  CSV/JSON export.
 - **Background collector.** `tbt-daemon` runs from a systemd user timer, a launchd agent
   or a Windows scheduled task, and shares a lock with the app so only one ingests at a
   time.
 
-## Supported harnesses
+## 🔌 Supported harnesses
 
-| Harness | Reads | Override |
+| Harness | State | Info |
 |---|---|---|
-| Claude Code | `~/.claude/projects/**/*.jsonl` (sessions and subagent runs) | `CLAUDE_CONFIG_DIR` |
-| Codex CLI | `~/.codex/sessions/YYYY/MM/DD/*.jsonl` | `CODEX_HOME` |
-| Gemini CLI | `~/.gemini/tmp/<project>/chats/*.jsonl` and legacy `session-*.json` (macOS also `~/.cache/.gemini/tmp`) | `GEMINI_CLI_HOME` |
-| Grok Build | `~/.grok/sessions/<cwd>/<session>/usage.json` (subagent sessions are skipped; their usage is already in the parent) | `GROK_HOME` |
-| pi | `~/.pi/agent/sessions/--<cwd>--/*.jsonl` (turns a fork copied from its parent are skipped) | `PI_CODING_AGENT_DIR`, `PI_CODING_AGENT_SESSION_DIR` |
-| OpenCode | `~/.local/share/opencode/opencode.db` (opened read-only) | `XDG_DATA_HOME` |
-| Cursor | `~/.config/Cursor/User/globalStorage/state.vscdb` (opened read-only; macOS `~/Library/Application Support/Cursor`, Windows `%APPDATA%\Cursor`) | `XDG_CONFIG_HOME` |
-| GitHub Copilot CLI | `~/.copilot/session-state/<session-id>/events.jsonl` | `COPILOT_HOME` |
-| Antigravity | `~/.gemini/{antigravity,antigravity-insiders,antigravity-cli}/conversations/*.db` (app, Insiders and CLI; opened read-only) | `GEMINI_CLI_HOME` |
-| LM Studio | `~/.lmstudio/conversations/**/*.conversation.json` (the chat window; not requests to its local server) | `~/.lmstudio-home-pointer` |
-| Zed Agent | `~/.local/share/zed/threads/threads.db` (Zed's own agent; opened read-only; Zed Flatpak `~/.var/app/dev.zed.Zed/data/zed/threads`, macOS `~/Library/Application Support/Zed/threads`, Windows `%LOCALAPPDATA%\Zed\threads`) | `XDG_DATA_HOME` |
-| Generic JSONL | any JSONL log you describe in `config.toml` | `[[generic_jsonl]]` |
+| Claude Code | ✅ | Passive reader `~/.claude/projects/**/*.jsonl` |
+| Codex CLI | ✅ | Passive reader `~/.codex/sessions/**/*.jsonl` |
+| OpenCode | ✅ | Passive reader `~/.local/share/opencode/opencode.db` |
+| LM Studio | ✅ | Passive reader `~/.lmstudio/conversations/**/*.conversation.json` |
+| Gemini CLI | 🧪 | Passive reader `~/.gemini/tmp/<project>/chats/*.jsonl` |
+| Grok Build | 🧪 | Passive reader `~/.grok/sessions/**/usage.json` |
+| pi | 🧪 | Passive reader `~/.pi/agent/sessions/**/*.jsonl` |
+| Cursor | 🧪 | Passive reader `~/.config/Cursor/User/globalStorage/state.vscdb` |
+| GitHub Copilot CLI | 🧪 | Passive reader `~/.copilot/session-state/*/events.jsonl` |
+| Antigravity | 🧪 | Passive reader `~/.gemini/antigravity*/conversations/*.db` |
+| Zed Agent | 🧪 | Passive reader `~/.local/share/zed/threads/threads.db` |
+| Goose | 🧪 | Passive reader `~/.local/share/goose/sessions/sessions.db` |
+| DeepSeek Harness | 🧪 | Passive reader `~/.dsh/sessions/**/session.v*.jsonl.zstd` |
+| Generic JSONL | ⚙️ | Passive reader for any JSONL log described in `config.toml` |
 
-Source files are only ever read. Roots can be changed per harness on the Harnesses page.
-The Gemini CLI and Grok Build parsers were built from upstream source rather than real
-logs, so treat their numbers with more caution. The same goes for Cursor, whose chat
-database format is not documented: it reads the agent and chat panel's per-message
-`tokenCount`, which Cursor does not fill in for every model, and it does not read the
-`cursor-agent` CLI. The GitHub
-Copilot CLI parser was also built from the published event schema, not real logs. Copilot
-does not write per-call usage to disk, only per-model running totals at checkpoints and at
-shutdown, so each usage row covers the calls since the previous total, and only the CLI is
-read, not Copilot in VS Code or other editors. The Antigravity parser is the least certain:
-Antigravity keeps token counts in undocumented protobuf blobs, and the field layout comes
-from other open-source usage trackers, not from Google or from real logs. Model names come
-from the model picker label (`Gemini 3.6 Flash (High)` → `gemini-3.6-flash`), or from the
-response model when it extends that name (`gemini-3.1-pro-preview`), so the thinking level
-is not priced separately. Messages are not read. LM Studio models run locally, so its usage
-is counted but has no price unless you add one for the `lmstudio` provider. The Zed Agent
-parser was built from Zed's source, not real threads. Zed keeps only a running token total
-per thread, so each usage row covers the calls since the previous read, is timed at the
-thread's last update and is charged to the model the thread had selected then. Threads run
-through external agents (Claude Code, Codex, Gemini CLI) are not in Zed's database; they are
-counted by those harnesses. Models served by LM Studio, Ollama or llama.cpp keep that
-provider, so they have no price.
+✅ tested on real logs · 🧪 built from upstream source or schema, no real logs yet ·
+⚙️ format defined by you.
+Paths per platform and per-harness caveats are in [docs/harnesses.md](docs/harnesses.md),
+and how to read a harness from another location in
+[docs/configuration.md](docs/configuration.md#harness-locations).
 
-## Privacy
+## 🔒 Privacy
 
 Everything stays on your machine. The data directory
 (`~/.local/share/tokenburntrack` on Linux) holds:
@@ -110,7 +110,7 @@ Nothing is sent anywhere. The only network access is the optional LiteLLM price 
 which downloads the public price list when you click it in Settings. The systemd unit
 runs the daemon without network access.
 
-## License
+## 📄 License
 
 Copyright (C) 2026 vaguemotion
 

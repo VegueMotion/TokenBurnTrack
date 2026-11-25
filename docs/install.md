@@ -68,8 +68,8 @@ sandboxed: the file system is read-only except the data directory
 `NoNewPrivileges`. If you later change `data_dir` in the config, run `install` again,
 or the service cannot write to the new directory.
 
-User services do not see variables exported by your shell. If you set
-`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `GEMINI_CLI_HOME`, `GROK_HOME`, `PI_CODING_AGENT_DIR`, `PI_CODING_AGENT_SESSION_DIR` or `TBT_DATA_DIR`, add them with
+User services do not see variables exported by your shell. If you set `TBT_DATA_DIR` or
+one of the [harness variables](configuration.md#harness-locations), add them with
 `systemctl --user edit tbt-daemon.service` (`[Service]` + `Environment=NAME=value`).
 
 ```sh
@@ -108,10 +108,10 @@ flatpak-builder --user --install --force-clean build-dir packaging/flatpak/io.Va
 flatpak run io.VagueMotion.TokenBurnTrack
 ```
 
-The sandbox can read `~/.claude`, `~/.codex`, `~/.copilot/session-state`, `~/.gemini`, `~/.grok`, `~/.lmstudio/conversations`, `~/.pi/agent/sessions` and Zed's `threads` folder (`~/.local/share/zed/threads`, or
+The sandbox can read `~/.claude`, `~/.codex`, `~/.copilot/session-state`, `~/.gemini`, `~/.grok`, `~/.lmstudio/conversations`, `~/.pi/agent/sessions`, `~/.dsh/sessions` and Zed's `threads` folder (`~/.local/share/zed/threads`, or
 `~/.var/app/dev.zed.Zed/data/zed/threads` for the Zed Flatpak), and can read and write
-`~/.local/share/opencode` (SQLite needs to create the `-shm` file of a database in WAL
-mode). Config and data stay in the usual host locations (`~/.config/tokenburntrack`,
+`~/.local/share/opencode` and `~/.local/share/goose/sessions` (SQLite needs to create the
+`-shm` file of a database in WAL mode). Config and data stay in the usual host locations (`~/.config/tokenburntrack`,
 `~/.local/share/tokenburntrack`), so the Flatpak and a host-installed `tbt-daemon` share
 one database and one collector lock. If `~/.lmstudio-home-pointer` points LM Studio somewhere
 else, grant that folder too: `flatpak override --user --filesystem=<path>/conversations:ro

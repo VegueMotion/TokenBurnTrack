@@ -1,0 +1,96 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+env:
+  APP_ID: io.VagueMotion.TokenBurnTrack
+
+jobs:
+  appimage:
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/library/ubuntu:22.04
+    steps:
+      - name: Install build dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends ca-certificates curl git gcc g++ clang \
+            cmake pkg-config libxkbcommon-dev libwayland-dev libxcb1-dev libx11-dev \
+            libfontconfig1-dev libfreetype-dev file >/dev/null
+          curl -sSf https://sh.rustup.rs | sh -s -- -y -q --default-toolchain none --profile minimal
+      - uses: actions/checkout@v7
+      - name: Build
+        run: scripts/build-appimage.sh --host
+      - uses: actions/upload-artifact@v7
+        with:
+          name: appimage
+          path: dist/
+
+  flatpak:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-26.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build
+        run: |
+          VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          flatpak-builder --disable-rofiles-fuse --force-clean --repo=repo build-dir \
+            "packaging/flatpak/$APP_ID.yml"
+          mkdir -p dist
+          flatpak build-bundle repo "dist/TokenBurnTrack-$VERSION-$(uname -m).flatpak" "$APP_ID" \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+      - uses: actions/upload-artifact@v7
+        with:
+          name: flatpak
+          path: dist/
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build
+        run: scripts\build-windows.ps1
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: dist/
+
+  macos:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build
+        run: |
+          xcodebuild -downloadComponent MetalToolchain
+          scripts/build-macos.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos
+          path: dist/
+
+  release:
+    needs: [appimage, flatpak, windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRERELEASE=
+          case $GITHUB_REF_NAME in *-*) PRERELEASE=--prerelease ;; esac
+          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" $PRERELEASE

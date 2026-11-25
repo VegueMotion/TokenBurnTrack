@@ -4,7 +4,8 @@ pub mod discover;
     feature = "opencode",
     feature = "cursor",
     feature = "antigravity",
-    feature = "zed"
+    feature = "zed",
+    feature = "goose"
 ))]
 mod sqlite;
 
@@ -40,7 +41,8 @@ pub use cursor::CursorAdapter;
     feature = "copilot_cli",
     feature = "grok_build",
     feature = "antigravity",
-    feature = "zed"
+    feature = "zed",
+    feature = "goose"
 ))]
 mod models;
 
@@ -70,6 +72,18 @@ pub mod zed;
 
 #[cfg(feature = "zed")]
 pub use zed::ZedAdapter;
+
+#[cfg(feature = "goose")]
+pub mod goose;
+
+#[cfg(feature = "goose")]
+pub use goose::GooseAdapter;
+
+#[cfg(feature = "deepseek_harness")]
+pub mod deepseek_harness;
+
+#[cfg(feature = "deepseek_harness")]
+pub use deepseek_harness::DeepSeekHarnessAdapter;
 
 #[cfg(feature = "gemini_cli")]
 pub mod gemini_cli;

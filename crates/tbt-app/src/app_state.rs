@@ -103,6 +103,7 @@ impl DateRange {
 pub struct HarnessOption {
     pub id: HarnessId,
     pub name: String,
+    pub events: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -368,6 +369,7 @@ mod tests {
         .map(|id| HarnessOption {
             name: id.to_string(),
             id,
+            events: 0,
         })
         .collect();
         s

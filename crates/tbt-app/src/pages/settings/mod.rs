@@ -1,3 +1,4 @@
+pub mod about;
 pub mod general;
 pub mod generic_jsonl;
 pub mod ops;
@@ -33,16 +34,18 @@ enum Tab {
     Import,
     Adapters,
     Export,
+    About,
 }
 
 impl Tab {
     /// Display order of the tab strip; the first entry is the one the page opens on.
-    const ALL: [Tab; 5] = [
+    const ALL: [Tab; 6] = [
         Tab::General,
         Tab::Prices,
         Tab::Import,
         Tab::Adapters,
         Tab::Export,
+        Tab::About,
     ];
 
     fn label(self) -> &'static str {
@@ -52,6 +55,7 @@ impl Tab {
             Tab::General => "General",
             Tab::Adapters => "Generic JSONL",
             Tab::Export => "Export",
+            Tab::About => "About",
         }
     }
 }

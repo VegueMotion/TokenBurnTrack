@@ -38,6 +38,32 @@ examples are in
 The data directory is chosen in this order: `--data-dir`, `TBT_DATA_DIR`, `data_dir` in
 the config, then the platform default (`~/.local/share/tokenburntrack` on Linux).
 
+## Harness locations
+
+Each harness is read from the default location listed in [harnesses.md](harnesses.md).
+To read it from somewhere else, change its roots on the Harnesses page, or set the same
+environment variable the harness itself uses:
+
+| Harness | Variable or file |
+|---|---|
+| Claude Code | `CLAUDE_CONFIG_DIR` |
+| Codex CLI | `CODEX_HOME` |
+| Gemini CLI | `GEMINI_CLI_HOME` |
+| Grok Build | `GROK_HOME` |
+| pi | `PI_CODING_AGENT_DIR`, `PI_CODING_AGENT_SESSION_DIR` |
+| OpenCode | `XDG_DATA_HOME` |
+| Cursor | `XDG_CONFIG_HOME` (Linux) |
+| GitHub Copilot CLI | `COPILOT_HOME` |
+| Antigravity | `GEMINI_CLI_HOME` |
+| LM Studio | `~/.lmstudio-home-pointer` (a file holding LM Studio's home folder) |
+| Zed Agent | `XDG_DATA_HOME` (Linux) |
+| Goose | `GOOSE_PATH_ROOT`, `XDG_DATA_HOME` (not Windows) |
+| DeepSeek Harness | `DSH_HOME` |
+| Generic JSONL | `roots` in its `[[generic_jsonl]]` table |
+
+The scheduled `tbt-daemon` does not see variables exported by your shell; see
+[install.md](install.md) for passing them to it.
+
 ## Sync and prices
 
 While the app is open it syncs at startup, every `sync_interval_minutes` on the hour
