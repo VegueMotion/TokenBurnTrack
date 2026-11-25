@@ -5,9 +5,9 @@ use tbt_core::{
     EventId, HarnessId, Hour, Micros, ParseWarning, ProjectId, RunId, SessionId, TokenCounts,
 };
 use tbt_store::{
-    BranchStats, BucketGroup, CostBucket, EventRow, HarnessConfig, HarnessStatus, HeatCell,
-    IngestRunSummary, KpiSummary, ModelStats, ProjectStats, QueryFilter, Result, RunStats,
-    RunTrigger, SessionDetail, SessionRow, TokenSums, UnpricedModel,
+    BranchStats, BucketGroup, CostBucket, EventRow, HarnessConfig, HarnessStatus, IngestRunSummary,
+    KpiSummary, ModelStats, ProjectStats, QueryFilter, Result, RunStats, RunTrigger, SessionDetail,
+    SessionRow, TokenSums, UnpricedModel,
 };
 
 use super::DataSource;
@@ -525,24 +525,6 @@ impl DataSource for MockData {
         Ok(map.into_values().collect())
     }
 
-    fn heatmap(&self, filter: &QueryFilter) -> Result<Vec<HeatCell>> {
-        let tz = time_zone(&filter.time_zone);
-        let mut map: BTreeMap<(u8, u8), HeatCell> = BTreeMap::new();
-        for e in self.in_filter(filter) {
-            let z = e.ts.to_zoned_datetime(tz.clone());
-            let key = (z.weekday().to_monday_zero_offset() as u8, z.hour() as u8);
-            let c = map.entry(key).or_insert_with(|| HeatCell {
-                weekday: key.0,
-                hour: key.1,
-                cost: Micros::ZERO,
-                events: 0,
-            });
-            c.cost += e.cost;
-            c.events += 1;
-        }
-        Ok(map.into_values().collect())
-    }
-
     fn sessions(&self, filter: &QueryFilter) -> Result<Vec<SessionRow>> {
         let ids: BTreeSet<usize> = self.in_filter(filter).map(|e| e.session).collect();
         let mut rows: Vec<SessionRow> = ids.into_iter().map(|s| self.session_row(s)).collect();
@@ -838,9 +820,6 @@ mod tests {
             assert_eq!(b.iter().map(|b| b.cost).sum::<Micros>(), k.cost);
             assert_eq!(b.iter().map(|b| b.events).sum::<u64>(), k.events);
         }
-        let heat = d.heatmap(&f).unwrap();
-        assert_eq!(heat.iter().map(|c| c.cost).sum::<Micros>(), k.cost);
-        assert!(heat.iter().all(|c| c.weekday < 7 && c.hour < 24));
         let models = d.model_stats(&f).unwrap();
         assert_eq!(models.iter().map(|m| m.cost).sum::<Micros>(), k.cost);
         let projects = d.project_stats(&f).unwrap();

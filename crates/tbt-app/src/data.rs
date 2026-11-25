@@ -4,8 +4,8 @@ mod store;
 use jiff::Timestamp;
 use tbt_core::SessionId;
 use tbt_store::{
-    BucketGroup, CostBucket, HarnessStatus, HeatCell, IngestRunSummary, KpiSummary, ModelStats,
-    ProjectStats, QueryFilter, Result, SessionDetail, SessionRow, UnpricedModel,
+    BucketGroup, CostBucket, HarnessStatus, IngestRunSummary, KpiSummary, ModelStats, ProjectStats,
+    QueryFilter, Result, SessionDetail, SessionRow, UnpricedModel,
 };
 
 pub use mock::MockData;
@@ -14,7 +14,6 @@ pub use store::StoreData;
 pub trait DataSource: Send + Sync + 'static {
     fn kpi_summary(&self, filter: &QueryFilter) -> Result<KpiSummary>;
     fn cost_buckets(&self, filter: &QueryFilter, group: BucketGroup) -> Result<Vec<CostBucket>>;
-    fn heatmap(&self, filter: &QueryFilter) -> Result<Vec<HeatCell>>;
     fn sessions(&self, filter: &QueryFilter) -> Result<Vec<SessionRow>>;
     fn session_detail(&self, id: SessionId) -> Result<Option<SessionDetail>>;
     fn model_stats(&self, filter: &QueryFilter) -> Result<Vec<ModelStats>>;

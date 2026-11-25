@@ -4,6 +4,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use jiff::Timestamp;
+use jiff::tz::TimeZone;
+use tbt_app::charts::HeatmapChart;
 use tbt_app::charts::format::micros_to_usd;
 use tbt_app::data::{DataSource, StoreData};
 use tbt_app::pages::dashboard::DashboardData;
@@ -50,6 +52,13 @@ fn assert_close(a: f64, b: f64) {
     assert!((a - b).abs() < 1e-6, "{a} != {b}");
 }
 
+fn assert_heat_matches(d: &DashboardData, kpi: &tbt_store::KpiSummary) {
+    let heat_cost: f64 = d.heat.cost.iter().sum();
+    assert_close(heat_cost, micros_to_usd(kpi.cost));
+    let heat_calls: u64 = d.heat.calls.iter().sum();
+    assert_eq!(heat_calls, kpi.events);
+}
+
 fn assert_buckets_match_kpi(d: &DashboardData) {
     let usd = micros_to_usd(d.kpi.cost);
     assert_close(d.cost_per_bucket.iter().sum(), usd);
@@ -59,10 +68,6 @@ fn assert_buckets_match_kpi(d: &DashboardData) {
     );
     let tokens: f64 = d.tokens.series.iter().flat_map(|s| s.values.iter()).sum();
     assert_eq!(tokens as u64, d.kpi.tokens.total());
-    let heat_cost: f64 = d.heat.cost.iter().flatten().sum();
-    assert_close(heat_cost, usd);
-    let heat_calls: u64 = d.heat.calls.iter().flatten().sum();
-    assert_eq!(heat_calls, d.kpi.events);
 }
 
 #[test]
@@ -100,6 +105,7 @@ fn day_and_hour_buckets_sum_to_kpi() {
     assert!(!d.no_data);
     assert_eq!(d.cost.labels.len(), 30);
     assert_buckets_match_kpi(&d);
+    assert_heat_matches(&d, &d.kpi);
     assert!(!d.top_models.is_empty());
     assert!(!d.top_projects.is_empty());
     assert_eq!(
@@ -116,6 +122,12 @@ fn day_and_hour_buckets_sum_to_kpi() {
     assert_eq!(d.cost.labels.len(), 24);
     assert!(d.kpi.events > 0);
     assert_buckets_match_kpi(&d);
+    let year = HeatmapChart::range_ending(jiff::civil::date(2026, 11, 21), &TimeZone::UTC).unwrap();
+    let year_kpi = data
+        .kpi_summary(&QueryFilter::new(year, BucketSize::Day))
+        .unwrap();
+    assert!(year_kpi.events > d.kpi.events);
+    assert_heat_matches(&d, &year_kpi);
 }
 
 #[test]

@@ -3,8 +3,8 @@ use std::sync::{Mutex, MutexGuard};
 
 use tbt_core::SessionId;
 use tbt_store::{
-    BucketGroup, CostBucket, HarnessStatus, HeatCell, IngestRunSummary, KpiSummary, ModelStats,
-    ProjectStats, QueryFilter, Result, SessionDetail, SessionRow, Store, StoreError, UnpricedModel,
+    BucketGroup, CostBucket, HarnessStatus, IngestRunSummary, KpiSummary, ModelStats, ProjectStats,
+    QueryFilter, Result, SessionDetail, SessionRow, Store, StoreError, UnpricedModel,
 };
 
 use super::DataSource;
@@ -81,10 +81,6 @@ impl DataSource for StoreData {
 
     fn cost_buckets(&self, filter: &QueryFilter, group: BucketGroup) -> Result<Vec<CostBucket>> {
         self.with(|s| s.cost_buckets(filter, group))
-    }
-
-    fn heatmap(&self, filter: &QueryFilter) -> Result<Vec<HeatCell>> {
-        self.with(|s| s.heatmap(filter))
     }
 
     fn sessions(&self, filter: &QueryFilter) -> Result<Vec<SessionRow>> {

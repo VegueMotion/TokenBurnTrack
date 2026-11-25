@@ -7,8 +7,9 @@ use gpui::{
     Styled, Subscription, Task, Window, div, px,
 };
 use gpui_component::{ActiveTheme, StyledExt, h_flex, v_flex};
+use jiff::SignedDuration;
 use tbt_core::HarnessId;
-use tbt_store::{BucketGroup, KpiSummary, ModelStats, ProjectStats, QueryFilter};
+use tbt_store::{BucketGroup, BucketSize, KpiSummary, ModelStats, ProjectStats, QueryFilter};
 
 use super::{Loadable, spawn_load};
 use crate::app_state::{AppState, AppStateEvent};
@@ -88,7 +89,19 @@ impl DashboardData {
             })
             .collect();
 
-        let heat = HeatmapChart::from_cells(&data.heatmap(filter)?, filter.time_zone.clone());
+        let last_day = (filter.range.end - SignedDuration::from_secs(1))
+            .to_zoned_datetime(tz.clone())
+            .date();
+        let year = QueryFilter {
+            range: HeatmapChart::range_ending(last_day, &tz).unwrap_or(filter.range),
+            bucket: BucketSize::Day,
+            ..filter.clone()
+        };
+        let heat = HeatmapChart::from_buckets(
+            &data.cost_buckets(&year, BucketGroup::Harness)?,
+            last_day,
+            &tz,
+        );
 
         let mut top_models = data.model_stats(filter)?;
         top_models.truncate(TOP_N);
@@ -379,32 +392,18 @@ impl DashboardPage {
                 ),
             )
             .child(
-                h_flex()
-                    .gap_4()
-                    .items_start()
-                    .child(
-                        ui::card("Tokens by type", cx)
-                            .flex_1()
-                            .min_w(px(300.))
-                            .child(token_legend)
-                            .child(
-                                line_chart(d.tokens.clone(), self.hovers.tokens.clone(), theme)
-                                    .w_full()
-                                    .h(px(220.)),
-                            ),
-                    )
-                    .child(
-                        ui::card("Activity by weekday and hour", cx)
-                            .flex_1()
-                            .min_w(px(300.))
-                            .child(d.heat.view(
-                                self.heat_metric.clone(),
-                                self.hovers.heat.clone(),
-                                theme,
-                                cx,
-                            )),
-                    ),
+                ui::card("Tokens by type", cx).child(token_legend).child(
+                    line_chart(d.tokens.clone(), self.hovers.tokens.clone(), theme)
+                        .w_full()
+                        .h(px(220.)),
+                ),
             )
+            .child(ui::card("Activity heatmap", cx).child(d.heat.view(
+                self.heat_metric.clone(),
+                self.hovers.heat.clone(),
+                theme,
+                cx,
+            )))
             .child(h_flex().gap_4().items_start().child(models).child(projects))
             .into_any_element()
     }
