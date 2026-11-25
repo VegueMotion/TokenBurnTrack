@@ -57,6 +57,11 @@ const FIXTURE_SETS: &[FixtureSet] = &[
         split_jsonl: false,
     },
     FixtureSet {
+        adapter: goose,
+        root: "goose/1.61.0/sessions",
+        split_jsonl: false,
+    },
+    FixtureSet {
         adapter: cursor,
         root: "cursor/3.31.15/User/globalStorage",
         split_jsonl: false,
@@ -85,6 +90,10 @@ fn lmstudio() -> Arc<dyn HarnessAdapter> {
 
 fn zed() -> Arc<dyn HarnessAdapter> {
     Arc::new(tbt_adapters::ZedAdapter::new())
+}
+
+fn goose() -> Arc<dyn HarnessAdapter> {
+    Arc::new(tbt_adapters::GooseAdapter::new())
 }
 
 fn cursor() -> Arc<dyn HarnessAdapter> {
@@ -269,6 +278,7 @@ fn reference_matches_golden_counts() {
             ("copilot_cli", 6),
             ("cursor", 3),
             ("gemini_cli", 12),
+            ("goose", 7),
             ("lmstudio", 4),
             ("opencode", 33),
             ("zed", 4),

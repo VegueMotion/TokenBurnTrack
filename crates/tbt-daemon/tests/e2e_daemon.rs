@@ -5,8 +5,8 @@ use std::time::{Duration, SystemTime};
 
 use tbt_collector::{CollectorLock, LockAttempt};
 
-const SOURCES: u64 = 35;
-const EVENTS: i64 = 662;
+const SOURCES: u64 = 36;
+const EVENTS: i64 = 669;
 const GOLDEN: &[(&str, i64)] = &[
     ("antigravity", 5),
     ("claude_code", 204),
@@ -14,6 +14,7 @@ const GOLDEN: &[(&str, i64)] = &[
     ("copilot_cli", 6),
     ("cursor", 3),
     ("gemini_cli", 12),
+    ("goose", 7),
     ("in_house_agent", 4),
     ("llm_proxy", 6),
     ("lmstudio", 4),
@@ -86,6 +87,10 @@ impl Sandbox {
         copy_tree(
             &f.join("zed/1.29.2/threads"),
             &sb.path("home/.local/share/zed/threads"),
+        );
+        copy_tree(
+            &f.join("goose/1.61.0/sessions"),
+            &sb.path("home/.local/share/goose/sessions"),
         );
         copy_tree(
             &f.join("copilot_cli/1.0.4/session-state"),

@@ -30,6 +30,7 @@ pub const BUILTIN_SETS: &[(HarnessId, &str)] = &[
     (HarnessId::LMSTUDIO, "lmstudio/0.4.20/conversations"),
     (HarnessId::PI, "pi/v3"),
     (HarnessId::ZED, "zed/1.29.2/threads"),
+    (HarnessId::GOOSE, "goose/1.61.0/sessions"),
 ];
 
 pub const GENERIC_SETS: &[(&str, &str)] = &[
@@ -44,6 +45,7 @@ pub const GOLDEN: &[(&str, i64)] = &[
     ("copilot_cli", 6),
     ("cursor", 3),
     ("gemini_cli", 12),
+    ("goose", 7),
     ("grok_build", 6),
     (IN_HOUSE, 4),
     (LLM_PROXY, 6),
@@ -53,8 +55,8 @@ pub const GOLDEN: &[(&str, i64)] = &[
     ("zed", 4),
 ];
 
-pub const GOLDEN_TOTAL: u64 = 674;
-pub const SOURCES: u64 = 42;
+pub const GOLDEN_TOTAL: u64 = 681;
+pub const SOURCES: u64 = 43;
 
 pub const KNOWN_WARNINGS: &[(&str, &str, u64, &str)] = &[
     (

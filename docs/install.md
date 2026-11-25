@@ -110,8 +110,8 @@ flatpak run io.VagueMotion.TokenBurnTrack
 
 The sandbox can read `~/.claude`, `~/.codex`, `~/.copilot/session-state`, `~/.gemini`, `~/.grok`, `~/.lmstudio/conversations`, `~/.pi/agent/sessions` and Zed's `threads` folder (`~/.local/share/zed/threads`, or
 `~/.var/app/dev.zed.Zed/data/zed/threads` for the Zed Flatpak), and can read and write
-`~/.local/share/opencode` (SQLite needs to create the `-shm` file of a database in WAL
-mode). Config and data stay in the usual host locations (`~/.config/tokenburntrack`,
+`~/.local/share/opencode` and `~/.local/share/goose/sessions` (SQLite needs to create the
+`-shm` file of a database in WAL mode). Config and data stay in the usual host locations (`~/.config/tokenburntrack`,
 `~/.local/share/tokenburntrack`), so the Flatpak and a host-installed `tbt-daemon` share
 one database and one collector lock. If `~/.lmstudio-home-pointer` points LM Studio somewhere
 else, grant that folder too: `flatpak override --user --filesystem=<path>/conversations:ro

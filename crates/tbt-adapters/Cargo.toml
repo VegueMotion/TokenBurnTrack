@@ -16,6 +16,7 @@ default = [
     "antigravity",
     "lmstudio",
     "zed",
+    "goose",
     "gemini_cli",
     "grok_build",
     "pi",
@@ -29,6 +30,7 @@ copilot_cli = []
 antigravity = ["dep:rusqlite"]
 lmstudio = []
 zed = ["dep:rusqlite", "dep:ruzstd"]
+goose = ["dep:rusqlite"]
 gemini_cli = []
 grok_build = []
 pi = []
