@@ -28,23 +28,23 @@ Download from the [latest release](https://github.com/VegueMotion/TokenBurnTrack
 
 | Platform | App | Daemon |
 |---|---|---|
-| Windows | `TokenBurnTrack-<version>-windows-x64.exe` | `tbt-daemon-<version>-windows-x64.exe` |
-| macOS | `TokenBurnTrack-<version>-macos-universal.dmg` | inside the app |
-| Linux | `TokenBurnTrack-<version>-x86_64.flatpak` (preferred) or `.AppImage` | Flatpak: a setting; AppImage: `tbt-daemon-<version>-linux-x86_64` |
+| 🪟 Windows | `TokenBurnTrack-<version>-windows-x64.exe` | `tbt-daemon-<version>-windows-x64.exe` |
+| 🍎 macOS | `TokenBurnTrack-<version>-macos-universal.dmg` | inside the app |
+| 🐧 Linux | `TokenBurnTrack-<version>-x86_64.flatpak` (preferred) or `.AppImage` | Flatpak: a setting; AppImage: `tbt-daemon-<version>-linux-x86_64` |
 
 The app syncs on startup, every hour and on *Sync now*, but only while it is open. The
 daemon (`tbt-daemon`) is a small collector without a window that runs once an hour in
 the background, so usage is still recorded when the app is closed, before some agents
 delete their old logs. It is optional. Run it with `uninstall` to remove it.
 
-### Windows
+### 🪟 Windows
 
 Run `TokenBurnTrack-<version>-windows-x64.exe`.
 
 Daemon: put `tbt-daemon-<version>-windows-x64.exe` somewhere it will stay (the
 schedule points at that path) and run it with `install`.
 
-### macOS
+### 🍎 macOS
 
 Open the `.dmg` and drag TokenBurnTrack to Applications.
 
@@ -54,9 +54,9 @@ Daemon:
 /Applications/TokenBurnTrack.app/Contents/MacOS/tbt-daemon install
 ```
 
-### Linux
+### 🐧 Linux
 
-**Flatpak (preferred)**
+**📦 Flatpak (preferred)**
 
 ```sh
 flatpak install --user TokenBurnTrack-<version>-x86_64.flatpak
@@ -65,7 +65,7 @@ flatpak run io.VagueMotion.TokenBurnTrack
 
 Daemon: turn on *Settings → General → Collect while closed*.
 
-**AppImage**
+**💿 AppImage**
 
 ```sh
 chmod +x TokenBurnTrack-<version>-x86_64.AppImage
@@ -79,7 +79,7 @@ install -Dm755 tbt-daemon-<version>-linux-x86_64 ~/.local/bin/tbt-daemon
 ~/.local/bin/tbt-daemon install
 ```
 
-**From source** (needs a Wayland session)
+**🛠️ From source** (needs a Wayland session)
 
 ```sh
 scripts/cargo build --release
