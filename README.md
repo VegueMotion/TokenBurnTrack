@@ -55,6 +55,7 @@ options are in [docs/install.md](docs/install.md). Settings are in
 | OpenCode | `~/.local/share/opencode/opencode.db` (opened read-only) | `XDG_DATA_HOME` |
 | Cursor | `~/.config/Cursor/User/globalStorage/state.vscdb` (opened read-only; macOS `~/Library/Application Support/Cursor`, Windows `%APPDATA%\Cursor`) | `XDG_CONFIG_HOME` |
 | GitHub Copilot CLI | `~/.copilot/session-state/<session-id>/events.jsonl` | `COPILOT_HOME` |
+| Antigravity | `~/.gemini/{antigravity,antigravity-insiders,antigravity-cli}/conversations/*.db` (app, Insiders and CLI; opened read-only) | `GEMINI_CLI_HOME` |
 | Generic JSONL | any JSONL log you describe in `config.toml` | `[[generic_jsonl]]` |
 
 Source files are only ever read. Roots can be changed per harness on the Harnesses page.
@@ -66,7 +67,12 @@ database format is not documented: it reads the agent and chat panel's per-messa
 Copilot CLI parser was also built from the published event schema, not real logs. Copilot
 does not write per-call usage to disk, only per-model running totals at checkpoints and at
 shutdown, so each usage row covers the calls since the previous total, and only the CLI is
-read, not Copilot in VS Code or other editors.
+read, not Copilot in VS Code or other editors. The Antigravity parser is the least certain:
+Antigravity keeps token counts in undocumented protobuf blobs, and the field layout comes
+from other open-source usage trackers, not from Google or from real logs. Model names come
+from the model picker label (`Gemini 3.6 Flash (High)` → `gemini-3.6-flash`), or from the
+response model when it extends that name (`gemini-3.1-pro-preview`), so the thinking level
+is not priced separately. Messages are not read.
 
 ## Privacy
 

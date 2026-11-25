@@ -49,7 +49,7 @@ fn backfill_then_hourly_reruns_with_the_builtin_registry() {
     assert!(w.env.count("SELECT count(*) FROM model_price") > 0);
     assert_eq!(
         w.env
-            .count("SELECT count(*) FROM usage_event WHERE price_id IS NULL AND harness_id IN ('claude_code', 'codex', 'copilot_cli', 'cursor', 'gemini_cli')"),
+            .count("SELECT count(*) FROM usage_event WHERE price_id IS NULL AND harness_id IN ('antigravity', 'claude_code', 'codex', 'copilot_cli', 'cursor', 'gemini_cli')"),
         0,
         "every built-in harness model except local OpenCode ones has a bundled price"
     );
@@ -766,8 +766,11 @@ fn wave2_database_continues_with_current_code_and_matches_a_fresh_backfill() {
 
     let wave2 = fixtures_root().join("db/wave2/tbt.db");
     let w = World::with_db(Some(&wave2));
-    let added_since = golden()["cursor"] + golden()["copilot_cli"] + golden()["grok_build"];
-    let new_sources = 3 + 4;
+    let added_since = golden()["cursor"]
+        + golden()["copilot_cli"]
+        + golden()["grok_build"]
+        + golden()["antigravity"];
+    let new_sources = 3 + 4 + 2;
     assert_eq!(
         w.env.count("SELECT count(*) FROM usage_event"),
         GOLDEN_TOTAL as i64 - added_since
