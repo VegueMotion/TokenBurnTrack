@@ -31,6 +31,9 @@ use crate::palette::{harness_color, harness_label};
 
 const REPO_URL: &str = "https://github.com/VegueMotion/TokenBurnTrack";
 const TOP_HARNESSES: usize = 3;
+const SIDEBAR_WIDTH: f32 = 200.;
+const TITLE_BAR_HEIGHT: f32 = 34.;
+const TOP_BAR_HEIGHT: f32 = 52.;
 
 pub struct Workspace {
     app_state: Entity<AppState>,
@@ -235,6 +238,38 @@ impl Workspace {
         self.sync.update(cx, |b, cx| b.sync_now(cx));
     }
 
+    fn client_decorated(window: &Window) -> bool {
+        matches!(window.window_decorations(), Decorations::Client { .. })
+    }
+
+    fn draggable(
+        &self,
+        el: gpui::Stateful<gpui::Div>,
+        cx: &mut Context<Self>,
+    ) -> gpui::Stateful<gpui::Div> {
+        el.on_double_click(|_, window, _| window.zoom_window())
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, _, window, _| this.title_drag = !window.default_prevented()),
+            )
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(|this, _, _, _| this.title_drag = false),
+            )
+            .on_mouse_down_out(cx.listener(|this, _, _, _| this.title_drag = false))
+            .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, window, _| {
+                if ev.pressed_button != Some(MouseButton::Left) {
+                    this.title_drag = false;
+                } else if this.title_drag {
+                    this.title_drag = false;
+                    window.start_window_move();
+                }
+            }))
+            .on_mouse_down(MouseButton::Right, |ev, window, _| {
+                window.show_window_menu(ev.position)
+            })
+    }
+
     /// Replaces the system title bar: window controls on the right, the rest of the
     /// strip drags the window. Only drawn when the window got client-side
     /// decorations; otherwise the compositor already draws its own bar.
@@ -243,56 +278,27 @@ impl Workspace {
         window: &Window,
         cx: &mut Context<Self>,
     ) -> Option<gpui::AnyElement> {
-        if !matches!(window.window_decorations(), Decorations::Client { .. }) {
+        if !Self::client_decorated(window) {
             return None;
         }
         let t = cx.theme();
-        let (bg, border, fg, hover, danger) = (
-            t.sidebar,
-            t.sidebar_border,
-            t.foreground,
-            t.secondary_hover,
-            t.danger,
-        );
+        let (fg, hover, danger) = (t.foreground, t.secondary_hover, t.danger);
         let supported = window.window_controls();
         let controls = WindowControl::ALL.into_iter().filter(move |c| match c {
             WindowControl::Minimize => supported.minimize,
             WindowControl::Maximize => supported.maximize,
             WindowControl::Close => true,
         });
+        let bar = h_flex()
+            .id("title-bar")
+            .debug_selector(|| "title-bar".into())
+            .w_full()
+            .flex_none()
+            .h(px(TITLE_BAR_HEIGHT))
+            .items_center()
+            .justify_end();
         Some(
-            h_flex()
-                .id("title-bar")
-                .debug_selector(|| "title-bar".into())
-                .w_full()
-                .flex_none()
-                .h(px(34.))
-                .items_center()
-                .justify_end()
-                .bg(bg)
-                .border_b_1()
-                .border_color(border)
-                .on_double_click(|_, window, _| window.zoom_window())
-                .on_mouse_down(
-                    MouseButton::Left,
-                    cx.listener(|this, _, window, _| this.title_drag = !window.default_prevented()),
-                )
-                .on_mouse_up(
-                    MouseButton::Left,
-                    cx.listener(|this, _, _, _| this.title_drag = false),
-                )
-                .on_mouse_down_out(cx.listener(|this, _, _, _| this.title_drag = false))
-                .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, window, _| {
-                    if ev.pressed_button != Some(MouseButton::Left) {
-                        this.title_drag = false;
-                    } else if this.title_drag {
-                        this.title_drag = false;
-                        window.start_window_move();
-                    }
-                }))
-                .on_mouse_down(MouseButton::Right, |ev, window, _| {
-                    window.show_window_menu(ev.position)
-                })
+            self.draggable(bar, cx)
                 .child(h_flex().h_full().pr_1().children(controls.map(|c| {
                     let close = matches!(c, WindowControl::Close);
                     div()
@@ -320,7 +326,45 @@ impl Workspace {
         )
     }
 
-    fn render_sidebar(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render_brand(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let t = cx.theme();
+        let (fg, muted, border) = (t.sidebar_foreground, t.muted_foreground, t.sidebar_border);
+        let height = if Self::client_decorated(window) {
+            TITLE_BAR_HEIGHT + TOP_BAR_HEIGHT
+        } else {
+            TOP_BAR_HEIGHT
+        };
+        let brand = h_flex()
+            .id("brand")
+            .debug_selector(|| "brand".into())
+            .flex_none()
+            .h(px(height))
+            .px_5()
+            .gap_2()
+            .items_center()
+            .border_b_1()
+            .border_color(border);
+        let brand = if Self::client_decorated(window) {
+            self.draggable(brand, cx)
+        } else {
+            brand
+        };
+        brand
+            .child(gpui::img(crate::assets::APP_ICON).size_8().flex_none())
+            .child(
+                v_flex()
+                    .child(
+                        div()
+                            .text_base()
+                            .font_semibold()
+                            .text_color(fg)
+                            .child("TokenBurnTrack"),
+                    )
+                    .child(div().text_xs().text_color(muted).child("AI usage & cost")),
+            )
+    }
+
+    fn render_sidebar(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
         let t = cx.theme();
         let (bg, border, fg, muted, accent) = (
             t.sidebar,
@@ -329,35 +373,11 @@ impl Workspace {
             t.muted_foreground,
             t.sidebar_accent,
         );
-        v_flex()
-            .w(px(200.))
-            .h_full()
-            .flex_none()
-            .bg(bg)
-            .border_r_1()
-            .border_color(border)
+        let nav = v_flex()
+            .flex_1()
+            .min_h_0()
             .p_3()
             .gap_1()
-            .child(
-                h_flex()
-                    .px_2()
-                    .pb_4()
-                    .pt_1()
-                    .gap_2()
-                    .items_center()
-                    .child(gpui::img(crate::assets::APP_ICON).size_8().flex_none())
-                    .child(
-                        v_flex()
-                            .child(
-                                div()
-                                    .text_base()
-                                    .font_semibold()
-                                    .text_color(fg)
-                                    .child("TokenBurnTrack"),
-                            )
-                            .child(div().text_xs().text_color(muted).child("AI usage & cost")),
-                    ),
-            )
             .children(Page::ALL.into_iter().map(|page| {
                 let active = page == self.page;
                 h_flex()
@@ -397,7 +417,18 @@ impl Workspace {
                     .on_click(|_, _, cx| cx.open_url(REPO_URL))
                     .child(Icon::empty().path(crate::assets::GITHUB_ICON).size_3p5())
                     .child("GitHub"),
-            )
+            );
+        v_flex()
+            .id("sidebar")
+            .debug_selector(|| "sidebar".into())
+            .w(px(SIDEBAR_WIDTH))
+            .h_full()
+            .flex_none()
+            .bg(bg)
+            .border_r_1()
+            .border_color(border)
+            .child(self.render_brand(window, cx))
+            .child(nav)
     }
 
     fn chip(
@@ -514,6 +545,8 @@ impl Workspace {
         let now = Timestamp::now();
         let failed = state.sync_failed();
         let ranges = h_flex()
+            .id("date-ranges")
+            .debug_selector(|| "date-ranges".into())
             .gap_1()
             .children(DateRange::PRESETS.into_iter().map(|r| {
                 let app_state = self.app_state.clone();
@@ -558,7 +591,7 @@ impl Workspace {
         h_flex()
             .w_full()
             .flex_none()
-            .h(px(52.))
+            .h(px(TOP_BAR_HEIGHT))
             .px_4()
             .gap_4()
             .items_center()
@@ -566,40 +599,61 @@ impl Workspace {
             .border_color(border)
             .child(
                 h_flex()
-                    .gap_4()
+                    .flex_1()
+                    .flex_basis(px(0.))
                     .items_center()
                     .when(!filters_apply, |d| d.opacity(0.4))
-                    .child(ranges)
-                    .child(h_flex().gap_1p5().children(chips)),
-            )
-            .child(div().flex_1().min_w(px(8.)))
-            .child(
-                div()
-                    .id("sync-status")
-                    .min_w_0()
-                    .max_w(px(320.))
-                    .overflow_hidden()
-                    .whitespace_nowrap()
-                    .text_ellipsis()
-                    .text_xs()
-                    .text_color(if failed { danger } else { muted })
-                    .child(state.sync_status(now))
-                    .when_some(state.sync_tooltip(now), |d, tip| {
-                        d.tooltip(move |window, cx| Tooltip::new(tip.clone()).build(window, cx))
-                    }),
+                    .child(ranges),
             )
             .child(
-                Button::new("sync-now")
+                h_flex()
+                    .id("harness-chips")
+                    .debug_selector(|| "harness-chips".into())
                     .flex_none()
-                    .small()
-                    .primary()
-                    .loading(state.syncing || state.daemon_busy)
-                    .disabled(!state.sync_available)
-                    .when(!state.sync_available, |b| {
-                        b.tooltip("Sync is off: no collector is available")
-                    })
-                    .label("Sync now")
-                    .on_click(cx.listener(|this, _, _, cx| this.sync_now(cx))),
+                    .gap_1p5()
+                    .items_center()
+                    .when(!filters_apply, |d| d.opacity(0.4))
+                    .children(chips),
+            )
+            .child(
+                h_flex()
+                    .flex_1()
+                    .flex_basis(px(0.))
+                    .min_w_0()
+                    .gap_4()
+                    .items_center()
+                    .justify_end()
+                    .child(
+                        div()
+                            .id("sync-status")
+                            .min_w_0()
+                            .max_w(px(320.))
+                            .overflow_hidden()
+                            .whitespace_nowrap()
+                            .text_ellipsis()
+                            .text_xs()
+                            .text_color(if failed { danger } else { muted })
+                            .child(state.sync_status(now))
+                            .when_some(state.sync_tooltip(now), |d, tip| {
+                                d.tooltip(move |window, cx| {
+                                    Tooltip::new(tip.clone()).build(window, cx)
+                                })
+                            }),
+                    )
+                    .child(
+                        Button::new("sync-now")
+                            .debug_selector(|| "sync-now".into())
+                            .flex_none()
+                            .small()
+                            .primary()
+                            .loading(state.syncing || state.daemon_busy)
+                            .disabled(!state.sync_available)
+                            .when(!state.sync_available, |b| {
+                                b.tooltip("Sync is off: no collector is available")
+                            })
+                            .label("Sync now")
+                            .on_click(cx.listener(|this, _, _, cx| this.sync_now(cx))),
+                    ),
             )
     }
 }
@@ -612,25 +666,19 @@ impl Render for Workspace {
         };
         let t = cx.theme();
         let (bg, fg) = (t.background, t.foreground);
-        v_flex()
+        h_flex()
             .size_full()
             .bg(bg)
             .text_color(fg)
-            .children(self.render_title_bar(window, cx))
+            .child(self.render_sidebar(window, cx))
             .child(
-                h_flex()
+                v_flex()
                     .flex_1()
-                    .min_h_0()
-                    .w_full()
-                    .child(self.render_sidebar(cx))
-                    .child(
-                        v_flex()
-                            .flex_1()
-                            .h_full()
-                            .min_w_0()
-                            .child(self.render_top_bar(cx))
-                            .child(div().flex_1().min_h_0().child(page)),
-                    ),
+                    .h_full()
+                    .min_w_0()
+                    .children(self.render_title_bar(window, cx))
+                    .child(self.render_top_bar(cx))
+                    .child(div().flex_1().min_h_0().child(page)),
             )
     }
 }
@@ -641,8 +689,8 @@ pub fn open_main_window(
     start: Page,
     cx: &mut App,
 ) -> anyhow::Result<()> {
-    use gpui::{Bounds, WindowBounds, WindowOptions, size};
-    let bounds = Bounds::centered(None, size(px(1320.), px(880.)), cx);
+    use gpui::{Bounds, WindowBounds, WindowOptions};
+    let bounds = Bounds::centered(None, initial_window_size(cx), cx);
     cx.open_window(
         WindowOptions {
             window_bounds: Some(WindowBounds::Windowed(bounds)),
@@ -662,4 +710,26 @@ pub fn open_main_window(
     )?;
     cx.activate(true);
     Ok(())
+}
+
+fn initial_window_size(cx: &App) -> gpui::Size<gpui::Pixels> {
+    let screen = cx.primary_display().map(|d| d.bounds().size).or_else(|| {
+        cx.displays()
+            .iter()
+            .map(|d| d.bounds().size)
+            .max_by(|a, b| area(a).total_cmp(&area(b)))
+    });
+    window_size_for(screen)
+}
+
+pub fn window_size_for(screen: Option<gpui::Size<gpui::Pixels>>) -> gpui::Size<gpui::Pixels> {
+    let (w, h) = (px(1600.), px(1040.));
+    match screen {
+        Some(s) => gpui::size(w.min(s.width * 0.9), h.min(s.height * 0.9)),
+        None => gpui::size(w, h),
+    }
+}
+
+fn area(s: &gpui::Size<gpui::Pixels>) -> f32 {
+    s.width.as_f32() * s.height.as_f32()
 }
