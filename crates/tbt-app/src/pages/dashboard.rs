@@ -101,7 +101,6 @@ impl DashboardData {
             &data.cost_buckets(&year, BucketGroup::Harness)?,
             last_day,
             &tz,
-            filter.time_zone.clone(),
         );
 
         let mut top_models = data.model_stats(filter)?;
@@ -399,7 +398,7 @@ impl DashboardPage {
                         .h(px(220.)),
                 ),
             )
-            .child(ui::card("Daily activity", cx).child(d.heat.view(
+            .child(ui::card("Activity heatmap", cx).child(d.heat.view(
                 self.heat_metric.clone(),
                 self.hovers.heat.clone(),
                 theme,

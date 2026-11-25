@@ -117,7 +117,6 @@ pub struct HeatmapChart {
     pub first: Date,
     pub cost: Vec<f64>,
     pub calls: Vec<u64>,
-    pub time_zone: String,
 }
 
 impl HeatmapChart {
@@ -141,18 +140,12 @@ impl HeatmapChart {
         Some(TimeRange::new(start.timestamp(), end.timestamp()))
     }
 
-    pub fn from_buckets(
-        buckets: &[CostBucket],
-        last: Date,
-        tz: &TimeZone,
-        time_zone: impl Into<String>,
-    ) -> HeatmapChart {
+    pub fn from_buckets(buckets: &[CostBucket], last: Date, tz: &TimeZone) -> HeatmapChart {
         let (first, len) = Self::days_ending(last);
         let mut chart = HeatmapChart {
             first,
             cost: vec![0.0; len],
             calls: vec![0; len],
-            time_zone: time_zone.into(),
         };
         for b in buckets {
             let date = b.start.to_zoned_datetime(tz.clone()).date();
@@ -263,19 +256,7 @@ impl HeatmapChart {
             }));
         v_flex()
             .gap_2()
-            .child(
-                h_flex()
-                    .gap_2()
-                    .items_center()
-                    .child(
-                        div()
-                            .flex_1()
-                            .text_xs()
-                            .text_color(muted)
-                            .child(format!("One square per day · {}", self.time_zone)),
-                    )
-                    .child(toggle),
-            )
+            .child(h_flex().justify_end().child(toggle))
             .child(
                 heatmap_chart(self.clone(), current, hover, theme)
                     .w_full()
@@ -489,7 +470,7 @@ mod tests {
         assert_eq!(first, date(2025, 11, 24));
         assert_eq!(first.weekday(), jiff::civil::Weekday::Monday);
         assert_eq!(len, 367);
-        let chart = HeatmapChart::from_buckets(&[], last, &TimeZone::UTC, "UTC");
+        let chart = HeatmapChart::from_buckets(&[], last, &TimeZone::UTC);
         assert_eq!(chart.weeks(), 53);
         assert_eq!(chart.date(len - 1), Some(last));
         assert_eq!(chart.day_index(2, 52), Some(366));
@@ -523,7 +504,6 @@ mod tests {
             ],
             last,
             &TimeZone::UTC,
-            "UTC",
         );
         assert_eq!(chart.cost[0], 1.0);
         assert!((chart.cost[365] - 1.30).abs() < 1e-9);
@@ -532,7 +512,7 @@ mod tests {
         assert_eq!(chart.value(HeatMetric::Calls, 365), 15.0);
         assert_eq!(chart.value(HeatMetric::Cost, 9999), 0.0);
         assert!(!chart.is_empty());
-        assert!(HeatmapChart::from_buckets(&[], last, &TimeZone::UTC, "UTC").is_empty());
+        assert!(HeatmapChart::from_buckets(&[], last, &TimeZone::UTC).is_empty());
     }
 
     #[test]
@@ -542,8 +522,7 @@ mod tests {
             start: "2026-11-25T03:00:00Z".parse().unwrap(),
             ..bucket(date(2026, 11, 25), 50, 1)
         };
-        let chart =
-            HeatmapChart::from_buckets(&[late], date(2026, 11, 25), &tz, "America/New_York");
+        let chart = HeatmapChart::from_buckets(&[late], date(2026, 11, 25), &tz);
         assert_eq!(chart.calls[365], 1);
     }
 
@@ -579,7 +558,7 @@ mod tests {
 
     #[test]
     fn month_labels_mark_each_new_month() {
-        let chart = HeatmapChart::from_buckets(&[], date(2026, 11, 25), &TimeZone::UTC, "UTC");
+        let chart = HeatmapChart::from_buckets(&[], date(2026, 11, 25), &TimeZone::UTC);
         let labels = chart.month_labels(0);
         assert_eq!(labels.first(), Some(&(1, "Dec")));
         assert_eq!(labels.last().map(|l| l.1), Some("Nov"));
@@ -641,7 +620,6 @@ mod tests {
             &[bucket(date(2026, 11, 24), 123, 12), bucket(last, 0, 1)],
             last,
             &TimeZone::UTC,
-            "UTC",
         );
         assert_eq!(chart.tooltip(365), "Tue Nov 24, 2026 · $1.23 · 12 calls");
         assert_eq!(chart.tooltip(366), "Wed Nov 25, 2026 · $0.00 · 1 call");
