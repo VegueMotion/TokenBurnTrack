@@ -29,7 +29,7 @@ use crate::pages::sessions::SessionsPage;
 use crate::pages::settings::SettingsPage;
 use crate::palette::{harness_color, harness_label};
 
-const REPO_URL: &str = "https://gitlab.com/vaguemotion/tokenburntrack";
+const REPO_URL: &str = "https://github.com/VegueMotion/TokenBurnTrack";
 
 pub struct Workspace {
     app_state: Entity<AppState>,
@@ -378,8 +378,8 @@ impl Workspace {
             .child(div().flex_1())
             .child(
                 h_flex()
-                    .id("gitlab-link")
-                    .debug_selector(|| "gitlab-link".into())
+                    .id("github-link")
+                    .debug_selector(|| "github-link".into())
                     .gap_2()
                     .items_center()
                     .px_3()
@@ -390,8 +390,8 @@ impl Workspace {
                     .text_color(muted)
                     .hover(move |s| s.bg(accent).text_color(fg))
                     .on_click(|_, _, cx| cx.open_url(REPO_URL))
-                    .child(Icon::empty().path(crate::assets::GITLAB_ICON).size_3p5())
-                    .child("GitLab"),
+                    .child(Icon::empty().path(crate::assets::GITHUB_ICON).size_3p5())
+                    .child("GitHub"),
             )
     }
 
