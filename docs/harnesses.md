@@ -16,6 +16,7 @@ Source files are only ever read. Roots can be changed per harness on the Harness
 | LM Studio | `~/.lmstudio/conversations/**/*.conversation.json` (the chat window; not requests to its local server) | `~/.lmstudio-home-pointer` |
 | Zed Agent | `~/.local/share/zed/threads/threads.db` (Zed's own agent; opened read-only; Zed Flatpak `~/.var/app/dev.zed.Zed/data/zed/threads`, macOS `~/Library/Application Support/Zed/threads`, Windows `%LOCALAPPDATA%\Zed\threads`) | `XDG_DATA_HOME` |
 | Goose | `~/.local/share/goose/sessions/sessions.db` (opened read-only; Windows `%APPDATA%\Block\goose\data\sessions`) | `GOOSE_PATH_ROOT`, `XDG_DATA_HOME` |
+| DeepSeek Harness | `~/.dsh/sessions/<project>/<session>/session.v4.jsonl.zstd` (the newest log generation per session; plain `.jsonl` logs too) | `DSH_HOME` |
 | Generic JSONL | any JSONL log you describe in `config.toml` (see [configuration.md](configuration.md)) | `[[generic_jsonl]]` |
 
 ## Notes per harness
@@ -58,3 +59,10 @@ a running total, so each of their usage rows covers the calls since the previous
 is timed at the session's last update. Models served by Goose's local providers (Ollama,
 LM Studio, llama-swap, built-in local inference and the like) keep that provider, so they
 have no price.
+
+**DeepSeek Harness.** Built from DeepSeek Harness's source, not real sessions. It reads the
+usage on each model reply, on failed attempts that were retried, and on compaction
+summaries; session titles written by a model are not counted, since their usage is not
+saved. A fork skips the rows it copied from its parent, and subagents are their own
+sessions linked to their parent. The `deepseek-official`, `deepseek-account` and
+`deepseek-messages` providers are priced as `deepseek`; other providers keep their name.

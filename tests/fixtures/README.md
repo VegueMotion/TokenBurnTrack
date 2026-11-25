@@ -369,6 +369,41 @@ Format notes:
   growth, keyed `<session id>:total:<running total>`; once such a session gets ledger
   rows, the already counted total is taken off its `carried_forward` row.
 
+## DeepSeek Harness (`deepseek_harness/v4/sessions/`)
+
+Synthetic: no real sessions were available. `deepseek_harness/gen_fixture.py` (Python 3.14+,
+for `compression.zstd`) writes the logs in session format v4, following
+`packages/session/session-persistence-jsonl` and `session-format-*` in the DeepSeek Harness
+repository.
+
+| Session | Scenario |
+|---|---|
+| `ds-main` | `deepseek-official` / `deepseek-v4-flash`, two replies, a failed attempt with usage, then a switch to `deepseek-v4-pro` and a compaction summary with usage; ends in a torn zstd frame |
+| `ds-sub` | subagent of `ds-main` (`origin: "subagent"`), `deepseek-account` provider |
+| `ds-fork` | fork of `ds-main` (`isSeeded`): copies its first turn, then `session/end-seed` with `inherited: true`, then one `moonshotai` / `kimi-k2.6` reply |
+| `ds-migrated` | both `session.v3.jsonl.zstd` and its migrated `session.v4.jsonl.zstd`; only v4 is read |
+| `ds-plain` | uncompressed `session.v4.jsonl` without a cwd (`_no-cwd`), an `anthropic` reply with cache writes, and a torn last line |
+
+Format notes:
+
+- Location: `$DSH_HOME/sessions` (default `~/.dsh/sessions`), then
+  `--<cwd with separators as ->--/<session id>/session.v<N>.jsonl.zstd`. Version 0 is
+  `session.jsonl`; with `compression: none` the `.zstd` suffix is dropped. Migrating a log
+  writes the next generation beside the old one.
+- A `.zstd` log is a series of zstd frames, one per appended batch; a torn last frame is
+  dropped on repair. The first line is the header (`type: "session"`, `version`, `id`,
+  `createdAt` in ms, `cwd`, `parentSession`, `isSeeded`, `origin`); every other line is
+  `{type, seq, time, data}` with `time` in ms.
+- `assistant/message` has `data.turn`, `data.step`, `data.message.source.{provider,model}`
+  and `data.usage` (`inputTokens` without cache reads, `outputTokens` including
+  `reasoningTokens`, `cacheReadTokens`, `cacheWriteTokens`). `assistant/attempt` keeps a
+  failed call's stream, whose last `usage` chunk is its usage. `compaction/summary` has
+  `provider`, `model` and `usage`. Logs before v2 put usage in `assistant/chunk` rows.
+  `request/header` (`data.header.config`) and `request/context` carry the current route.
+- The adapter re-reads a log when its size or mtime changes, keys replies
+  `<session>:<turn>:<step>`, attempts `<session>:<turn>:<step>:attempt:<n>` and compactions
+  `<session>:compaction:<id>`, so a migrated log does not count twice.
+
 ## Database snapshots (`db/`)
 
 - `db/wave2/tbt.db`: a TokenBurnTrack database written by the Wave 2 code (`wave2-done` tag,

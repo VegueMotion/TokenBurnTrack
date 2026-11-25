@@ -31,6 +31,7 @@ pub const BUILTIN_SETS: &[(HarnessId, &str)] = &[
     (HarnessId::PI, "pi/v3"),
     (HarnessId::ZED, "zed/1.29.2/threads"),
     (HarnessId::GOOSE, "goose/1.61.0/sessions"),
+    (HarnessId::DEEPSEEK_HARNESS, "deepseek_harness/v4/sessions"),
 ];
 
 pub const GENERIC_SETS: &[(&str, &str)] = &[
@@ -44,6 +45,7 @@ pub const GOLDEN: &[(&str, i64)] = &[
     ("codex", 381),
     ("copilot_cli", 6),
     ("cursor", 3),
+    ("deepseek_harness", 9),
     ("gemini_cli", 12),
     ("goose", 7),
     ("grok_build", 6),
@@ -55,8 +57,8 @@ pub const GOLDEN: &[(&str, i64)] = &[
     ("zed", 4),
 ];
 
-pub const GOLDEN_TOTAL: u64 = 681;
-pub const SOURCES: u64 = 43;
+pub const GOLDEN_TOTAL: u64 = 690;
+pub const SOURCES: u64 = 48;
 
 pub const KNOWN_WARNINGS: &[(&str, &str, u64, &str)] = &[
     (

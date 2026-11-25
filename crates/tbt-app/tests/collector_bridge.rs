@@ -171,6 +171,7 @@ fn config_saved_while_running_applies_to_the_next_run() {
             HarnessId::LMSTUDIO,
             HarnessId::ZED,
             HarnessId::GOOSE,
+            HarnessId::DEEPSEEK_HARNESS,
         ] {
             store.register_harness(&id, id.as_str()).unwrap();
             store.set_harness_enabled(&id, false).unwrap();
