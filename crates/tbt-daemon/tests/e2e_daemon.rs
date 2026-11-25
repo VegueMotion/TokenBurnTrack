@@ -5,8 +5,8 @@ use std::time::{Duration, SystemTime};
 
 use tbt_collector::{CollectorLock, LockAttempt};
 
-const SOURCES: u64 = 31;
-const EVENTS: i64 = 654;
+const SOURCES: u64 = 34;
+const EVENTS: i64 = 658;
 const GOLDEN: &[(&str, i64)] = &[
     ("antigravity", 5),
     ("claude_code", 204),
@@ -16,6 +16,7 @@ const GOLDEN: &[(&str, i64)] = &[
     ("gemini_cli", 12),
     ("in_house_agent", 4),
     ("llm_proxy", 6),
+    ("lmstudio", 4),
     ("opencode", 33),
 ];
 
@@ -77,6 +78,10 @@ impl Sandbox {
             &sb.path("home/.local/share/opencode/opencode.db"),
         );
         copy_tree(&f.join("antigravity/1.1.17"), &sb.path("gemini/.gemini"));
+        copy_tree(
+            &f.join("lmstudio/0.4.20/conversations"),
+            &sb.path("home/.lmstudio/conversations"),
+        );
         copy_tree(
             &f.join("copilot_cli/1.0.4/session-state"),
             &sb.path("home/.copilot/session-state"),

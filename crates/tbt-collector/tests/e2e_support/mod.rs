@@ -27,6 +27,7 @@ pub const BUILTIN_SETS: &[(HarnessId, &str)] = &[
     (HarnessId::COPILOT_CLI, "copilot_cli/1.0.4/session-state"),
     (HarnessId::GROK_BUILD, "grok_build/1.0.45"),
     (HarnessId::ANTIGRAVITY, "antigravity/1.1.17"),
+    (HarnessId::LMSTUDIO, "lmstudio/0.4.20/conversations"),
 ];
 
 pub const GENERIC_SETS: &[(&str, &str)] = &[
@@ -44,11 +45,12 @@ pub const GOLDEN: &[(&str, i64)] = &[
     ("grok_build", 6),
     (IN_HOUSE, 4),
     (LLM_PROXY, 6),
+    ("lmstudio", 4),
     ("opencode", 33),
 ];
 
-pub const GOLDEN_TOTAL: u64 = 660;
-pub const SOURCES: u64 = 35;
+pub const GOLDEN_TOTAL: u64 = 664;
+pub const SOURCES: u64 = 38;
 
 pub const KNOWN_WARNINGS: &[(&str, &str, u64, &str)] = &[
     (

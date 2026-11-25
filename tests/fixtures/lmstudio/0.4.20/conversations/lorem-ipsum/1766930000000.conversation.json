@@ -1,0 +1,251 @@
+{
+  "name": "lorem ipsum dolor sit amet",
+  "pinned": false,
+  "createdAt": 1766930000000,
+  "preset": "",
+  "tokenCount": 512,
+  "userLastMessagedAt": 1766930120000,
+  "systemPrompt": "",
+  "messages": [
+    {
+      "versions": [
+        {
+          "type": "singleStep",
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "lorem ipsum dolor sit amet consectetur"
+            }
+          ]
+        }
+      ],
+      "currentlySelected": 0
+    },
+    {
+      "versions": [
+        {
+          "type": "multiStep",
+          "role": "assistant",
+          "steps": [
+            {
+              "type": "contentBlock",
+              "stepIdentifier": "1766930002000-0.87741",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "sed do eiusmod tempor",
+                  "fromDraftModel": false,
+                  "tokensCount": 40,
+                  "isStructural": false
+                }
+              ],
+              "defaultShouldIncludeInContext": true,
+              "shouldIncludeInContext": true,
+              "style": {
+                "type": "thinking",
+                "ended": true,
+                "title": "lorem ipsum"
+              },
+              "prefix": "<|channel|>analysis<|message|>",
+              "suffix": "<|end|>"
+            },
+            {
+              "type": "contentBlock",
+              "stepIdentifier": "1766930003000-0.97742",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<|start|>assistant<|channel|>final<|message|>",
+                  "fromDraftModel": false,
+                  "tokensCount": 6,
+                  "isStructural": true
+                },
+                {
+                  "type": "text",
+                  "text": "ut labore et dolore magna",
+                  "fromDraftModel": false,
+                  "tokensCount": 200,
+                  "isStructural": false
+                }
+              ],
+              "defaultShouldIncludeInContext": true,
+              "shouldIncludeInContext": true,
+              "genInfo": {
+                "indexedModelIdentifier": "openai/gpt-oss-20b",
+                "identifier": "openai/gpt-oss-20b",
+                "loadModelConfig": {
+                  "fields": []
+                },
+                "predictionConfig": {
+                  "fields": []
+                },
+                "stats": {
+                  "stopReason": "eosFound",
+                  "tokensPerSecond": 40.5,
+                  "numGpuLayers": -1,
+                  "timeToFirstTokenSec": 0.31,
+                  "totalTimeSec": 6.222222222222222,
+                  "promptTokensCount": 30,
+                  "predictedTokensCount": 252,
+                  "totalTokensCount": 282
+                }
+              }
+            }
+          ],
+          "senderInfo": {
+            "senderName": "qwen/qwen3-8b"
+          }
+        },
+        {
+          "type": "multiStep",
+          "role": "assistant",
+          "steps": [
+            {
+              "type": "contentBlock",
+              "stepIdentifier": "1766930060000-0.69361",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "quis nostrud exercitation",
+                  "fromDraftModel": false,
+                  "tokensCount": 25,
+                  "isStructural": false
+                }
+              ],
+              "defaultShouldIncludeInContext": true,
+              "shouldIncludeInContext": true,
+              "style": {
+                "type": "thinking",
+                "ended": true,
+                "title": "lorem ipsum"
+              },
+              "prefix": "<|channel|>analysis<|message|>",
+              "suffix": "<|end|>"
+            },
+            {
+              "type": "contentBlock",
+              "stepIdentifier": "1766930061000-0.79362",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<|start|>assistant<|channel|>final<|message|>",
+                  "fromDraftModel": false,
+                  "tokensCount": 6,
+                  "isStructural": true
+                },
+                {
+                  "type": "text",
+                  "text": "ullamco laboris nisi ut",
+                  "fromDraftModel": false,
+                  "tokensCount": 150,
+                  "isStructural": false
+                }
+              ],
+              "defaultShouldIncludeInContext": true,
+              "shouldIncludeInContext": true,
+              "genInfo": {
+                "indexedModelIdentifier": "qwen/qwen3-8b",
+                "identifier": "qwen/qwen3-8b",
+                "loadModelConfig": {
+                  "fields": []
+                },
+                "predictionConfig": {
+                  "fields": []
+                },
+                "stats": {
+                  "stopReason": "eosFound",
+                  "tokensPerSecond": 40.5,
+                  "numGpuLayers": -1,
+                  "timeToFirstTokenSec": 0.31,
+                  "totalTimeSec": 4.493827160493828,
+                  "promptTokensCount": 30,
+                  "predictedTokensCount": 182,
+                  "totalTokensCount": 212
+                }
+              }
+            }
+          ],
+          "senderInfo": {
+            "senderName": "qwen/qwen3-8b"
+          }
+        }
+      ],
+      "currentlySelected": 1
+    },
+    {
+      "versions": [
+        {
+          "type": "singleStep",
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "duis aute irure dolor in reprehenderit"
+            }
+          ]
+        }
+      ],
+      "currentlySelected": 0
+    },
+    {
+      "versions": [
+        {
+          "type": "multiStep",
+          "role": "assistant",
+          "steps": [
+            {
+              "type": "contentBlock",
+              "stepIdentifier": "1766930121000-0.80982",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<|start|>assistant<|channel|>final<|message|>",
+                  "fromDraftModel": false,
+                  "tokensCount": 6,
+                  "isStructural": true
+                },
+                {
+                  "type": "text",
+                  "text": "",
+                  "fromDraftModel": false,
+                  "tokensCount": 0,
+                  "isStructural": false
+                }
+              ],
+              "defaultShouldIncludeInContext": true,
+              "shouldIncludeInContext": true
+            }
+          ],
+          "senderInfo": {
+            "senderName": "qwen/qwen3-8b"
+          }
+        }
+      ],
+      "currentlySelected": 0
+    }
+  ],
+  "usePerChatPredictionConfig": true,
+  "perChatPredictionConfig": {
+    "fields": []
+  },
+  "clientInput": "",
+  "clientInputFiles": [],
+  "userFilesSizeBytes": 0,
+  "lastUsedModel": {
+    "identifier": "qwen/qwen3-8b",
+    "indexedModelIdentifier": "qwen/qwen3-8b",
+    "instanceLoadTimeConfig": {
+      "fields": []
+    },
+    "instanceOperationTimeConfig": {
+      "fields": []
+    }
+  },
+  "notes": [],
+  "plugins": [],
+  "pluginConfigs": {},
+  "disabledPluginTools": [],
+  "looseFiles": [],
+  "assistantLastMessagedAt": 1766930062000
+}

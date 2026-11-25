@@ -164,7 +164,12 @@ fn config_saved_while_running_applies_to_the_next_run() {
     let sb = sandbox();
     {
         let mut store = Store::open(&tbt_store::paths::db_path(&sb.data_dir)).unwrap();
-        for id in [HarnessId::CODEX, HarnessId::OPENCODE, HarnessId::GEMINI_CLI] {
+        for id in [
+            HarnessId::CODEX,
+            HarnessId::OPENCODE,
+            HarnessId::GEMINI_CLI,
+            HarnessId::LMSTUDIO,
+        ] {
             store.register_harness(&id, id.as_str()).unwrap();
             store.set_harness_enabled(&id, false).unwrap();
         }

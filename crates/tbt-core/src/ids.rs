@@ -15,6 +15,7 @@ impl HarnessId {
     pub const CURSOR: HarnessId = HarnessId(Cow::Borrowed("cursor"));
     pub const GEMINI_CLI: HarnessId = HarnessId(Cow::Borrowed("gemini_cli"));
     pub const GROK_BUILD: HarnessId = HarnessId(Cow::Borrowed("grok_build"));
+    pub const LMSTUDIO: HarnessId = HarnessId(Cow::Borrowed("lmstudio"));
     pub const OPENCODE: HarnessId = HarnessId(Cow::Borrowed("opencode"));
 
     pub fn new(id: impl Into<String>) -> Self {

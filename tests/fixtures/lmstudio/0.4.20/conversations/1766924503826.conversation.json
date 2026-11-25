@@ -1,0 +1,203 @@
+{
+  "name": "id et commodo adipiscing consequ",
+  "pinned": false,
+  "createdAt": 1766924503826,
+  "preset": "",
+  "tokenCount": 86,
+  "userLastMessagedAt": 1766925514917,
+  "systemPrompt": "",
+  "messages": [
+    {
+      "versions": [
+        {
+          "type": "singleStep",
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "aliqua pariatur sed labore culpa lorem aute deserunt pariatur et minim minim consectetur dolore culpa elit sint tempo"
+            }
+          ]
+        }
+      ],
+      "currentlySelected": 0
+    },
+    {
+      "versions": [
+        {
+          "type": "multiStep",
+          "role": "assistant",
+          "steps": [
+            {
+              "type": "contentBlock",
+              "stepIdentifier": "1766925515470-0.42846625731572574",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "aliqua eiusmod dolor veniam enim quis voluptate aliquip irure aliquip id tempor consequat fugiat amet occaecat incididunt tempor commodo eiusmod deserunt adipis",
+                  "fromDraftModel": false,
+                  "tokensCount": 57,
+                  "isStructural": false
+                }
+              ],
+              "defaultShouldIncludeInContext": true,
+              "shouldIncludeInContext": true,
+              "style": {
+                "type": "thinking",
+                "ended": true,
+                "title": "ea sint duis amet velit ex"
+              },
+              "prefix": "deserunt lorem veniam qui ulla",
+              "suffix": "consect"
+            },
+            {
+              "type": "contentBlock",
+              "stepIdentifier": "1766925515887-0.35456493658319643",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "aliquip do pariatur esse ipsum deserunt sit e",
+                  "fromDraftModel": false,
+                  "tokensCount": 6,
+                  "isStructural": true
+                },
+                {
+                  "type": "text",
+                  "text": "fugiat labore ut est nisi qui dolore nisi culpa est consequat officia tempor magna aute id dolor est consequat sint nisi culpa incididunt lorem lorem magna ipsu",
+                  "fromDraftModel": false,
+                  "tokensCount": 1689,
+                  "isStructural": false
+                }
+              ],
+              "defaultShouldIncludeInContext": true,
+              "shouldIncludeInContext": true,
+              "genInfo": {
+                "indexedModelIdentifier": "openai/gpt-oss-20b",
+                "identifier": "openai/gpt-oss-20b",
+                "loadModelConfig": {
+                  "fields": [
+                    {
+                      "key": "fugiat reprehenderit ullamco ani",
+                      "value": 6
+                    },
+                    {
+                      "key": "cupidatat anim comm",
+                      "value": 4
+                    },
+                    {
+                      "key": "aliqua cupidatat aliqu",
+                      "value": 4096
+                    },
+                    {
+                      "key": "sunt commodo proident non veniam cillum",
+                      "value": 1
+                    }
+                  ]
+                },
+                "predictionConfig": {
+                  "fields": [
+                    {
+                      "key": "in excepteur do sint officia",
+                      "value": {
+                        "type": "jinja",
+                        "jinjaPromptTemplate": {
+                          "template": "do irure id laboris magna deserunt consequat veniam consectetur voluptate mollit aute sint eiusmod pariatur minim excepteur consectetur incididunt duis enim sit"
+                        },
+                        "stopStrings": []
+                      }
+                    },
+                    {
+                      "key": "amet quis excepteur aute ad con",
+                      "value": 6
+                    },
+                    {
+                      "key": "non in quis ea deserunt do an",
+                      "value": []
+                    },
+                    {
+                      "key": "amet commodo sunt voluptat",
+                      "value": 0.8
+                    },
+                    {
+                      "key": "aliqua est in dolore pariat",
+                      "value": 40
+                    },
+                    {
+                      "key": "elit magna lorem eiusmod qu",
+                      "value": {
+                        "checked": true,
+                        "value": 0.8
+                      }
+                    },
+                    {
+                      "key": "et aliquip esse ex enim dolo",
+                      "value": {
+                        "checked": true,
+                        "value": 1.1
+                      }
+                    },
+                    {
+                      "key": "commodo reprehenderit esse",
+                      "value": {
+                        "checked": true,
+                        "value": 0.05
+                      }
+                    },
+                    {
+                      "key": "ut est ullamco cillu",
+                      "value": {
+                        "type": "none"
+                      }
+                    }
+                  ]
+                },
+                "stats": {
+                  "stopReason": "eosFound",
+                  "tokensPerSecond": 124.93404452163563,
+                  "numGpuLayers": -1,
+                  "timeToFirstTokenSec": 0.238,
+                  "totalTimeSec": 14.063,
+                  "promptTokensCount": 86,
+                  "predictedTokensCount": 1757,
+                  "totalTokensCount": 1843
+                }
+              }
+            },
+            {
+              "type": "debugInfoBlock",
+              "stepIdentifier": "1766925529446-0.5795223280742516",
+              "debugInfo": "sint nulla proident sed consectetur con"
+            }
+          ],
+          "senderInfo": {
+            "senderName": "openai/gpt-oss-20b"
+          }
+        }
+      ],
+      "currentlySelected": 0
+    }
+  ],
+  "usePerChatPredictionConfig": true,
+  "perChatPredictionConfig": {
+    "fields": []
+  },
+  "clientInput": "",
+  "clientInputFiles": [],
+  "userFilesSizeBytes": 0,
+  "lastUsedModel": {
+    "identifier": "openai/gpt-oss-20b",
+    "indexedModelIdentifier": "openai/gpt-oss-20b",
+    "instanceLoadTimeConfig": {
+      "fields": []
+    },
+    "instanceOperationTimeConfig": {
+      "fields": []
+    }
+  },
+  "notes": [],
+  "plugins": [],
+  "pluginConfigs": {},
+  "disabledPluginTools": [],
+  "looseFiles": [],
+  "assistantLastMessagedAt": 1766925530329
+}

@@ -14,6 +14,7 @@ default = [
     "cursor",
     "copilot_cli",
     "antigravity",
+    "lmstudio",
     "gemini_cli",
     "grok_build",
     "generic_jsonl",
@@ -24,6 +25,7 @@ opencode = ["dep:rusqlite"]
 cursor = ["dep:rusqlite"]
 copilot_cli = []
 antigravity = ["dep:rusqlite"]
+lmstudio = []
 gemini_cli = []
 grok_build = []
 generic_jsonl = []

@@ -270,6 +270,35 @@ Format notes:
   the CLI counts once. A row with zero usage that is less than a day old is held back in
   case it is still being written.
 
+## LM Studio (`lmstudio/0.4.20/conversations/`)
+
+Two real chats from the chat window, anonymized (the files were written by an earlier 0.3.x
+build; 0.4.20 is the version installed at harvest, 2026-11-25), and one synthetic chat in a
+folder, hand-written in the same shape.
+
+| File | Scenario |
+|---|---|
+| `1766924503826.conversation.json`, `1766925535102.conversation.json` | real: one question, one `openai/gpt-oss-20b` answer with a thinking block |
+| `lorem-ipsum/1766930000000.conversation.json` | synthetic: a regenerated answer (2 versions, different models, the second selected), a second question, and an answer still being generated (no `stats`) |
+
+Format notes:
+
+- Location: `~/.lmstudio/conversations/**/<created-ms>.conversation.json`; the home moves
+  where `~/.lmstudio-home-pointer` says. One JSON document per chat, rewritten on every change.
+- Top level: `name`, `createdAt`, `userLastMessagedAt`, `assistantLastMessagedAt` (epoch ms),
+  `lastUsedModel.identifier`, `messages[]`. Each message has `versions[]` (regenerations) and
+  `currentlySelected`.
+- User versions: `type: "singleStep"`, `content[{type: "text", text}]`, no timestamp.
+  Assistant versions: `type: "multiStep"`, `steps[]`, `senderInfo.senderName` (the model).
+- Steps: `contentBlock` (`content[{text, tokensCount, isStructural}]`, `style.type: "thinking"`
+  for reasoning), `debugInfoBlock`, …. `stepIdentifier` is `<epoch ms>-<random>`. The step
+  that finished a prediction carries `genInfo{identifier, indexedModelIdentifier, stats}`,
+  with `stats{promptTokensCount, predictedTokensCount, totalTokensCount, stopReason, …}`.
+  `predictedTokensCount` includes the thinking tokens.
+- The adapter counts every version, not only the selected one, since each was generated;
+  messages are kept for the selected version only. The anonymizer keeps `identifier`,
+  `indexedModelIdentifier`, `senderName`, `stepIdentifier` and `stopReason`.
+
 ## Database snapshots (`db/`)
 
 - `db/wave2/tbt.db`: a TokenBurnTrack database written by the Wave 2 code (`wave2-done` tag,

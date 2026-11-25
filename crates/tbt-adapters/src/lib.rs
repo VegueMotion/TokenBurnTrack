@@ -53,6 +53,12 @@ pub mod antigravity;
 #[cfg(feature = "antigravity")]
 pub use antigravity::AntigravityAdapter;
 
+#[cfg(feature = "lmstudio")]
+pub mod lmstudio;
+
+#[cfg(feature = "lmstudio")]
+pub use lmstudio::LmStudioAdapter;
+
 #[cfg(feature = "gemini_cli")]
 pub mod gemini_cli;
 
