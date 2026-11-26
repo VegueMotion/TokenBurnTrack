@@ -88,10 +88,9 @@ install -Dm755 target/release/tbt-daemon ~/.local/bin/tbt-daemon
 ~/.local/bin/tbt-daemon install --app ~/.local/bin/tbt-app
 ```
 
-System dependencies, what `install` writes and the daemon options are in
-[docs/install.md](docs/install.md). Settings are in
-[docs/configuration.md](docs/configuration.md), and tests and release builds in
-[docs/development.md](docs/development.md).
+System dependencies, what `install` writes, the daemon options, tests and release
+builds are in [docs/install.md](docs/install.md). Settings are in
+[docs/configuration.md](docs/configuration.md).
 
 ## ✨ Features
 
