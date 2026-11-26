@@ -245,7 +245,8 @@ privileged containers, so set `container.privileged: true` in that runner's conf
 Windows and macOS packages are not built there; build them with the scripts above and
 attach them by hand.
 
-On GitHub, pushing a `v*` tag runs `.github/workflows/release.yml` instead, which builds
-all four packages on GitHub-hosted runners and attaches them to the tag's GitHub release
-(a prerelease if the tag contains `-`). The macOS dmg is ad-hoc signed there. Forgejo
+On GitHub, pushing to the `stable` branch runs `.github/workflows/release.yml` instead.
+It fails at once if the `Cargo.toml` version is already tagged, otherwise it builds all
+four packages on GitHub-hosted runners, tags the pushed commit `v<version>` and attaches
+the packages to that GitHub release (a prerelease if the version contains `-`). The macOS dmg is ad-hoc signed there. Forgejo
 ignores `.github/workflows` while `.forgejo/workflows` exists.

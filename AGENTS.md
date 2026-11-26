@@ -98,10 +98,12 @@ prices, cursors or sessions. The most important rules:
 ## Git
 
 - Branch from `master` and target `master`. `stable` is for releases only.
-- To release, merge `master` into `stable` with a merge commit (`git merge --no-ff`),
-  never a fast-forward, and tag that merge commit `vX.Y.Z`.
+- To release, bump the version in `Cargo.toml` on `master`, then merge `master` into
+  `stable` with a merge commit (`git merge --no-ff`), never a fast-forward. The push to
+  `stable` runs the release workflow, which fails if `vX.Y.Z` is already tagged and
+  otherwise tags the merge commit and creates the release. Don't tag by hand.
 - After the release workflow succeeds, point the README download buttons at the new
-  version's files (`releases/download/vX.Y.Z/…-X.Y.Z-…`).
+  version's files (`releases/download/vX.Y.Z/…-X.Y.Z-…`) in a PR to `master`.
 - One change per PR. No drive-by refactors, mass reformatting or renaming.
 - Commit messages in the imperative mood: `Fix cost rounding for cached tokens`.
 - PR titles start with a type prefix: `fix:`, `feat:`, `perf:`, `docs:`, `refactor:`,
