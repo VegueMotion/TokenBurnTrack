@@ -248,6 +248,7 @@ attach them by hand.
 On GitHub, pushing to the `stable` branch runs `.github/workflows/release.yml` instead.
 It fails at once if the `Cargo.toml` version is already tagged, otherwise it builds all
 four packages on GitHub-hosted runners, tags the pushed commit `v<version>` and attaches
-the packages to that GitHub release (a prerelease if the version contains `-`). The macOS dmg is ad-hoc signed there. For a non-prerelease it then commits the new
-version's README download links to `master`. Forgejo
-ignores `.github/workflows` while `.forgejo/workflows` exists.
+the packages to that GitHub release (a prerelease if the version contains `-`). The
+macOS dmg is ad-hoc signed there. For a non-prerelease the workflow then commits the new
+version's README download links to `master`. Forgejo ignores `.github/workflows` while
+`.forgejo/workflows` exists.

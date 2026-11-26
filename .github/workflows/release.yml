@@ -137,6 +137,7 @@ jobs:
         run: |
           VERSION=${TAG#v}
           sed -i -E "s#releases/download/v[0-9][^/]*/TokenBurnTrack-[0-9][^-]*-#releases/download/$TAG/TokenBurnTrack-$VERSION-#g" README.md
+          grep -q "releases/download/$TAG/" README.md || { echo "::error::No README download links matched"; exit 1; }
           git diff --quiet && exit 0
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
