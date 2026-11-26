@@ -100,6 +100,8 @@ prices, cursors or sessions. The most important rules:
 - Branch from `develop` and target `develop`. `master` is for releases only.
 - To release, merge `develop` into `master` with a merge commit (`git merge --no-ff`),
   never a fast-forward, and tag that merge commit `vX.Y.Z`.
+- After the release workflow succeeds, point the README download buttons at the new
+  version's files (`releases/download/vX.Y.Z/…-X.Y.Z-…`).
 - One change per PR. No drive-by refactors, mass reformatting or renaming.
 - Commit messages in the imperative mood: `Fix cost rounding for cached tokens`.
 - Don't add dependencies without a clear reason.
