@@ -97,8 +97,8 @@ prices, cursors or sessions. The most important rules:
 
 ## Git
 
-- Branch from `develop` and target `develop`. `master` is for releases only.
-- To release, merge `develop` into `master` with a merge commit (`git merge --no-ff`),
+- Branch from `master` and target `master`. `stable` is for releases only.
+- To release, merge `master` into `stable` with a merge commit (`git merge --no-ff`),
   never a fast-forward, and tag that merge commit `vX.Y.Z`.
 - After the release workflow succeeds, point the README download buttons at the new
   version's files (`releases/download/vX.Y.Z/…-X.Y.Z-…`).

@@ -8,11 +8,11 @@ To build from source, set up the daemon and run the checks, see [docs/install.md
 
 | Branch    | Purpose                    |
 |-----------|----------------------------|
-| `master`  | Release code only.         |
-| `develop` | Active development.        |
+| `master`  | Active development.        |
+| `stable`  | Release code only.         |
 
-- All PRs target `develop`.
-- `develop` is merged into `master` for a release.
+- All PRs target `master`.
+- `master` is merged into `stable` for a release.
 
 ## Issues
 
@@ -35,7 +35,7 @@ Reporting a bug with good details is often more useful than a PR.
 1. **Discuss first.** For anything beyond a small fix, open an issue before writing code.
 2. **Keep it small.** One PR does one thing. Don't mix unrelated fixes or refactors.
 3. **Explain it.** Say what changed and why it should exist. Link the issue.
-4. **Target `develop`.** Branch from `develop`, rebase on it before opening the PR.
+4. **Target `master`.** Branch from `master`, rebase on it before opening the PR.
 5. **It must build and pass.** Run `cargo fmt`, `cargo clippy` with no new warnings, and `cargo test`.
 6. **Show UI changes.** Include before/after screenshots. For anything animated or interactive, include a short video.
 7. **Update docs** if behavior, configuration or installation changes.
@@ -73,7 +73,7 @@ These will be closed, usually without discussion:
 - Drive-by features or scope changes nobody asked for
 - Opinionated rewrites, mass reformatting or renaming
 - Unreviewed AI-generated PRs, issues or descriptions
-- PRs targeting `master`
+- PRs targeting `stable`
 - Dependency additions without a clear reason
 
 Repeated low-effort or spam submissions will get you blocked from the repository.
