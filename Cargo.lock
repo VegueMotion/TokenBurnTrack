@@ -6947,6 +6947,7 @@ dependencies = [
  "ashpd",
  "async-io",
  "crossbeam-channel",
+ "embed-resource",
  "futures-lite",
  "gpui-component",
  "gpui-kit-assets",
