@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use gpui::{
     AnyView, App, Context, Decorations, Entity, Hsla, IntoElement, MouseButton, MouseMoveEvent,
-    ParentElement, Render, SharedString, Styled, Window, div, prelude::*, px,
+    ParentElement, Render, SharedString, Styled, Window, WindowControlArea, div, prelude::*, px,
 };
 use gpui_component::button::{Button, ButtonVariants};
 use gpui_component::calendar::{Calendar, CalendarEvent, CalendarState, Date, Matcher};
@@ -74,6 +74,14 @@ impl WindowControl {
             WindowControl::Minimize => "\u{2014}",
             WindowControl::Maximize => "\u{25C7}",
             WindowControl::Close => "\u{2715}",
+        }
+    }
+
+    fn area(self) -> WindowControlArea {
+        match self {
+            WindowControl::Minimize => WindowControlArea::Min,
+            WindowControl::Maximize => WindowControlArea::Max,
+            WindowControl::Close => WindowControlArea::Close,
         }
     }
 
@@ -238,8 +246,9 @@ impl Workspace {
         self.sync.update(cx, |b, cx| b.sync_now(cx));
     }
 
-    fn client_decorated(window: &Window) -> bool {
-        matches!(window.window_decorations(), Decorations::Client { .. })
+    fn draws_title_bar(window: &Window) -> bool {
+        cfg!(target_os = "windows")
+            || matches!(window.window_decorations(), Decorations::Client { .. })
     }
 
     fn draggable(
@@ -247,6 +256,9 @@ impl Workspace {
         el: gpui::Stateful<gpui::Div>,
         cx: &mut Context<Self>,
     ) -> gpui::Stateful<gpui::Div> {
+        if cfg!(target_os = "windows") {
+            return el.window_control_area(WindowControlArea::Drag);
+        }
         el.on_double_click(|_, window, _| window.zoom_window())
             .on_mouse_down(
                 MouseButton::Left,
@@ -271,14 +283,14 @@ impl Workspace {
     }
 
     /// Replaces the system title bar: window controls on the right, the rest of the
-    /// strip drags the window. Only drawn when the window got client-side
+    /// strip drags the window. Only drawn on Windows or when the window got client-side
     /// decorations; otherwise the compositor already draws its own bar.
     fn render_title_bar(
         &self,
         window: &Window,
         cx: &mut Context<Self>,
     ) -> Option<gpui::AnyElement> {
-        if !Self::client_decorated(window) {
+        if !Self::draws_title_bar(window) {
             return None;
         }
         let t = cx.theme();
@@ -314,13 +326,18 @@ impl Workspace {
                         .text_sm()
                         .text_color(fg)
                         .hover(move |s| if close { s.bg(danger) } else { s.bg(hover) })
-                        .on_mouse_down(MouseButton::Left, |_, window, cx| {
-                            window.prevent_default();
-                            cx.stop_propagation();
-                        })
-                        .on_click(move |_, window, cx| {
-                            cx.stop_propagation();
-                            c.run(window);
+                        .map(|d| {
+                            if cfg!(target_os = "windows") {
+                                return d.occlude().window_control_area(c.area());
+                            }
+                            d.on_mouse_down(MouseButton::Left, |_, window, cx| {
+                                window.prevent_default();
+                                cx.stop_propagation();
+                            })
+                            .on_click(move |_, window, cx| {
+                                cx.stop_propagation();
+                                c.run(window);
+                            })
                         })
                         .child(c.glyph())
                 })))
@@ -331,7 +348,7 @@ impl Workspace {
     fn render_brand(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
         let t = cx.theme();
         let (fg, muted) = (t.sidebar_foreground, t.muted_foreground);
-        let height = if Self::client_decorated(window) {
+        let height = if Self::draws_title_bar(window) {
             TITLE_BAR_HEIGHT + TOP_BAR_HEIGHT
         } else {
             TOP_BAR_HEIGHT
@@ -344,7 +361,7 @@ impl Workspace {
             .px_5()
             .gap_2()
             .items_center();
-        let brand = if Self::client_decorated(window) {
+        let brand = if Self::draws_title_bar(window) {
             self.draggable(brand, cx)
         } else {
             brand

@@ -52,6 +52,7 @@ fn sidebar_spans_the_window_with_the_app_name_on_top(cx: &mut TestAppContext) {
     assert!(title.left() >= sidebar.right());
 }
 
+#[cfg(not(target_os = "windows"))]
 #[gpui::test]
 fn app_name_stays_in_the_sidebar_without_a_custom_title_bar(cx: &mut TestAppContext) {
     let mut cx = open(cx, false, None);
@@ -101,6 +102,7 @@ fn starting_window_is_bigger_but_fits_the_screen() {
     );
 }
 
+#[cfg(not(target_os = "windows"))]
 #[gpui::test]
 #[should_panic(expected = "not implemented")]
 fn dragging_the_app_name_moves_the_window(cx: &mut TestAppContext) {
