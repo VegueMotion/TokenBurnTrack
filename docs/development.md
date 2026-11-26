@@ -57,3 +57,11 @@ On GitHub, pushing a `v*` tag runs `.github/workflows/release.yml` instead, whic
 all four packages on GitHub-hosted runners and attaches them to the tag's GitHub release
 (a prerelease if the tag contains `-`). The macOS dmg is ad-hoc signed there. Forgejo
 ignores `.github/workflows` while `.forgejo/workflows` exists.
+
+The Windows exes are unsigned unless SignPath is set up, and Windows SmartScreen warns
+before running an unsigned download. To sign them through SignPath, add the
+`SIGNPATH_API_TOKEN` secret and the `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG`
+and `SIGNPATH_SIGNING_POLICY_SLUG` variables to the GitHub repository. Make
+[`packaging/windows/signpath-artifact-configuration.xml`](../packaging/windows/signpath-artifact-configuration.xml)
+the SignPath project's default artifact configuration, and link the project to the
+GitHub.com trusted build system.

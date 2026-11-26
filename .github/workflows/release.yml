@@ -29,7 +29,7 @@ jobs:
         run: scripts/build-appimage.sh --host
       - uses: actions/upload-artifact@v7
         with:
-          name: appimage
+          name: release-appimage
           path: dist/
 
   flatpak:
@@ -49,19 +49,42 @@ jobs:
             --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
       - uses: actions/upload-artifact@v7
         with:
-          name: flatpak
+          name: release-flatpak
           path: dist/
 
   windows:
     runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+    env:
+      SIGN: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v7
       - name: Build
         run: scripts\build-windows.ps1
       - uses: actions/upload-artifact@v7
+        id: unsigned
         with:
-          name: windows
+          name: ${{ env.SIGN == 'true' && 'windows-unsigned' || 'release-windows' }}
           path: dist/
+      - name: Sign
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed/
+      - uses: actions/upload-artifact@v7
+        if: env.SIGN == 'true'
+        with:
+          name: release-windows
+          path: signed/
 
   macos:
     runs-on: macos-26
@@ -73,7 +96,7 @@ jobs:
           scripts/build-macos.sh
       - uses: actions/upload-artifact@v7
         with:
-          name: macos
+          name: release-macos
           path: dist/
 
   release:
@@ -85,6 +108,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           path: dist
+          pattern: release-*
           merge-multiple: true
       - name: Create release
         env:
