@@ -6924,7 +6924,7 @@ dependencies = [
 
 [[package]]
 name = "tbt-adapters"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "insta",
  "jiff",
@@ -6941,7 +6941,7 @@ dependencies = [
 
 [[package]]
 name = "tbt-app"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "ashpd",
@@ -6968,7 +6968,7 @@ dependencies = [
 
 [[package]]
 name = "tbt-collector"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "crossbeam-channel",
@@ -6990,7 +6990,7 @@ dependencies = [
 
 [[package]]
 name = "tbt-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "blake3",
  "insta",
@@ -7004,7 +7004,7 @@ dependencies = [
 
 [[package]]
 name = "tbt-daemon"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -7025,7 +7025,7 @@ dependencies = [
 
 [[package]]
 name = "tbt-pricing"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "globset",
  "jiff",
@@ -7040,7 +7040,7 @@ dependencies = [
 
 [[package]]
 name = "tbt-store"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "directories",
  "jiff",
