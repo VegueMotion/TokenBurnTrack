@@ -2,6 +2,8 @@
 //! leaves minimize, zoom and window moves `unimplemented!()`, so a control
 //! reaching the platform shows up as a "not implemented" panic.
 
+#![cfg_attr(target_os = "windows", allow(dead_code))]
+
 use std::sync::Arc;
 
 use gpui::{
@@ -60,11 +62,20 @@ fn window_count(cx: &mut VisualTestContext) -> usize {
     app.update(|cx| cx.windows().len())
 }
 
+#[cfg(not(target_os = "windows"))]
 #[gpui::test]
 fn no_custom_bar_under_server_decorations(cx: &mut TestAppContext) {
     let mut cx = open(cx, false);
     assert!(cx.debug_bounds("title-bar").is_none());
     assert!(cx.debug_bounds("window-close").is_none());
+}
+
+#[cfg(target_os = "windows")]
+#[gpui::test]
+fn windows_draws_the_bar_under_server_decorations(cx: &mut TestAppContext) {
+    let mut cx = open(cx, false);
+    assert!(cx.debug_bounds("title-bar").is_some());
+    assert!(cx.debug_bounds("window-close").is_some());
 }
 
 #[gpui::test]
@@ -78,6 +89,7 @@ fn controls_sit_on_the_right_in_order(cx: &mut TestAppContext) {
     assert!(close.x > bar.right() - px(150.));
 }
 
+#[cfg(not(target_os = "windows"))]
 #[gpui::test]
 fn close_removes_the_window_even_with_drift(cx: &mut TestAppContext) {
     let mut cx = open(cx, true);
@@ -89,6 +101,7 @@ fn close_removes_the_window_even_with_drift(cx: &mut TestAppContext) {
     assert_eq!(window_count(&mut cx), 0);
 }
 
+#[cfg(not(target_os = "windows"))]
 #[gpui::test]
 #[should_panic(expected = "not implemented")]
 fn minimize_reaches_the_platform(cx: &mut TestAppContext) {
@@ -97,6 +110,7 @@ fn minimize_reaches_the_platform(cx: &mut TestAppContext) {
     click(&mut cx, at);
 }
 
+#[cfg(not(target_os = "windows"))]
 #[gpui::test]
 #[should_panic(expected = "not implemented")]
 fn maximize_reaches_the_platform(cx: &mut TestAppContext) {
@@ -105,6 +119,7 @@ fn maximize_reaches_the_platform(cx: &mut TestAppContext) {
     click(&mut cx, at);
 }
 
+#[cfg(not(target_os = "windows"))]
 #[gpui::test]
 #[should_panic(expected = "not implemented")]
 fn dragging_the_bar_moves_the_window(cx: &mut TestAppContext) {
