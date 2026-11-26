@@ -14,6 +14,10 @@ To build from source, set up the daemon and run the checks, see [docs/install.md
 - All PRs target `develop`.
 - `develop` is merged into `master` for a release.
 
+## Issues
+
+Start the title of a bug report with `[Bug]:`, for example `[Bug]: Daemon crashes on an empty Codex log`.
+
 ## The best way to help
 
 These are the changes most likely to be merged:
@@ -36,6 +40,18 @@ Reporting a bug with good details is often more useful than a PR.
 6. **Show UI changes.** Include before/after screenshots. For anything animated or interactive, include a short video.
 7. **Update docs** if behavior, configuration or installation changes.
 8. **Write clear commits** in the imperative mood: `Fix cost rounding for cached tokens`, not `fixes`.
+9. **Prefix the PR title** with its type: `<type>: <summary>`, for example `fix: Round cached token costs correctly`.
+
+| Prefix     | Use for                                   |
+|------------|-------------------------------------------|
+| `fix`      | Bug fixes                                 |
+| `feat`     | New features or harness support           |
+| `perf`     | Performance improvements                  |
+| `docs`     | Documentation only                        |
+| `refactor` | Code changes that don't change behavior   |
+| `test`     | Tests and fixtures only                   |
+| `ci`       | CI, release workflows and packaging       |
+| `chore`    | Version bumps, dependencies, other upkeep |
 
 At least one maintainer approval is required before merging.
 

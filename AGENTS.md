@@ -104,6 +104,9 @@ prices, cursors or sessions. The most important rules:
   version's files (`releases/download/vX.Y.Z/…-X.Y.Z-…`).
 - One change per PR. No drive-by refactors, mass reformatting or renaming.
 - Commit messages in the imperative mood: `Fix cost rounding for cached tokens`.
+- PR titles start with a type prefix: `fix:`, `feat:`, `perf:`, `docs:`, `refactor:`,
+  `test:`, `ci:` or `chore:`. See [CONTRIBUTING.md](CONTRIBUTING.md#rules-for-a-pr).
+- Bug report issue titles start with `[Bug]:`.
 - Don't add dependencies without a clear reason.
 - Don't commit plans, research notes or scratch files. Track work in issues.
 
