@@ -98,6 +98,8 @@ prices, cursors or sessions. The most important rules:
 ## Git
 
 - Branch from `develop` and target `develop`. `master` is for releases only.
+- To release, merge `develop` into `master` with a merge commit (`git merge --no-ff`),
+  never a fast-forward, and tag that merge commit `vX.Y.Z`.
 - One change per PR. No drive-by refactors, mass reformatting or renaming.
 - Commit messages in the imperative mood: `Fix cost rounding for cached tokens`.
 - Don't add dependencies without a clear reason.
