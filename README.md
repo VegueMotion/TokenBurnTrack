@@ -26,11 +26,11 @@
 
 Download from the [latest release](https://github.com/VegueMotion/TokenBurnTrack/releases/latest):
 
-| Platform | App | Daemon |
+| Platform | App | Download |
 |---|---|---|
-| Windows | `TokenBurnTrack-<version>-windows-x64.exe` | `tbt-daemon-<version>-windows-x64.exe` |
-| macOS | `TokenBurnTrack-<version>-macos-universal.dmg` | inside the app |
-| Linux | `TokenBurnTrack-<version>-x86_64.flatpak` (preferred) or `.AppImage` | Flatpak: a setting; AppImage: `tbt-daemon-<version>-linux-x86_64` |
+| Windows | `TokenBurnTrack-<version>-windows-x64.exe` | [![Download for Windows](https://img.shields.io/badge/Download-0078D4?style=for-the-badge&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgcm9sZT0iaW1nIj48ZyBmaWxsPSIjZmZmIj48cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTEuNCIgaGVpZ2h0PSIxMS40Ii8+PHJlY3QgeD0iMTIuNiIgeT0iMCIgd2lkdGg9IjExLjQiIGhlaWdodD0iMTEuNCIvPjxyZWN0IHg9IjAiIHk9IjEyLjYiIHdpZHRoPSIxMS40IiBoZWlnaHQ9IjExLjQiLz48cmVjdCB4PSIxMi42IiB5PSIxMi42IiB3aWR0aD0iMTEuNCIgaGVpZ2h0PSIxMS40Ii8+PC9nPjwvc3ZnPgo=)](https://github.com/VegueMotion/TokenBurnTrack/releases/latest) |
+| macOS | `TokenBurnTrack-<version>-macos-universal.dmg` | [![Download for macOS](https://img.shields.io/badge/Download-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/VegueMotion/TokenBurnTrack/releases/latest) |
+| Linux | `TokenBurnTrack-<version>-x86_64.flatpak` (preferred) or `.AppImage` | [![Download for Linux](https://img.shields.io/badge/Download-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/VegueMotion/TokenBurnTrack/releases/latest) |
 
 The app syncs on startup, every hour and on *Sync now*, but only while it is open. The
 daemon (`tbt-daemon`) is a small collector without a window that runs once an hour in
