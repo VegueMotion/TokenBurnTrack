@@ -98,9 +98,9 @@ prices, cursors or sessions. The most important rules:
 ## Git
 
 - Branch from `master` and target `master`. `stable` is for releases only.
-- To release, bump the version in `Cargo.toml` on `master`, then merge `master` into
-  `stable` with a merge commit (`git merge --no-ff`), never a fast-forward. The push to
-  `stable` runs the release workflow, which fails if `vX.Y.Z` is already tagged and
+- To release, bump the version in `Cargo.toml` on `master`, then open a PR from `master`
+  into `stable` and merge it with a merge commit (the only method `stable` allows; it
+  can't be pushed to directly). The merge runs the release workflow, which fails if `vX.Y.Z` is already tagged and
   otherwise tags the merge commit and creates the release. Don't tag by hand.
 - After the release workflow succeeds, point the README download buttons at the new
   version's files (`releases/download/vX.Y.Z/…-X.Y.Z-…`) in a PR to `master`.
