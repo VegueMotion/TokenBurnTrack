@@ -120,3 +120,29 @@ jobs:
           case $TAG in *-*) PRERELEASE=--prerelease ;; esac
           gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" --title "$TAG" $PRERELEASE
+
+  readme-links:
+    needs: [version, release]
+    if: ${{ !contains(needs.version.outputs.tag, '-') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: master
+      - name: Point the README download links at the new release
+        env:
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          VERSION=${TAG#v}
+          sed -i -E "s#releases/download/v[0-9][^/]*/TokenBurnTrack-[0-9][^-]*-#releases/download/$TAG/TokenBurnTrack-$VERSION-#g" README.md
+          git diff --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Point README download links at $TAG"
+          for _ in 1 2 3; do
+            git push origin HEAD:master && exit 0
+            git pull --rebase origin master
+          done
+          exit 1
