@@ -7,7 +7,7 @@ use tbt_core::{
 use tbt_store::{
     BranchStats, BucketGroup, CostBucket, EventRow, HarnessConfig, HarnessStatus, IngestRunSummary,
     KpiSummary, ModelStats, ProjectStats, QueryFilter, Result, RunStats, RunTrigger, SessionDetail,
-    SessionRow, TokenSums, UnpricedModel,
+    SessionRow, TokenSums, TypeCostBucket, UnpricedModel,
 };
 
 use super::DataSource;
@@ -521,6 +521,30 @@ impl DataSource for MockData {
             b.cost += e.cost;
             add_tokens(&mut b.tokens, &e.tokens);
             b.events += 1;
+        }
+        Ok(map.into_values().collect())
+    }
+
+    fn type_cost_buckets(&self, filter: &QueryFilter) -> Result<Vec<TypeCostBucket>> {
+        let tz = time_zone(&filter.time_zone);
+        let mut map: BTreeMap<Timestamp, TypeCostBucket> = BTreeMap::new();
+        for e in self.in_filter(filter) {
+            let Some([i, o, cw, cr]) = MODELS[e.model].price else {
+                continue;
+            };
+            let start = bucket_start(e.ts, filter.bucket, &tz);
+            let b = map.entry(start).or_insert_with(|| TypeCostBucket {
+                start,
+                input: Micros::ZERO,
+                output: Micros::ZERO,
+                cache_write: Micros::ZERO,
+                cache_read: Micros::ZERO,
+            });
+            let part = |n: u64, rate: f64| Micros((n as f64 * rate).round() as i64);
+            b.input += part(e.tokens.input, i);
+            b.output += part(e.tokens.output, o);
+            b.cache_write += part(e.tokens.cache_write(), cw);
+            b.cache_read += part(e.tokens.cache_read, cr);
         }
         Ok(map.into_values().collect())
     }

@@ -13,7 +13,7 @@ use jiff::tz::TimeZone;
 use tbt_core::TimeRange;
 use tbt_store::CostBucket;
 
-use super::format::{fmt_count, fmt_usd, micros_to_usd};
+use super::format::{fmt_count, fmt_tokens, fmt_usd, micros_to_usd};
 use super::paint::{
     Align, ChartTheme, Hover, LABEL_SIZE, bounds_size, insert_hitbox, paint_text, paint_tooltip,
     rect_bounds,
@@ -44,15 +44,17 @@ pub const HEATMAP_HEIGHT: f32 = TOP + 7.0 * MAX_STEP;
 pub enum HeatMetric {
     #[default]
     Cost,
+    Tokens,
     Calls,
 }
 
 impl HeatMetric {
-    pub const ALL: [HeatMetric; 2] = [HeatMetric::Cost, HeatMetric::Calls];
+    pub const ALL: [HeatMetric; 3] = [HeatMetric::Cost, HeatMetric::Tokens, HeatMetric::Calls];
 
     pub fn label(self) -> &'static str {
         match self {
             HeatMetric::Cost => "Cost",
+            HeatMetric::Tokens => "Tokens",
             HeatMetric::Calls => "Calls",
         }
     }
@@ -60,6 +62,7 @@ impl HeatMetric {
     pub fn fmt(self, v: f64) -> String {
         match self {
             HeatMetric::Cost => fmt_usd(v),
+            HeatMetric::Tokens => fmt_tokens(v.max(0.0).round() as u64),
             HeatMetric::Calls => fmt_count(v.max(0.0).round() as u64),
         }
     }
@@ -116,6 +119,7 @@ pub fn intensity(v: f64, max: f64) -> f32 {
 pub struct HeatmapChart {
     pub first: Date,
     pub cost: Vec<f64>,
+    pub tokens: Vec<u64>,
     pub calls: Vec<u64>,
 }
 
@@ -145,12 +149,14 @@ impl HeatmapChart {
         let mut chart = HeatmapChart {
             first,
             cost: vec![0.0; len],
+            tokens: vec![0; len],
             calls: vec![0; len],
         };
         for b in buckets {
             let date = b.start.to_zoned_datetime(tz.clone()).date();
             if let Some(i) = days_between(first, date).filter(|i| *i < len) {
                 chart.cost[i] += micros_to_usd(b.cost);
+                chart.tokens[i] += b.tokens.total();
                 chart.calls[i] += b.events;
             }
         }
@@ -179,6 +185,7 @@ impl HeatmapChart {
     pub fn value(&self, metric: HeatMetric, index: usize) -> f64 {
         match metric {
             HeatMetric::Cost => self.cost.get(index).copied().unwrap_or(0.0),
+            HeatMetric::Tokens => self.tokens.get(index).copied().unwrap_or(0) as f64,
             HeatMetric::Calls => self.calls.get(index).copied().unwrap_or(0) as f64,
         }
     }
@@ -194,8 +201,9 @@ impl HeatmapChart {
             |d| d.strftime("%a %b %-d, %Y").to_string(),
         );
         format!(
-            "{day} · {} · {} {}",
+            "{day} · {} · {} tok · {} {}",
             fmt_usd(self.value(HeatMetric::Cost, index)),
+            fmt_tokens(self.tokens.get(index).copied().unwrap_or(0)),
             fmt_count(calls),
             if calls == 1 { "call" } else { "calls" }
         )
@@ -458,7 +466,10 @@ mod tests {
             start: day.to_zoned_datetime(TimeZone::UTC).unwrap().timestamp(),
             key: "claude_code".to_owned(),
             cost: Micros(usd_cents * 10_000),
-            tokens: TokenSums::default(),
+            tokens: TokenSums {
+                input: events * 100,
+                ..TokenSums::default()
+            },
             events,
         }
     }
@@ -510,6 +521,7 @@ mod tests {
         assert_eq!(chart.calls[365], 15);
         assert_eq!(chart.calls.iter().sum::<u64>(), 17);
         assert_eq!(chart.value(HeatMetric::Calls, 365), 15.0);
+        assert_eq!(chart.value(HeatMetric::Tokens, 365), 1500.0);
         assert_eq!(chart.value(HeatMetric::Cost, 9999), 0.0);
         assert!(!chart.is_empty());
         assert!(HeatmapChart::from_buckets(&[], last, &TimeZone::UTC).is_empty());
@@ -621,9 +633,18 @@ mod tests {
             last,
             &TimeZone::UTC,
         );
-        assert_eq!(chart.tooltip(365), "Tue Nov 24, 2026 · $1.23 · 12 calls");
-        assert_eq!(chart.tooltip(366), "Wed Nov 25, 2026 · $0.00 · 1 call");
-        assert_eq!(chart.tooltip(0), "Mon Nov 24, 2025 · $0.00 · 0 calls");
+        assert_eq!(
+            chart.tooltip(365),
+            "Tue Nov 24, 2026 · $1.23 · 1.2k tok · 12 calls"
+        );
+        assert_eq!(
+            chart.tooltip(366),
+            "Wed Nov 25, 2026 · $0.00 · 100 tok · 1 call"
+        );
+        assert_eq!(
+            chart.tooltip(0),
+            "Mon Nov 24, 2025 · $0.00 · 0 tok · 0 calls"
+        );
     }
 
     #[test]

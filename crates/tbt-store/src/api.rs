@@ -203,6 +203,10 @@ impl Store {
         query::cost_buckets(&self.conn, filter, group)
     }
 
+    pub fn type_cost_buckets(&self, filter: &QueryFilter) -> Result<Vec<TypeCostBucket>> {
+        query::type_cost_buckets(&self.conn, filter)
+    }
+
     pub fn heatmap(&self, filter: &QueryFilter) -> Result<Vec<HeatCell>> {
         query::heatmap(&self.conn, filter)
     }
@@ -475,6 +479,15 @@ pub struct CostBucket {
     pub cost: Micros,
     pub tokens: TokenSums,
     pub events: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TypeCostBucket {
+    pub start: Timestamp,
+    pub input: Micros,
+    pub output: Micros,
+    pub cache_write: Micros,
+    pub cache_read: Micros,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -16,7 +16,9 @@ use tbt_store::{BucketGroup, BucketSize, KpiSummary, ModelStats, ProjectStats, Q
 use super::{Loadable, spawn_load};
 use crate::app_state::{AppState, AppStateEvent};
 use crate::charts::format::{fmt_count, fmt_micros, fmt_pct, fmt_tokens, fmt_usd, micros_to_usd};
-use crate::charts::time::{bucket_label, bucket_starts, bucket_title, pivot, time_zone};
+use crate::charts::time::{
+    bucket_index, bucket_label, bucket_starts, bucket_title, pivot, time_zone,
+};
 use crate::charts::{
     BarChart, ChartTheme, HeatMetric, HeatmapChart, Hover, LineChart, LineMode, Series, ValueKind,
     bar_chart, legend, line_chart, sparkline,
@@ -43,6 +45,13 @@ impl Metric {
             Metric::Tokens => "Tokens",
         }
     }
+
+    fn heat_metric(self) -> HeatMetric {
+        match self {
+            Metric::Cost => HeatMetric::Cost,
+            Metric::Tokens => HeatMetric::Tokens,
+        }
+    }
 }
 
 fn top_n<T: Clone>(by_cost: &[T], tokens: impl Fn(&T) -> u64) -> (Vec<T>, Vec<T>) {
@@ -57,6 +66,7 @@ pub struct DashboardData {
     pub cost: BarChart,
     pub harness_tokens: BarChart,
     pub tokens: LineChart,
+    pub type_cost: LineChart,
     pub heat: HeatmapChart,
     pub cost_per_bucket: Vec<f64>,
     pub top_models: Vec<ModelStats>,
@@ -67,6 +77,13 @@ pub struct DashboardData {
 }
 
 impl DashboardData {
+    pub fn type_chart(&self, metric: Metric) -> &LineChart {
+        match metric {
+            Metric::Cost => &self.type_cost,
+            Metric::Tokens => &self.tokens,
+        }
+    }
+
     pub fn harness_chart(&self, metric: Metric) -> &BarChart {
         match metric {
             Metric::Cost => &self.cost,
@@ -145,6 +162,24 @@ impl DashboardData {
             })
             .collect();
 
+        let type_costs = data.type_cost_buckets(filter)?;
+        let type_cost_series: Vec<Series> = TokenKind::ALL
+            .iter()
+            .map(|kind| {
+                let mut values = vec![0.0; starts.len()];
+                for b in &type_costs {
+                    if let Some(i) = bucket_index(&starts, b.start) {
+                        values[i] += micros_to_usd(kind.cost_of(b));
+                    }
+                }
+                Series {
+                    name: kind.label().into(),
+                    color: kind.color(),
+                    values,
+                }
+            })
+            .collect();
+
         let last_day = (filter.range.end - SignedDuration::from_secs(1))
             .to_zoned_datetime(tz.clone())
             .date();
@@ -179,10 +214,17 @@ impl DashboardData {
                 kind: ValueKind::Tokens,
             },
             tokens: LineChart {
-                labels,
-                titles,
+                labels: labels.clone(),
+                titles: titles.clone(),
                 series: token_series,
                 kind: ValueKind::Tokens,
+                mode: LineMode::StackedArea,
+            },
+            type_cost: LineChart {
+                labels,
+                titles,
+                series: type_cost_series,
+                kind: ValueKind::Usd,
                 mode: LineMode::StackedArea,
             },
             heat,
@@ -390,8 +432,9 @@ impl DashboardPage {
             harness.series.iter().map(|s| (s.name.clone(), s.color)),
             t.muted_foreground,
         );
+        let by_type = d.type_chart(metric);
         let token_legend = legend(
-            d.tokens.series.iter().map(|s| (s.name.clone(), s.color)),
+            by_type.series.iter().map(|s| (s.name.clone(), s.color)),
             t.muted_foreground,
         );
 
@@ -464,6 +507,7 @@ impl DashboardPage {
             .gap_1()
             .children(Metric::ALL.into_iter().map(|m| {
                 let cell = self.metric.clone();
+                let heat = self.heat_metric.clone();
                 Button::new(SharedString::from(format!(
                     "dashboard-metric-{}",
                     m.label()
@@ -474,12 +518,13 @@ impl DashboardPage {
                 .label(m.label())
                 .on_click(move |_, window, _| {
                     cell.set(m);
+                    heat.set(m.heat_metric());
                     window.refresh();
                 })
             }));
-        let harness_title = match metric {
-            Metric::Cost => "Cost by harness",
-            Metric::Tokens => "Tokens by harness",
+        let (harness_title, type_title) = match metric {
+            Metric::Cost => ("Cost by harness", "Cost by type"),
+            Metric::Tokens => ("Tokens by harness", "Tokens by type"),
         };
 
         v_flex()
@@ -496,8 +541,8 @@ impl DashboardPage {
                 ),
             )
             .child(
-                ui::card("Tokens by type", cx).child(token_legend).child(
-                    line_chart(d.tokens.clone(), self.hovers.tokens.clone(), theme)
+                ui::card(type_title, cx).child(token_legend).child(
+                    line_chart(by_type.clone(), self.hovers.tokens.clone(), theme)
                         .w_full()
                         .h(px(220.)),
                 ),
@@ -577,6 +622,13 @@ mod tests {
         assert_eq!(tokens as u64, d.kpi.tokens.total());
         assert!(d.top_models.len() <= TOP_N);
         assert!(d.top_models_by_tokens.len() <= TOP_N);
+        let type_cost: f64 = d
+            .type_cost
+            .series
+            .iter()
+            .flat_map(|s| s.values.iter())
+            .sum();
+        assert!((type_cost - micros_to_usd(d.kpi.cost)).abs() < 0.01);
         let harness_tokens: f64 = d
             .harness_tokens
             .series

@@ -355,3 +355,42 @@ fn project_branches_follow_event_projects() {
     assert_eq!(cost("/home/u/repo"), Micros(107));
     assert_eq!(cost("/home/u/repo/sub"), Micros(40));
 }
+
+#[test]
+fn type_cost_buckets_split_cost_by_token_type() {
+    let mut db = Db::new();
+    let price_id = db
+        .store
+        .insert_price(&price("claude-sonnet-4-5", "3", Some("0.30")))
+        .unwrap();
+    let events = [
+        priced(
+            event("k1", "s1", "2026-01-01T22:30:00Z"),
+            1395,
+            Some(price_id.0),
+        ),
+        priced(
+            event("k2", "s1", "2026-01-01T23:10:00Z"),
+            1395,
+            Some(price_id.0),
+        ),
+        PricedEvent::unpriced(event("k3", "s1", "2026-01-01T23:20:00Z")),
+    ];
+    db.ingest("/s1.jsonl", &events);
+    let mut f = two_days();
+    f.time_zone = "UTC".into();
+    let b = db.store.type_cost_buckets(&f).unwrap();
+    let got: Vec<_> = b
+        .iter()
+        .map(|b| {
+            (
+                b.start,
+                b.input.0,
+                b.output.0,
+                b.cache_write.0,
+                b.cache_read.0,
+            )
+        })
+        .collect();
+    assert_eq!(got, [(ts("2026-01-01T00:00:00Z"), 600, 1500, 90, 600)]);
+}

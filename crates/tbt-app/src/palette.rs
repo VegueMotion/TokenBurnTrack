@@ -74,6 +74,15 @@ impl TokenKind {
         categorical(self as usize)
     }
 
+    pub fn cost_of(self, b: &tbt_store::TypeCostBucket) -> tbt_core::Micros {
+        match self {
+            TokenKind::Input => b.input,
+            TokenKind::Output => b.output,
+            TokenKind::CacheWrite => b.cache_write,
+            TokenKind::CacheRead => b.cache_read,
+        }
+    }
+
     pub fn of(self, t: &tbt_store::TokenSums) -> u64 {
         match self {
             TokenKind::Input => t.input,
