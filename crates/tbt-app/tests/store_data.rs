@@ -68,6 +68,14 @@ fn assert_buckets_match_kpi(d: &DashboardData) {
     );
     let tokens: f64 = d.tokens.series.iter().flat_map(|s| s.values.iter()).sum();
     assert_eq!(tokens as u64, d.kpi.tokens.total());
+    assert_close(
+        d.type_cost
+            .series
+            .iter()
+            .flat_map(|s| s.values.iter())
+            .sum(),
+        usd,
+    );
 }
 
 #[test]

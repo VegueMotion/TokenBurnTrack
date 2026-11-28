@@ -1,7 +1,7 @@
 use gpui::{
     AnyElement, App, Hsla, IntoElement, ParentElement, SharedString, Styled, div, prelude::*, px,
 };
-use gpui_component::{ActiveTheme, StyledExt, h_flex, v_flex};
+use gpui_component::{ActiveTheme, StyledExt, h_flex, scroll::ScrollableElement, v_flex};
 
 pub fn card(title: impl Into<SharedString>, cx: &App) -> gpui::Div {
     let t = cx.theme();
@@ -39,7 +39,11 @@ pub fn status_message(text: impl Into<SharedString>, cx: &App) -> AnyElement {
 }
 
 pub fn page_scroll(id: &'static str, content: impl IntoElement) -> impl IntoElement {
-    div().id(id).size_full().overflow_y_scroll().child(content)
+    div()
+        .size_full()
+        .overflow_y_scrollbar()
+        .id(id)
+        .child(content)
 }
 
 pub fn swatch(color: Hsla) -> impl IntoElement {
