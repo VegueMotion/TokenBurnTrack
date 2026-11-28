@@ -102,8 +102,8 @@ prices, cursors or sessions. The most important rules:
   `stable` with `git merge --no-ff` and push `stable`. The push runs the release workflow,
   which fails if `vX.Y.Z` is already tagged and otherwise tags the merge commit and
   creates the release. Don't tag by hand.
-- After the release workflow succeeds, point the README download buttons at the new
-  version's files (`releases/download/vX.Y.Z/…-X.Y.Z-…`) in a PR to `master`.
+- After a non-prerelease release, the workflow commits the new version's README download
+  links to `master`. Pull before continuing work.
 - One change per PR. No drive-by refactors, mass reformatting or renaming.
 - Commit messages in the imperative mood: `Fix cost rounding for cached tokens`.
 - PR titles start with a type prefix: `fix:`, `feat:`, `perf:`, `docs:`, `refactor:`,
