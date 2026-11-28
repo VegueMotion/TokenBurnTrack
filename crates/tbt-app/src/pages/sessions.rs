@@ -7,6 +7,7 @@ use gpui::{
     Styled, Subscription, Task, UniformListScrollHandle, Window, div, prelude::*, px, uniform_list,
 };
 use gpui_component::input::{Input, InputEvent, InputState};
+use gpui_component::scroll::ScrollableElement;
 use gpui_component::{ActiveTheme, h_flex, v_flex};
 use jiff::tz::TimeZone;
 use tbt_core::Micros;
@@ -371,16 +372,22 @@ impl Render for SessionsPage {
             Loadable::Ready(_) if self.view.indices.is_empty() => {
                 ui::status_message("No sessions match", cx)
             }
-            Loadable::Ready(_) => uniform_list(
-                "sessions",
-                self.view.indices.len(),
-                cx.processor(|this, range: Range<usize>, _window, cx| {
-                    range.map(|ix| this.render_row(ix, cx)).collect()
-                }),
-            )
-            .track_scroll(&self.scroll)
-            .size_full()
-            .into_any_element(),
+            Loadable::Ready(_) => div()
+                .relative()
+                .size_full()
+                .child(
+                    uniform_list(
+                        "sessions",
+                        self.view.indices.len(),
+                        cx.processor(|this, range: Range<usize>, _window, cx| {
+                            range.map(|ix| this.render_row(ix, cx)).collect()
+                        }),
+                    )
+                    .track_scroll(&self.scroll)
+                    .size_full(),
+                )
+                .vertical_scrollbar(&self.scroll)
+                .into_any_element(),
         };
         v_flex()
             .size_full()

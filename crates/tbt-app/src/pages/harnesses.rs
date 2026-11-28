@@ -8,6 +8,7 @@ use gpui::{
 };
 use gpui_component::button::{Button, ButtonVariants};
 use gpui_component::input::{InputEvent, Textarea, TextareaState};
+use gpui_component::scroll::ScrollableElement;
 use gpui_component::switch::Switch;
 use gpui_component::{ActiveTheme, Disableable, Sizable, StyledExt, h_flex, v_flex};
 use jiff::Timestamp;
@@ -557,9 +558,9 @@ impl HarnessesPage {
                 .when(!h.last_warnings.is_empty(), |d| {
                     d.child(
                         div()
-                            .id(("warnings", ix))
                             .max_h(px(140.))
-                            .overflow_y_scroll()
+                            .overflow_y_scrollbar()
+                            .id(("warnings", ix))
                             .rounded_md()
                             .border_1()
                             .border_color(border)
