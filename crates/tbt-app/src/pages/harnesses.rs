@@ -557,23 +557,22 @@ impl HarnessesPage {
                 ))
                 .when(!h.last_warnings.is_empty(), |d| {
                     d.child(
-                        div()
-                            .max_h(px(140.))
-                            .overflow_y_scrollbar()
-                            .id(("warnings", ix))
-                            .rounded_md()
-                            .border_1()
-                            .border_color(border)
-                            .p_2()
-                            .children(h.last_warnings.iter().map(|w| {
-                                let error = is_error(w);
-                                div()
-                                    .text_xs()
-                                    .font_family("monospace")
-                                    .text_color(if error { danger } else { warn })
-                                    .when(error, |d| d.font_semibold())
-                                    .child(warning_text(w))
-                            })),
+                        div().rounded_md().border_1().border_color(border).child(
+                            div()
+                                .max_h(px(140.))
+                                .overflow_y_scrollbar()
+                                .id(("warnings", ix))
+                                .p_2()
+                                .children(h.last_warnings.iter().map(|w| {
+                                    let error = is_error(w);
+                                    div()
+                                        .text_xs()
+                                        .font_family("monospace")
+                                        .text_color(if error { danger } else { warn })
+                                        .when(error, |d| d.font_semibold())
+                                        .child(warning_text(w))
+                                })),
+                        ),
                     )
                 });
         v_flex()
