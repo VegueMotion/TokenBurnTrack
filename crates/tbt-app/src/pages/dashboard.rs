@@ -503,7 +503,7 @@ impl DashboardPage {
             });
 
         let toggle = h_flex()
-            .justify_end()
+            .justify_center()
             .gap_1()
             .children(Metric::ALL.into_iter().map(|m| {
                 let cell = self.metric.clone();
