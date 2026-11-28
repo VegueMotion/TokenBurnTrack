@@ -6,6 +6,7 @@ use gpui::{
     Subscription, Task, UniformListScrollHandle, Window, div, prelude::*, px, uniform_list,
 };
 use gpui_component::button::{Button, ButtonVariants};
+use gpui_component::scroll::ScrollableElement;
 use gpui_component::{ActiveTheme, StyledExt, h_flex, v_flex};
 use jiff::Timestamp;
 use jiff::tz::TimeZone;
@@ -775,17 +776,21 @@ impl SessionDetailPage {
         let height = (d.messages.len() as f32 * MESSAGE_ROW_HEIGHT).min(360.0);
         card.child(
             v_flex().child(header).child(
-                div().h(px(height)).child(
-                    uniform_list(
-                        "session-messages",
-                        d.messages.len(),
-                        cx.processor(|this, range: Range<usize>, _window, cx| {
-                            range.map(|ix| this.render_message_row(ix, cx)).collect()
-                        }),
+                div()
+                    .relative()
+                    .h(px(height))
+                    .child(
+                        uniform_list(
+                            "session-messages",
+                            d.messages.len(),
+                            cx.processor(|this, range: Range<usize>, _window, cx| {
+                                range.map(|ix| this.render_message_row(ix, cx)).collect()
+                            }),
+                        )
+                        .track_scroll(&self.messages_scroll)
+                        .size_full(),
                     )
-                    .track_scroll(&self.messages_scroll)
-                    .size_full(),
-                ),
+                    .vertical_scrollbar(&self.messages_scroll),
             ),
         )
         .into_any_element()
