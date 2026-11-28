@@ -3,15 +3,15 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use jiff::tz::TimeZone;
 use rusqlite::{Connection, OptionalExtension, Row};
 use tbt_core::{
-    Decimal, EventId, HarnessId, Hour, MessageKind, MessageRole, Micros, ModelPrice, PriceId,
-    ProjectId, SessionId, Timestamp, TokenCounts,
+    Decimal, EventId, HarnessId, Hour, LongContextTier, MessageKind, MessageRole, Micros,
+    ModelPrice, PriceId, ProjectId, SessionId, Timestamp, TokenCounts,
 };
 
 use crate::admin::{harness_config, model_prices, parse_warnings, with_roots};
 use crate::api::{
     BranchStats, BucketGroup, BucketSize, CostBucket, EventRow, HarnessStatus, HeatCell,
     KpiSummary, MessageRow, ModelStats, ProjectStats, QueryFilter, Result, SessionDetail,
-    SessionRow, TokenSums, UnpricedModel,
+    SessionRow, TokenSums, TypeCostBucket, UnpricedModel,
 };
 use crate::db::{DbTs, Params, corrupt, time_zone, to_u64, ts_opt};
 
@@ -110,10 +110,7 @@ pub(crate) fn cost_buckets(
          WHERE {} GROUP BY h.hour, {key_sql}",
         hourly_where(filter, &mut p)
     );
-    let tz = match filter.bucket {
-        BucketSize::Hour => None,
-        BucketSize::Day => Some(time_zone(&filter.time_zone)?),
-    };
+    let mut starts = BucketStarts::new(filter)?;
     let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map(p.iter(), |r| {
         Ok((
@@ -122,21 +119,10 @@ pub(crate) fn cost_buckets(
             sums_at(r, 2)?,
         ))
     })?;
-    let mut day_of: HashMap<Timestamp, Timestamp> = HashMap::new();
     let mut out: BTreeMap<(Timestamp, String), CostBucket> = BTreeMap::new();
     for row in rows {
         let (hour, key, (events, tokens, cost)) = row?;
-        let start = match &tz {
-            None => hour,
-            Some(tz) => match day_of.get(&hour) {
-                Some(d) => *d,
-                None => {
-                    let d = local_day_start(tz, hour)?;
-                    day_of.insert(hour, d);
-                    d
-                }
-            },
-        };
+        let start = starts.of(hour)?;
         let b = out
             .entry((start, key.clone()))
             .or_insert_with(|| CostBucket {
@@ -151,6 +137,108 @@ pub(crate) fn cost_buckets(
         add_sums(&mut b.tokens, &tokens);
     }
     Ok(out.into_values().collect())
+}
+
+struct BucketStarts {
+    tz: Option<TimeZone>,
+    day_of: HashMap<Timestamp, Timestamp>,
+}
+
+impl BucketStarts {
+    fn new(filter: &QueryFilter) -> Result<BucketStarts> {
+        let tz = match filter.bucket {
+            BucketSize::Hour => None,
+            BucketSize::Day => Some(time_zone(&filter.time_zone)?),
+        };
+        Ok(BucketStarts {
+            tz,
+            day_of: HashMap::new(),
+        })
+    }
+
+    fn of(&mut self, hour: Timestamp) -> Result<Timestamp> {
+        let Some(tz) = &self.tz else {
+            return Ok(hour);
+        };
+        if let Some(d) = self.day_of.get(&hour) {
+            return Ok(*d);
+        }
+        let d = local_day_start(tz, hour)?;
+        self.day_of.insert(hour, d);
+        Ok(d)
+    }
+}
+
+#[derive(Default)]
+struct TypeCostAgg {
+    input: Decimal,
+    output: Decimal,
+    cache_read: Decimal,
+    cost: Micros,
+}
+
+pub(crate) fn type_cost_buckets(
+    conn: &Connection,
+    filter: &QueryFilter,
+) -> Result<Vec<TypeCostBucket>> {
+    let prices: HashMap<i64, ModelPrice> = model_prices(conn)?
+        .into_iter()
+        .filter_map(|p| p.id.map(|id| (id.0, p)))
+        .collect();
+    let mut p = Params::default();
+    let sql = format!(
+        "SELECT h.hour, h.price_id, h.over_tier, SUM(h.input_tokens), SUM(h.output_tokens),
+                SUM(h.cache_read_tokens), SUM(h.cost_micros)
+         FROM hourly_model_usage h WHERE {} AND h.price_id != 0
+         GROUP BY h.hour, h.price_id, h.over_tier",
+        hourly_where(filter, &mut p)
+    );
+    let mut starts = BucketStarts::new(filter)?;
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(p.iter(), |r| {
+        Ok((
+            r.get::<_, DbTs>(0)?.0,
+            r.get::<_, i64>(1)?,
+            r.get::<_, bool>(2)?,
+            [r.get::<_, i64>(3)?, r.get(4)?, r.get(5)?],
+            Micros(r.get(6)?),
+        ))
+    })?;
+    let mut out: BTreeMap<Timestamp, TypeCostAgg> = BTreeMap::new();
+    for row in rows {
+        let (hour, price_id, over_tier, [input, output, cache_read], cost) = row?;
+        let Some(price) = prices.get(&price_id) else {
+            continue;
+        };
+        let tier = price.long_context.as_ref().filter(|_| over_tier);
+        let rate =
+            |r: Decimal, m: fn(&LongContextTier) -> Decimal| r * tier.map_or(Decimal::ONE, m);
+        let input_rate = rate(price.input_per_mtok, |lc| lc.input);
+        let cache_read_rate = price
+            .cache_read_per_mtok
+            .map_or(input_rate, |r| rate(r, |lc| lc.cache_read));
+        let a = out.entry(starts.of(hour)?).or_default();
+        a.input += Decimal::from(input) * input_rate;
+        a.output += Decimal::from(output) * rate(price.output_per_mtok, |lc| lc.output);
+        a.cache_read += Decimal::from(cache_read) * cache_read_rate;
+        a.cost += cost;
+    }
+    Ok(out
+        .into_iter()
+        .map(|(start, a)| {
+            let input = Micros::from_micros_decimal(a.input);
+            let output = Micros::from_micros_decimal(a.output);
+            let cache_read = Micros::from_micros_decimal(a.cache_read);
+            let cache_write = Micros((a.cost.0 - input.0 - output.0 - cache_read.0).max(0));
+            TypeCostBucket {
+                start,
+                input,
+                output,
+                cache_write,
+                cache_read,
+            }
+        })
+        .collect())
 }
 
 pub(crate) fn heatmap(conn: &Connection, filter: &QueryFilter) -> Result<Vec<HeatCell>> {

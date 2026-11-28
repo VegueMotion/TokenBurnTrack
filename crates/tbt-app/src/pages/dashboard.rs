@@ -1,4 +1,5 @@
 use std::cell::Cell;
+use std::cmp::Reverse;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -6,7 +7,8 @@ use gpui::{
     AnyElement, App, Context, Entity, Hsla, IntoElement, ParentElement, Render, SharedString,
     Styled, Subscription, Task, Window, div, px,
 };
-use gpui_component::{ActiveTheme, StyledExt, h_flex, v_flex};
+use gpui_component::button::{Button, ButtonVariants};
+use gpui_component::{ActiveTheme, Selectable, Sizable, StyledExt, h_flex, v_flex};
 use jiff::SignedDuration;
 use tbt_core::HarnessId;
 use tbt_store::{BucketGroup, BucketSize, KpiSummary, ModelStats, ProjectStats, QueryFilter};
@@ -14,7 +16,9 @@ use tbt_store::{BucketGroup, BucketSize, KpiSummary, ModelStats, ProjectStats, Q
 use super::{Loadable, spawn_load};
 use crate::app_state::{AppState, AppStateEvent};
 use crate::charts::format::{fmt_count, fmt_micros, fmt_pct, fmt_tokens, fmt_usd, micros_to_usd};
-use crate::charts::time::{bucket_label, bucket_starts, bucket_title, pivot, time_zone};
+use crate::charts::time::{
+    bucket_index, bucket_label, bucket_starts, bucket_title, pivot, time_zone,
+};
 use crate::charts::{
     BarChart, ChartTheme, HeatMetric, HeatmapChart, Hover, LineChart, LineMode, Series, ValueKind,
     bar_chart, legend, line_chart, sparkline,
@@ -25,15 +29,81 @@ use crate::ui;
 
 const TOP_N: usize = 6;
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Metric {
+    #[default]
+    Cost,
+    Tokens,
+}
+
+impl Metric {
+    pub const ALL: [Metric; 2] = [Metric::Cost, Metric::Tokens];
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Metric::Cost => "Cost",
+            Metric::Tokens => "Tokens",
+        }
+    }
+
+    fn heat_metric(self) -> HeatMetric {
+        match self {
+            Metric::Cost => HeatMetric::Cost,
+            Metric::Tokens => HeatMetric::Tokens,
+        }
+    }
+}
+
+fn top_n<T: Clone>(by_cost: &[T], tokens: impl Fn(&T) -> u64) -> (Vec<T>, Vec<T>) {
+    let mut by_tokens = by_cost.to_vec();
+    by_tokens.sort_by_key(|x| Reverse(tokens(x)));
+    by_tokens.truncate(TOP_N);
+    (by_cost.iter().take(TOP_N).cloned().collect(), by_tokens)
+}
+
 pub struct DashboardData {
     pub kpi: KpiSummary,
     pub cost: BarChart,
+    pub harness_tokens: BarChart,
     pub tokens: LineChart,
+    pub type_cost: LineChart,
     pub heat: HeatmapChart,
     pub cost_per_bucket: Vec<f64>,
     pub top_models: Vec<ModelStats>,
     pub top_projects: Vec<ProjectStats>,
+    pub top_models_by_tokens: Vec<ModelStats>,
+    pub top_projects_by_tokens: Vec<ProjectStats>,
     pub no_data: bool,
+}
+
+impl DashboardData {
+    pub fn type_chart(&self, metric: Metric) -> &LineChart {
+        match metric {
+            Metric::Cost => &self.type_cost,
+            Metric::Tokens => &self.tokens,
+        }
+    }
+
+    pub fn harness_chart(&self, metric: Metric) -> &BarChart {
+        match metric {
+            Metric::Cost => &self.cost,
+            Metric::Tokens => &self.harness_tokens,
+        }
+    }
+
+    pub fn models(&self, metric: Metric) -> &[ModelStats] {
+        match metric {
+            Metric::Cost => &self.top_models,
+            Metric::Tokens => &self.top_models_by_tokens,
+        }
+    }
+
+    pub fn projects(&self, metric: Metric) -> &[ProjectStats] {
+        match metric {
+            Metric::Cost => &self.top_projects,
+            Metric::Tokens => &self.top_projects_by_tokens,
+        }
+    }
 }
 
 impl DashboardData {
@@ -52,18 +122,21 @@ impl DashboardData {
             .collect();
 
         let buckets = data.cost_buckets(filter, BucketGroup::Harness)?;
-        let by_harness = pivot(&buckets, &starts, |b| micros_to_usd(b.cost));
-        let cost_series: Vec<Series> = by_harness
-            .into_iter()
-            .map(|(key, values)| {
-                let id = HarnessId::new(key);
-                Series {
-                    name: harness_label(&id).into(),
-                    color: harness_color(&id),
-                    values,
-                }
-            })
-            .collect();
+        let harness_series = |value: fn(&tbt_store::CostBucket) -> f64| -> Vec<Series> {
+            pivot(&buckets, &starts, value)
+                .into_iter()
+                .map(|(key, values)| {
+                    let id = HarnessId::new(key);
+                    Series {
+                        name: harness_label(&id).into(),
+                        color: harness_color(&id),
+                        values,
+                    }
+                })
+                .collect()
+        };
+        let cost_series = harness_series(|b| micros_to_usd(b.cost));
+        let harness_token_series = harness_series(|b| b.tokens.total() as f64);
         let cost_per_bucket = crate::charts::stack::totals(
             &cost_series
                 .iter()
@@ -89,6 +162,24 @@ impl DashboardData {
             })
             .collect();
 
+        let type_costs = data.type_cost_buckets(filter)?;
+        let type_cost_series: Vec<Series> = TokenKind::ALL
+            .iter()
+            .map(|kind| {
+                let mut values = vec![0.0; starts.len()];
+                for b in &type_costs {
+                    if let Some(i) = bucket_index(&starts, b.start) {
+                        values[i] += micros_to_usd(kind.cost_of(b));
+                    }
+                }
+                Series {
+                    name: kind.label().into(),
+                    color: kind.color(),
+                    values,
+                }
+            })
+            .collect();
+
         let last_day = (filter.range.end - SignedDuration::from_secs(1))
             .to_zoned_datetime(tz.clone())
             .date();
@@ -103,10 +194,10 @@ impl DashboardData {
             &tz,
         );
 
-        let mut top_models = data.model_stats(filter)?;
-        top_models.truncate(TOP_N);
-        let mut top_projects = data.project_stats(filter)?;
-        top_projects.truncate(TOP_N);
+        let (top_models, top_models_by_tokens) =
+            top_n(&data.model_stats(filter)?, |m| m.tokens.total());
+        let (top_projects, top_projects_by_tokens) =
+            top_n(&data.project_stats(filter)?, |p| p.tokens.total());
 
         Ok(DashboardData {
             kpi,
@@ -116,17 +207,32 @@ impl DashboardData {
                 series: cost_series,
                 kind: ValueKind::Usd,
             },
+            harness_tokens: BarChart {
+                labels: labels.clone(),
+                titles: titles.clone(),
+                series: harness_token_series,
+                kind: ValueKind::Tokens,
+            },
             tokens: LineChart {
-                labels,
-                titles,
+                labels: labels.clone(),
+                titles: titles.clone(),
                 series: token_series,
                 kind: ValueKind::Tokens,
+                mode: LineMode::StackedArea,
+            },
+            type_cost: LineChart {
+                labels,
+                titles,
+                series: type_cost_series,
+                kind: ValueKind::Usd,
                 mode: LineMode::StackedArea,
             },
             heat,
             cost_per_bucket,
             top_models,
             top_projects,
+            top_models_by_tokens,
+            top_projects_by_tokens,
             no_data,
         })
     }
@@ -149,6 +255,7 @@ pub struct DashboardPage {
     state: Loadable<DashboardData>,
     hovers: Hovers,
     heat_metric: Rc<Cell<HeatMetric>>,
+    metric: Rc<Cell<Metric>>,
     _load: Task<()>,
     _subscription: Subscription,
 }
@@ -169,6 +276,7 @@ impl DashboardPage {
             state: Loadable::Loading,
             hovers: Hovers::default(),
             heat_metric: Rc::default(),
+            metric: Rc::default(),
             _load: Task::ready(()),
             _subscription: subscription,
         };
@@ -318,33 +426,44 @@ impl DashboardPage {
                 cx,
             ));
 
+        let metric = self.metric.get();
+        let harness = d.harness_chart(metric);
         let cost_legend = legend(
-            d.cost.series.iter().map(|s| (s.name.clone(), s.color)),
+            harness.series.iter().map(|s| (s.name.clone(), s.color)),
             t.muted_foreground,
         );
+        let by_type = d.type_chart(metric);
         let token_legend = legend(
-            d.tokens.series.iter().map(|s| (s.name.clone(), s.color)),
+            by_type.series.iter().map(|s| (s.name.clone(), s.color)),
             t.muted_foreground,
         );
 
-        let max_model = d
-            .top_models
-            .first()
-            .map(|m| micros_to_usd(m.cost))
-            .unwrap_or(0.0);
+        let models = d.models(metric);
+        let model_value = |m: &ModelStats| match metric {
+            Metric::Cost => micros_to_usd(m.cost),
+            Metric::Tokens => m.tokens.total() as f64,
+        };
+        let max_model = models.first().map(model_value).unwrap_or(0.0);
         let models = ui::card("Top models", cx)
             .flex_1()
-            .children(if d.top_models.is_empty() {
+            .children(if models.is_empty() {
                 vec![ui::muted_text("No usage in range", cx).into_any_element()]
             } else {
-                d.top_models
+                models
                     .iter()
                     .map(|m| {
+                        let (detail, value) = match metric {
+                            Metric::Cost => (
+                                format!("{} tok", fmt_tokens(m.tokens.total())),
+                                fmt_micros(m.cost),
+                            ),
+                            Metric::Tokens => (fmt_micros(m.cost), fmt_tokens(m.tokens.total())),
+                        };
                         ranked_row(
                             m.model.clone(),
-                            format!("{} tok", fmt_tokens(m.tokens.total())),
-                            fmt_micros(m.cost),
-                            safe_ratio(micros_to_usd(m.cost), max_model),
+                            detail,
+                            value,
+                            safe_ratio(model_value(m), max_model),
                             categorical(0),
                             cx,
                         )
@@ -352,48 +471,78 @@ impl DashboardPage {
                     })
                     .collect()
             });
-        let max_project = d
-            .top_projects
-            .first()
-            .map(|p| micros_to_usd(p.cost))
-            .unwrap_or(0.0);
-        let projects =
-            ui::card("Top projects", cx)
-                .flex_1()
-                .children(if d.top_projects.is_empty() {
-                    vec![ui::muted_text("No usage in range", cx).into_any_element()]
-                } else {
-                    d.top_projects
-                        .iter()
-                        .map(|p| {
-                            ranked_row(
-                                p.name.clone().unwrap_or_else(|| "(no project)".into()),
-                                format!("{} sessions", p.sessions),
-                                fmt_micros(p.cost),
-                                safe_ratio(micros_to_usd(p.cost), max_project),
-                                categorical(0),
-                                cx,
-                            )
-                            .into_any_element()
-                        })
-                        .collect()
-                });
+        let projects = d.projects(metric);
+        let project_value = |p: &ProjectStats| match metric {
+            Metric::Cost => micros_to_usd(p.cost),
+            Metric::Tokens => p.tokens.total() as f64,
+        };
+        let max_project = projects.first().map(project_value).unwrap_or(0.0);
+        let projects = ui::card("Top projects", cx)
+            .flex_1()
+            .children(if projects.is_empty() {
+                vec![ui::muted_text("No usage in range", cx).into_any_element()]
+            } else {
+                projects
+                    .iter()
+                    .map(|p| {
+                        let value = match metric {
+                            Metric::Cost => fmt_micros(p.cost),
+                            Metric::Tokens => fmt_tokens(p.tokens.total()),
+                        };
+                        ranked_row(
+                            p.name.clone().unwrap_or_else(|| "(no project)".into()),
+                            format!("{} sessions", p.sessions),
+                            value,
+                            safe_ratio(project_value(p), max_project),
+                            categorical(0),
+                            cx,
+                        )
+                        .into_any_element()
+                    })
+                    .collect()
+            });
+
+        let toggle = h_flex()
+            .justify_center()
+            .gap_1()
+            .children(Metric::ALL.into_iter().map(|m| {
+                let cell = self.metric.clone();
+                let heat = self.heat_metric.clone();
+                Button::new(SharedString::from(format!(
+                    "dashboard-metric-{}",
+                    m.label()
+                )))
+                .small()
+                .ghost()
+                .selected(metric == m)
+                .label(m.label())
+                .on_click(move |_, window, _| {
+                    cell.set(m);
+                    heat.set(m.heat_metric());
+                    window.refresh();
+                })
+            }));
+        let (harness_title, type_title) = match metric {
+            Metric::Cost => ("Cost by harness", "Cost by type"),
+            Metric::Tokens => ("Tokens by harness", "Tokens by type"),
+        };
 
         v_flex()
             .gap_4()
             .p_4()
             .text_color(fg)
             .child(tiles)
+            .child(toggle)
             .child(
-                ui::card("Cost by harness", cx).child(cost_legend).child(
-                    bar_chart(d.cost.clone(), self.hovers.cost.clone(), theme)
+                ui::card(harness_title, cx).child(cost_legend).child(
+                    bar_chart(harness.clone(), self.hovers.cost.clone(), theme)
                         .w_full()
                         .h(px(240.)),
                 ),
             )
             .child(
-                ui::card("Tokens by type", cx).child(token_legend).child(
-                    line_chart(d.tokens.clone(), self.hovers.tokens.clone(), theme)
+                ui::card(type_title, cx).child(token_legend).child(
+                    line_chart(by_type.clone(), self.hovers.tokens.clone(), theme)
                         .w_full()
                         .h(px(220.)),
                 ),
@@ -445,6 +594,15 @@ mod tests {
     }
 
     #[test]
+    fn top_by_tokens_ranks_before_truncating() {
+        let by_cost: Vec<(u64, u64)> = (0..10).map(|i| (10 - i, i * 100)).collect();
+        let (cost, tokens) = top_n(&by_cost, |x| x.1);
+        assert_eq!(cost, by_cost[..TOP_N]);
+        let ranked: Vec<u64> = tokens.iter().map(|x| x.1).collect();
+        assert_eq!(ranked, [900, 800, 700, 600, 500, 400]);
+    }
+
+    #[test]
     fn load_builds_dense_series() {
         let now: Timestamp = "2026-11-23T15:20:00Z".parse().unwrap();
         let data = MockData::new(11, now);
@@ -463,6 +621,26 @@ mod tests {
         let tokens: f64 = d.tokens.series.iter().flat_map(|s| s.values.iter()).sum();
         assert_eq!(tokens as u64, d.kpi.tokens.total());
         assert!(d.top_models.len() <= TOP_N);
+        assert!(d.top_models_by_tokens.len() <= TOP_N);
+        let type_cost: f64 = d
+            .type_cost
+            .series
+            .iter()
+            .flat_map(|s| s.values.iter())
+            .sum();
+        assert!((type_cost - micros_to_usd(d.kpi.cost)).abs() < 0.01);
+        let harness_tokens: f64 = d
+            .harness_tokens
+            .series
+            .iter()
+            .flat_map(|s| s.values.iter())
+            .sum();
+        assert_eq!(harness_tokens as u64, d.kpi.tokens.total());
+        assert!(
+            d.top_models_by_tokens
+                .windows(2)
+                .all(|w| w[0].tokens.total() >= w[1].tokens.total())
+        );
         assert!(!d.no_data);
     }
 }

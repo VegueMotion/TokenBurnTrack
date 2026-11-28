@@ -104,9 +104,9 @@ builds are in [docs/install.md](docs/install.md). Settings are in
 - **Per-call cost.** Bundled prices, an optional LiteLLM import and your own overrides,
   versioned by date so a price change does not rewrite old costs. When a harness logs
   its own cost, both values are kept.
-- **Dashboards.** KPIs, hourly/daily cost, tokens by type, top models and projects, a
-  daily activity heatmap of the last year, a sessions table with session detail, and
-  CSV/JSON export.
+- **Dashboards.** KPIs, hourly/daily usage by harness and by token type, top models and
+  projects, and a daily activity heatmap of the last year, each by cost or by tokens. Also
+  a sessions table with session detail, and CSV/JSON export.
 - **Background collector.** `tbt-daemon` runs from a systemd user timer, a launchd agent
   or a Windows scheduled task, and shares a lock with the app so only one ingests at a
   time.
